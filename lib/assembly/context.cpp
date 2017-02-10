@@ -60,6 +60,8 @@ Context<BasisFunctionType, ResultType>::Context(
           "options.assembly.boundaryOperatorAssemblyType"));
   if (assemblyType == "hmat")
     m_assemblyOptions.switchToHMatMode();
+  else if (assemblyType == "fmm")
+    m_assemblyOptions.switchToFMMMode();
   else if (assemblyType == "dense")
     m_assemblyOptions.switchToDenseMode();
   else

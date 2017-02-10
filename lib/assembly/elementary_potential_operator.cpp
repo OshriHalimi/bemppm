@@ -21,6 +21,7 @@
 #include "elementary_potential_operator.hpp"
 
 #include "hmat_global_assembler.hpp"
+#include "fmm_global_assembler.hpp"
 #include "assembled_potential_operator.hpp"
 #include "evaluation_options.hpp"
 #include "local_assembler_construction_helper.hpp"
@@ -142,6 +143,11 @@ ElementaryPotentialOperator<BasisFunctionType, KernelType, ResultType>::
         assembleOperatorInHMatMode(space, evaluationPoints, assembler,
                                    parameterList)
             .release());
+  case EvaluationOptions::FMM:
+    return shared_ptr<DiscreteBoundaryOperator<ResultType>>(
+        assembleOperatorInFMMMode(space, evaluationPoints, assembler,
+                                   parameterList)
+            .release());
   default:
     throw std::runtime_error(
         "ElementaryPotentialOperator::assembleWeakFormInternalImpl(): "
@@ -169,6 +175,18 @@ ElementaryPotentialOperator<BasisFunctionType, KernelType, ResultType>::
                                LocalAssembler &assembler,
                                const ParameterList &parameterList) const {
   return HMatGlobalAssembler<BasisFunctionType, ResultType>::
+      assemblePotentialOperator(evaluationPoints, space, assembler,
+                                parameterList);
+}
+
+template <typename BasisFunctionType, typename KernelType, typename ResultType>
+std::unique_ptr<DiscreteBoundaryOperator<ResultType>>
+ElementaryPotentialOperator<BasisFunctionType, KernelType, ResultType>::
+    assembleOperatorInFMMMode(const Space<BasisFunctionType> &space,
+                               const Matrix<CoordinateType> &evaluationPoints,
+                               LocalAssembler &assembler,
+                               const ParameterList &parameterList) const {
+  return FMMGlobalAssembler<BasisFunctionType, ResultType>::
       assemblePotentialOperator(evaluationPoints, space, assembler,
                                 parameterList);
 }

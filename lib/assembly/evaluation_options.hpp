@@ -56,7 +56,9 @@ public:
     /** \brief Assemble dense matrices. */
     DENSE,
     /** \brief Assemble hierarchical matrices using HMat. */
-    HMAT
+    HMAT,
+    /** \brief Assemble fast multipole using FMM. */
+    FMM
   };
 
   /** \brief Use dense-matrix representations of elementary potential operators.

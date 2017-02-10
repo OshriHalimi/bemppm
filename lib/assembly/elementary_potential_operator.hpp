@@ -177,6 +177,12 @@ private:
                              const Matrix<CoordinateType> &evaluationPoints,
                              LocalAssembler &assembler,
                              const ParameterList &parameterList) const;
+
+  std::unique_ptr<DiscreteBoundaryOperator<ResultType_>>
+  assembleOperatorInFMMMode(const Space<BasisFunctionType> &space,
+                             const Matrix<CoordinateType> &evaluationPoints,
+                             LocalAssembler &assembler,
+                             const ParameterList &parameterList) const;
   /** \endcond */
 };
 

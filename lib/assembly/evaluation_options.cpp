@@ -40,6 +40,8 @@ EvaluationOptions::EvaluationOptions(const ParameterList &parameters)
     m_evaluationMode = DENSE;
   } else if (assemblyType == "hmat") {
     m_evaluationMode = HMAT;
+  } else if (assemblyType == "fmm") {
+    m_evaluationMode = FMM;
   } else
     throw std::runtime_error(
         "EvaluationOptions::EvaluationOptions(): "

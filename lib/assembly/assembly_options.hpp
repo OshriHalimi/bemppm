@@ -52,7 +52,9 @@ public:
     /** \brief Assemble dense matrices. */
     DENSE,
     /** \brief Assemble hierarchical matrices using the HMat library. */
-    HMAT
+    HMAT,
+    /** \brief Assemble fast multipole matrices using the FMM library. */
+    FMM
   };
 
   /** \brief Use dense-matrix representations of weak forms of boundary integral
@@ -63,6 +65,9 @@ public:
 
   /** \brief Assemble using the HMat hierarchical matrix library. */
   void switchToHMatMode();
+
+  /** \brief Assemble using the FMM fast multipole library. */
+  void switchToFMMMode();
 
   /** \brief Use dense-matrix representations of weak forms of boundary integral
    *operators.

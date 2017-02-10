@@ -205,6 +205,10 @@ private:
   assembleWeakFormInHMatMode(
       LocalAssembler &assembler,
       const Context<BasisFunctionType, ResultType> &context) const;
+  std::unique_ptr<DiscreteBoundaryOperator<ResultType_>>
+  assembleWeakFormInFMMMode(
+      LocalAssembler &assembler,
+      const Context<BasisFunctionType, ResultType> &context) const;
 
   /** \endcond */
 };

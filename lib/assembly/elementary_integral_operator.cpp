@@ -26,6 +26,7 @@
 #include "context.hpp"
 #include "local_assembler_construction_helper.hpp"
 #include "hmat_global_assembler.hpp"
+#include "fmm_global_assembler.hpp"
 
 #include "../fiber/explicit_instantiation.hpp"
 #include "../fiber/local_assembler_for_integral_operators.hpp"
@@ -110,6 +111,9 @@ ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>::
   case AssemblyOptions::HMAT:
     return shared_ptr<DiscreteBoundaryOperator<ResultType>>(
         assembleWeakFormInHMatMode(assembler, context).release());
+  case AssemblyOptions::FMM:
+    return shared_ptr<DiscreteBoundaryOperator<ResultType>>(
+        assembleWeakFormInFMMMode(assembler, context).release());
   default:
     throw std::runtime_error(
         "ElementaryIntegralOperator::assembleWeakFormInternalImpl2(): "
@@ -146,6 +150,19 @@ ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>::
   const Space<BasisFunctionType> &testSpace = *this->dualToRange();
   const Space<BasisFunctionType> &trialSpace = *this->domain();
   return HMatGlobalAssembler<BasisFunctionType, ResultType>::
+      assembleDetachedWeakForm(testSpace, trialSpace, assembler, assembler,
+                               context, this->symmetry() & SYMMETRIC);
+}
+
+template <typename BasisFunctionType, typename KernelType, typename ResultType>
+std::unique_ptr<DiscreteBoundaryOperator<ResultType>>
+ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>::
+    assembleWeakFormInFMMMode(
+        LocalAssembler &assembler,
+        const Context<BasisFunctionType, ResultType> &context) const {
+  const Space<BasisFunctionType> &testSpace = *this->dualToRange();
+  const Space<BasisFunctionType> &trialSpace = *this->domain();
+  return FMMGlobalAssembler<BasisFunctionType, ResultType>::
       assembleDetachedWeakForm(testSpace, trialSpace, assembler, assembler,
                                context, this->symmetry() & SYMMETRIC);
 }

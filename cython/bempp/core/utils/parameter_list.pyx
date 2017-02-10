@@ -292,6 +292,22 @@ cdef class _HMatParameterList:
             cdef char* s = b"options.hmat.admissibility"
             deref(self.impl_).put_string(s,_convert_to_bytes(value))
 
+cdef class _FMMParameterList:
+
+    def __cinit__(self, ParameterList base):
+        self.base = base
+
+    def __init__(self, ParameterList base):
+        pass
+
+    property levels:
+        def __get__(self):
+            cdef char* s = b"options.fmm.levels"
+            return deref(self.impl_).get_int(s)
+        def __set__(self,int value):
+            cdef char* s = b"options.fmm.levels"
+            deref(self.impl_).put_int(s,value)
+
 cdef class ParameterList:
 
     def __cinit__(self):
@@ -299,6 +315,7 @@ cdef class ParameterList:
         self._assembly = _AssemblyParameterList(self)
         self._quadrature = _QuadratureParameterList(self)
         self._hmat = _HMatParameterList(self)
+        self._fmm = _FMMParameterList(self)
         self._verbosity = _VerbosityParameterList()
         (<_AssemblyParameterList>self._assembly).impl_ = self.impl_
         (<_QuadratureParameterList>self._quadrature).impl_ = self.impl_
@@ -306,6 +323,7 @@ cdef class ParameterList:
         (<_MediumField>self.quadrature.medium).impl_ = self.impl_
         (<_FarField>self.quadrature.far).impl_ = self.impl_
         (<_HMatParameterList>self._hmat).impl_ = self.impl_
+        (<_FMMParameterList>self._fmm).impl_ = self.impl_
 
     def __init__(self):
         pass
@@ -327,6 +345,11 @@ cdef class ParameterList:
 
         def __get__(self):
             return self._hmat
+
+    property fmm:
+
+        def __get__(self):
+            return self._fmm
 
     property verbosity:
 
