@@ -22,6 +22,7 @@
 #define bempp_geometry_hpp
 
 #include "../common/common.hpp"
+#include "../common/types.hpp"
 #include "../common/eigen_support.hpp"
 
 #include "dune.hpp"
@@ -170,6 +171,7 @@ public:
 
   /** \overload */
   void getCenter(Eigen::Ref<Vector<float>> c) const;
+  template <typename CoordinateType> void getCenter(Point3D<CoordinateType> c) const;
 
   /** \brief Get transposed Jacobian matrices at specified points.
    *

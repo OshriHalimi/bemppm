@@ -39,8 +39,11 @@
 #include "../fiber/scalar_traits.hpp"
 #include "../fiber/shared_ptr.hpp"
 #include "../space/space.hpp"
-
 #include "../grid/grid.hpp"
+#include "../grid/grid_view.hpp"
+#include "../grid/geometry.hpp"
+#include "../grid/entity.hpp"
+#include "../grid/entity_iterator.hpp"
 
 #include "../hmat/block_cluster_tree.hpp"
 #include "../hmat/data_accessor.hpp"
@@ -126,7 +129,6 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
     const FmmTransform<ResultType>& fmmTransform,
     int symmetry) {
 
-  std::cout << "HELLO WORLD!" << std::endl;
 
   // Get options and parameters
   const AssemblyOptions &options = context.assemblyOptions();
@@ -143,7 +145,6 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   auto levels =
       parameterList.template get<int>("options.fmm.levels");
 
-  std::cout << levels << std::endl << std::endl;
 
   // get bounding boxes of spaces
   Vector<double> lowerBoundTest, upperBoundTest;
@@ -182,12 +183,42 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
         cache,
         lowerBound,
         upperBound);
-  /*auto trialOctree = Octree<ResultType>(
-        levels,
-        fmmTransform,
-        cache,
-        lowerBoundTest,
-        upperBoundTest);
+
+  const size_t testDofCount = testSpace.globalDofCount();
+  const size_t trialDofCount = trialSpace.globalDofCount();
+  // assign each dof a location which is used to determine its leaf in the octree
+  // using the barycentre of the triangle for discontinuous spaces
+  std::vector<Point3D<CoordinateType> > testDofLocations, trialDofLocations;
+  if (trialSpace.isDiscontinuous()) { // default triangle indexed octree
+    trialDofLocations.resize(trialDofCount);
+    // Form a vector containing barycentres of all triangles in the trial grid,
+    // following the approach of grid_segment.cpp
+
+    // must use a const reference to the view to call entityIterator
+    const GridView &view = trialSpace.gridView();
+    std::vector<Point3D<CoordinateType> > barycentres( view.entityCount(0) );
+    const IndexSet& indexSet = view.indexSet();
+    Point3D<CoordinateType> barycentre;
+    for(std::unique_ptr<EntityIterator<0> > it = view.entityIterator<0>();
+        !it->finished();it->next()){
+      const Entity<0>& entity = it->entity();
+      entity.geometry().getCenter(barycentre);
+      unsigned int element = indexSet.entityIndex(entity);
+      barycentres[element] = barycentre;
+    }
+    // Following local_dof_lists_cache.hpp, find owning triangle of a dof
+    typedef int DofIndex;
+    std::vector<DofIndex> indices(trialDofCount);
+    std::iota(indices.begin(), indices.end(), 0); // fill 0..trialDofCount-1
+    std::vector<LocalDof> localDofs;
+    trialSpace.flatLocal2localDofs(indices, localDofs);
+    for (unsigned int dof = 0; dof < trialDofCount; dof++) {
+      unsigned int element = localDofs[dof].entityIndex;
+      trialDofLocations[dof] = barycentres[element];
+    }
+  } else {
+      trialSpace.getGlobalDofPositions(trialDofLocations);
+  }
 /*
   auto minBlockSize =
       parameterList.template get<int>("options.hmat.minBlockSize");

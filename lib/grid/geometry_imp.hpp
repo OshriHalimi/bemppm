@@ -22,6 +22,7 @@
 #define bempp_geometry_imp_hpp
 
 #include "../common/common.hpp"
+#include "../common/types.hpp"
 
 #include "geometry.hpp" // keep IDEs happy
 #include "../fiber/geometrical_data.hpp"
@@ -105,6 +106,17 @@ inline void Geometry::getCenter(Eigen::Ref<Vector<float>> c) const {
   getCenterImpl(cDouble);
   for (int i = 0; i < c.rows(); ++i)
     c(i) = cDouble(i);
+}
+
+template <typename CoordinateType>
+inline void Geometry::getCenter(Point3D<CoordinateType> c) const {
+
+  Vector<double> cDouble;
+  cDouble.resize(c.rows());
+  getCenterImpl(cDouble);
+  c.x = cDouble(0);
+  c.y = cDouble(1);
+  c.z = cDouble(2);
 }
 
 inline void Geometry::getJacobiansTransposed(
