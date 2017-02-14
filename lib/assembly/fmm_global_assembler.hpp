@@ -73,7 +73,9 @@ public:
       const Space<BasisFunctionType> &testSpace,
       const Space<BasisFunctionType> &trialSpace,
       const LocalAssembler &assembler,
-      const Context<BasisFunctionType, ResultType> &context, int symmetry);
+      const Context<BasisFunctionType, ResultType> &context,
+      const FmmTransform<ResultType>& fmmTransform,
+      int symmetry);
 
   static std::unique_ptr<DiscreteBndOp> assemblePotentialOperator(
       const Matrix<CoordinateType> &points,

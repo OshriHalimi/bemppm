@@ -53,8 +53,8 @@ public:
 
 	//template <typename KernelType>
 	void initCache(
-		const Vector<CoordinateType> &lowerBound,
-		const Vector<CoordinateType> &upperBound);//,
+		const Point3D<CoordinateType> &lowerBound,
+		const Point3D<CoordinateType> &upperBound);//,
 //		const Fiber::CollectionOfKernels<KernelType>& kernels);
 
 	void compressM2L(bool isSymmetric);

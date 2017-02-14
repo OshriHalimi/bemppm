@@ -9,6 +9,8 @@
 #include "../fiber/scalar_traits.hpp"
 #include "../common/shared_ptr.hpp"
 
+#include "octree_node.hpp"
+
 #include <iostream>
 #include "../assembly/transposition_mode.hpp"
 
@@ -28,9 +30,9 @@ unsigned long getNodesPerLevel(unsigned long level);
 
 
 /** \cond FORWARD_DECL */
-template <typename ResultType> class OctreeNode;
+//template <typename ResultType> class OctreeNode;
 template <typename ResultType> class FmmCache;
-template <typename ValueType> class FmmTransform;
+template <typename ResultType> class FmmTransform;
 class IndexPermutation;
 /** \endcond */
 
@@ -44,8 +46,8 @@ public:
     Octree(unsigned int levels, 
         const FmmTransform<ResultType> &fmmTransform,
         const shared_ptr<FmmCache<ResultType> > &fmmCache,
-        const Vector<CoordinateType> &lowerBound,
-        const Vector<CoordinateType> &upperBound);
+        const Point3D<CoordinateType> &lowerBound,
+        const Point3D<CoordinateType> &upperBound);
 
     const OctreeNode<ResultType> &getNodeConst(
         unsigned long number, unsigned int level) const;

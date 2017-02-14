@@ -24,6 +24,9 @@
 #include "elementary_singular_integral_operator.hpp"
 
 namespace Bempp {
+/** \cond FORWARD_DECL */
+template <typename ResultType> class FmmTransform;
+/** \endcond */
 
 /** \ingroup abstract_boundary_operators
  *  \brief Standard implementation of an elementary singular integral operator.
@@ -180,6 +183,66 @@ public:
       const shared_ptr<Fiber::TestKernelTrialIntegral<
           BasisFunctionType_, KernelType_, ResultType_>> &integral);
 
+    /** \overload
+     *
+     *  Overload the first constructor to take a shared_ptr to an fmmTransform object
+     */
+    template <typename KernelFunctor,
+              typename TestTransformationsFunctor,
+              typename TrialTransformationsFunctor,
+              typename IntegrandFunctor>
+    GeneralElementarySingularIntegralOperator(
+            const shared_ptr<const Space<BasisFunctionType_> >& domain,
+            const shared_ptr<const Space<BasisFunctionType_> >& range,
+            const shared_ptr<const Space<BasisFunctionType_> >& dualToRange,
+            const std::string& label,
+            int symmetry,
+            const KernelFunctor& kernelFunctor,
+            const TestTransformationsFunctor& testTransformationsFunctor,
+            const TrialTransformationsFunctor& trialTransformationsFunctor,
+            const IntegrandFunctor& integrandFunctor,
+            const shared_ptr<FmmTransform<ResultType> > &fmmTransform);
+
+    /** \overload
+     *
+     *  Overload the second constructor to take a shared_ptr to an fmmTransform object
+     */
+    template <typename KernelFunctor,
+              typename TestTransformationsFunctor,
+              typename TrialTransformationsFunctor>
+    GeneralElementarySingularIntegralOperator(
+            const shared_ptr<const Space<BasisFunctionType_> >& domain,
+            const shared_ptr<const Space<BasisFunctionType_> >& range,
+            const shared_ptr<const Space<BasisFunctionType_> >& dualToRange,
+            const std::string& label,
+            int symmetry,
+            const KernelFunctor& kernelFunctor,
+            const TestTransformationsFunctor& testTransformationsFunctor,
+            const TrialTransformationsFunctor& trialTransformationsFunctor,
+            const shared_ptr<Fiber::TestKernelTrialIntegral<
+            BasisFunctionType_, KernelType_, ResultType_> >& integral,
+            const shared_ptr<FmmTransform<ResultType> > &fmmTransform);
+
+    /** \overload
+     *
+     *  Overload the third constructor to take a shared_ptr to an fmmTransform object
+     */
+    GeneralElementarySingularIntegralOperator(
+        const shared_ptr<const Space<BasisFunctionType_> >& domain,
+        const shared_ptr<const Space<BasisFunctionType_> >& range,
+        const shared_ptr<const Space<BasisFunctionType_> >& dualToRange,
+        const std::string& label,
+        int symmetry,
+        const shared_ptr<Fiber::CollectionOfKernels<KernelType_> >& kernels,
+        const shared_ptr<Fiber::CollectionOfShapesetTransformations<CoordinateType> >&
+        testTransformations,
+        const shared_ptr<Fiber::CollectionOfShapesetTransformations<CoordinateType> >&
+        trialTransformations,
+        const shared_ptr<Fiber::TestKernelTrialIntegral<
+        BasisFunctionType_, KernelType_, ResultType_> >& integral,
+        const shared_ptr<FmmTransform<ResultType> > &fmmTransform);
+
+
   virtual const CollectionOfKernels &kernels() const { return *m_kernels; }
   virtual const CollectionOfShapesetTransformations &
   testTransformations() const {
@@ -192,6 +255,9 @@ public:
   virtual const TestKernelTrialIntegral &integral() const {
     return *m_integral;
   }
+  virtual const FmmTransform<ResultType>& fmmTransform() const {
+    return *m_fmmTransform;
+  }
 
 private:
   /** \cond PRIVATE */
@@ -199,6 +265,7 @@ private:
   shared_ptr<CollectionOfShapesetTransformations> m_testTransformations;
   shared_ptr<CollectionOfShapesetTransformations> m_trialTransformations;
   shared_ptr<TestKernelTrialIntegral> m_integral;
+  shared_ptr<FmmTransform<ResultType>> m_fmmTransform;
   /** \endcond */
 };
 

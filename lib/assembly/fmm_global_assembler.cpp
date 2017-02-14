@@ -52,6 +52,8 @@
 #include "../hmat/hmatrix_dense_compressor.hpp"
 
 #include "../fmm/octree.hpp"
+#include "../fmm/fmm_transform.hpp"
+#include "../fmm/fmm_cache.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -120,7 +122,9 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
     const Space<BasisFunctionType> &testSpace,
     const Space<BasisFunctionType> &trialSpace,
     const LocalAssembler &assembler,
-    const Context<BasisFunctionType, ResultType> &context, int symmetry) {
+    const Context<BasisFunctionType, ResultType> &context,
+    const FmmTransform<ResultType>& fmmTransform,
+    int symmetry) {
 
   std::cout << "HELLO WORLD!" << std::endl;
 
@@ -144,21 +148,46 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   // get bounding boxes of spaces
   Vector<double> lowerBoundTest, upperBoundTest;
   Vector<double> lowerBoundTrial, upperBoundTrial;
+  Point3D<CoordinateType> lowerBound, upperBound;
+
+//  lowerBound.conservativeResize(3);
+ // upperBound.conservativeResize(3);
 
   actualTestSpace->grid()->getBoundingBox(lowerBoundTest, upperBoundTest);
   actualTrialSpace->grid()->getBoundingBox(lowerBoundTrial, upperBoundTrial);
+
+  lowerBound.x = std::min(lowerBoundTest(0),lowerBoundTrial(0));
+  lowerBound.y = std::min(lowerBoundTest(1),lowerBoundTrial(1));
+  lowerBound.z = std::min(lowerBoundTest(2),lowerBoundTrial(2));
+
+  upperBound.x = std::min(upperBoundTest(0),upperBoundTrial(0));
+  upperBound.y = std::min(upperBoundTest(1),upperBoundTrial(1));
+  upperBound.z = std::min(upperBoundTest(2),upperBoundTrial(2));
+
+//  FmmTransform<BasisFunctionType> trans;
+//  auto trans = FmmTransform<ResultType>(1,levels,false);
+
+  shared_ptr<FmmCache<ResultType>> cache = boost::make_shared<FmmCache<ResultType>>(fmmTransform,levels);
+
+  cache->initCache(lowerBound,upperBound);
 
   //////////////////////////////////////////////////
  //           I AM APPROXIMATELY HERE            //
 //////////////////////////////////////////////////
 
   // Make octree
-  //auto octree = Octree(
-  //      levels,
-  //      ??,
-  //      ??,
-  //      lowerBoundTest,
-  //      upperBoundTest);
+  shared_ptr<Octree<ResultType>> octree = boost::make_shared<Octree<ResultType>>(
+        levels,
+        fmmTransform,
+        cache,
+        lowerBound,
+        upperBound);
+  /*auto trialOctree = Octree<ResultType>(
+        levels,
+        fmmTransform,
+        cache,
+        lowerBoundTest,
+        upperBoundTest);
 /*
   auto minBlockSize =
       parameterList.template get<int>("options.hmat.minBlockSize");

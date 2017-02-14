@@ -122,8 +122,8 @@ Octree<ResultType>::Octree(
 		unsigned int levels,
 		const FmmTransform<ResultType>& fmmTransform,
 		const shared_ptr<FmmCache<ResultType> > &fmmCache,
-		const Vector<CoordinateType> &lowerBound,
-		const Vector<CoordinateType> &upperBound)
+		const Point3D<CoordinateType> &lowerBound,
+		const Point3D<CoordinateType> &upperBound)
 	:	m_topLevel(2), m_levels(levels), 
 		m_fmmTransform(fmmTransform), m_fmmCache(fmmCache)
 {

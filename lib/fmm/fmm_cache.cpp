@@ -44,8 +44,8 @@ template <typename ValueType>
 //template <typename KernelType>
 void 
 FmmCache<ValueType>::initCache(
-		const Vector<CoordinateType> &lowerBound,
-		const Vector<CoordinateType> &upperBound)//,
+		const Point3D<CoordinateType> &lowerBound,
+		const Point3D<CoordinateType> &upperBound)//,
 //		const Fiber::CollectionOfKernels<KernelType>& kernels)
 {
 } // initCache
