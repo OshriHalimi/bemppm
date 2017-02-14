@@ -28,6 +28,8 @@
 #include "../common/eigen_support.hpp"
 #include "../common/types.hpp"
 
+#include "elementary_integral_operator.hpp"
+
 #include <memory>
 #include <vector>
 
@@ -70,22 +72,8 @@ public:
   static std::unique_ptr<DiscreteBndOp> assembleDetachedWeakForm(
       const Space<BasisFunctionType> &testSpace,
       const Space<BasisFunctionType> &trialSpace,
-      const std::vector<LocalAssemblerForIntegralOperators *> &localAssemblers,
-      const std::vector<LocalAssemblerForIntegralOperators *>
-          &localAssemblersForAdmissibleBlocks,
-      const std::vector<const DiscreteBndOp *> &sparseTermsToAdd,
-      const std::vector<ResultType> &denseTermMultipliers,
-      const std::vector<ResultType> &sparseTermMultipliers,
+      const LocalAssembler &assembler,
       const Context<BasisFunctionType, ResultType> &context, int symmetry);
-
-  static std::unique_ptr<DiscreteBndOp> assembleDetachedWeakForm(
-      const Space<BasisFunctionType> &testSpace,
-      const Space<BasisFunctionType> &trialSpace,
-      LocalAssemblerForIntegralOperators &localAssembler,
-      LocalAssemblerForIntegralOperators &localAssemblerForAdmissibleBlocks,
-      const Context<BasisFunctionType, ResultType> &context,
-      int symmetry); // used to be "bool symmetric"; fortunately "true"
-                     // is converted to 1 == SYMMETRIC
 
   static std::unique_ptr<DiscreteBndOp> assemblePotentialOperator(
       const Matrix<CoordinateType> &points,

@@ -163,8 +163,8 @@ ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>::
   const Space<BasisFunctionType> &testSpace = *this->dualToRange();
   const Space<BasisFunctionType> &trialSpace = *this->domain();
   return FMMGlobalAssembler<BasisFunctionType, ResultType>::
-      assembleDetachedWeakForm(testSpace, trialSpace, assembler, assembler,
-                               context, this->symmetry() & SYMMETRIC);
+      assembleDetachedWeakForm(testSpace, trialSpace, assembler, context,
+                               this->symmetry() & SYMMETRIC);
 }
 
 /** \endcond */

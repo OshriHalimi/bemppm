@@ -119,12 +119,7 @@ std::unique_ptr<DiscreteBoundaryOperator<ResultType>>
 FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
     const Space<BasisFunctionType> &testSpace,
     const Space<BasisFunctionType> &trialSpace,
-    const std::vector<LocalAssemblerForIntegralOperators *> &localAssemblers,
-    const std::vector<LocalAssemblerForIntegralOperators *>
-        &localAssemblersForAdmissibleBlocks,
-    const std::vector<const DiscreteBndOp *> &sparseTermsToAdd,
-    const std::vector<ResultType> &denseTermMultipliers,
-    const std::vector<ResultType> &sparseTermMultipliers,
+    const LocalAssembler &assembler,
     const Context<BasisFunctionType, ResultType> &context, int symmetry) {
 
   std::cout << "HELLO WORLD!" << std::endl;
@@ -157,32 +152,14 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
  //           I AM APPROXIMATELY HERE            //
 //////////////////////////////////////////////////
 
-  std::cout << lowerBoundTest(0) << ",";
-  std::cout << lowerBoundTest(1) << ",";
-  std::cout << lowerBoundTest(2) << std::endl;
-
-  std::cout << upperBoundTest(0) << ",";
-  std::cout << upperBoundTest(1) << ",";
-  std::cout << upperBoundTest(2) << std::endl;
-
-  std::cout << lowerBoundTrial(0) << ",";
-  std::cout << lowerBoundTrial(1) << ",";
-  std::cout << lowerBoundTrial(2) << std::endl;
-
-  std::cout << upperBoundTrial(0) << ",";
-  std::cout << upperBoundTrial(1) << ",";
-  std::cout << upperBoundTrial(2) << std::endl;
-
   // Make octree
   //auto octree = Octree(
   //      levels,
   //      ??,
   //      ??,
   //      lowerBoundTest,
-  //      upperBoundTest
-  //      ??,
-  //      ??);
-
+  //      upperBoundTest);
+/*
   auto minBlockSize =
       parameterList.template get<int>("options.hmat.minBlockSize");
   auto maxBlockSize =
@@ -214,33 +191,12 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
     hMatrix.reset(
         new hmat::DefaultHMatrixType<ResultType>(blockClusterTree, compressor));
   } else
-    throw std::runtime_error("HMatGlobalAssember::assembleDetachedWeakForm: "
+    throw std::runtime_error("FMMGlobalAssember::assembleDetachedWeakForm: "
                              "Unknown compression algorithm");
   return std::unique_ptr<DiscreteBoundaryOperator<ResultType>>(
       static_cast<DiscreteBoundaryOperator<ResultType> *>(
           new DiscreteHMatBoundaryOperator<ResultType>(hMatrix)));
-}
-
-template <typename BasisFunctionType, typename ResultType>
-std::unique_ptr<DiscreteBoundaryOperator<ResultType>>
-FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
-    const Space<BasisFunctionType> &testSpace,
-    const Space<BasisFunctionType> &trialSpace,
-    LocalAssemblerForIntegralOperators &localAssembler,
-    LocalAssemblerForIntegralOperators &localAssemblerForAdmissibleBlocks,
-    const Context<BasisFunctionType, ResultType> &context, int symmetry) {
-  typedef LocalAssemblerForIntegralOperators Assembler;
-  std::vector<Assembler *> localAssemblers(1, &localAssembler);
-  std::vector<Assembler *> localAssemblersForAdmissibleBlocks(
-      1, &localAssemblerForAdmissibleBlocks);
-  std::vector<const DiscreteBndOp *> sparseTermsToAdd;
-  std::vector<ResultType> denseTermsMultipliers(1, 1.0);
-  std::vector<ResultType> sparseTermsMultipliers;
-
-  return assembleDetachedWeakForm(testSpace, trialSpace, localAssemblers,
-                                  localAssemblersForAdmissibleBlocks,
-                                  sparseTermsToAdd, denseTermsMultipliers,
-                                  sparseTermsMultipliers, context, symmetry);
+*/
 }
 
 template <typename BasisFunctionType, typename ResultType>
