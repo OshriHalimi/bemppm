@@ -127,6 +127,17 @@ Octree<ResultType>::Octree(
 	:	m_topLevel(2), m_levels(levels), 
 		m_fmmTransform(fmmTransform), m_fmmCache(fmmCache)
 {
+  std::cout << "making octree" << std::endl;
+  m_OctreeNodes.resize(levels-m_topLevel+1);
+  // initialise octree stucture (don't bother storing the lowest two levels)
+  for (unsigned int level = m_topLevel; level<=levels; ++level) {
+    unsigned int nNodes = getNodesPerLevel(level);
+    std::cout << level << " " << nNodes << std::endl;
+    m_OctreeNodes[level-m_topLevel].resize(nNodes);
+    for (unsigned int node=0; node<nNodes; ++node)
+      getNode(node,level).setIndex(node, level);
+  }
+  std::cout << "finished making octree" << std::endl;
 }
 
 // fill octree and return p2o permutation vector (shared vector)
@@ -138,6 +149,7 @@ void Octree<ResultType>::assignPoints(
 	const std::vector<Point3D<CoordinateType> > &trialDofCenters,
 	std::vector<unsigned int> &test_p2o, std::vector<unsigned int> &trial_p2o)
 {
+  std::cout << "assigning points" << std::endl;
 }
 
 
@@ -381,11 +393,13 @@ void Octree<ResultType>::downwardsStep(
 template <typename ResultType>
 OctreeNode<ResultType> &Octree<ResultType>::getNode(unsigned long number, unsigned int level)
 {
+  return m_OctreeNodes[level-m_topLevel][number];
 }
 
 template <typename ResultType>
 const OctreeNode<ResultType> &Octree<ResultType>::getNodeConst(unsigned long number, unsigned int level) const
 {
+  return m_OctreeNodes[level-m_topLevel][number];
 }
 
 

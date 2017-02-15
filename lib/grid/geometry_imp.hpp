@@ -112,7 +112,7 @@ template <typename CoordinateType>
 inline void Geometry::getCenter(Point3D<CoordinateType> c) const {
 
   Vector<double> cDouble;
-  cDouble.resize(c.rows());
+  cDouble.resize(3);
   getCenterImpl(cDouble);
   c.x = cDouble(0);
   c.y = cDouble(1);
