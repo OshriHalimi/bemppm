@@ -18,9 +18,11 @@ namespace Bempp
 {
 
 unsigned long morton(unsigned long x, unsigned long y, unsigned long z);
+unsigned long morton(std::vector<unsigned long> v);
 
 void deMorton(  unsigned long *indx, unsigned long *indy, unsigned long *indz, 
         unsigned long n);
+void deMorton(  std::vector<unsigned long> *indv, unsigned long n);
 
 unsigned long getParent(unsigned long n);
 unsigned long getFirstChild(unsigned long n);
@@ -46,8 +48,8 @@ public:
     Octree(unsigned int levels, 
         const FmmTransform<ResultType> &fmmTransform,
         const shared_ptr<FmmCache<ResultType> > &fmmCache,
-        const Point3D<CoordinateType> &lowerBound,
-        const Point3D<CoordinateType> &upperBound);
+        const Vector<CoordinateType> &lowerBound,
+        const Vector<CoordinateType> &upperBound);
 
     const OctreeNode<ResultType> &getNodeConst(
         unsigned long number, unsigned int level) const;
@@ -70,9 +72,9 @@ public:
     unsigned int levels() const {return m_levels;}
     OctreeNode<ResultType> &getNode(unsigned long number, unsigned int level);
     void nodeCentre(unsigned long number, unsigned int level,
-        std::vector<CoordinateType> &centre) const;
+        Vector<CoordinateType> &centre) const;
     void nodeSize(unsigned int level,
-        std::vector<CoordinateType> &size) const;
+        Vector<CoordinateType> &size) const;
     const FmmCache<ResultType>& fmmCache() {return *m_fmmCache;}
 private:
     unsigned long getLeafContainingPoint(const Point3D<CoordinateType> &point) const;
@@ -82,7 +84,7 @@ private:
     std::vector<std::vector<OctreeNode<ResultType> > > m_OctreeNodes;
     shared_ptr<IndexPermutation> m_test_p2o, m_trial_p2o;
     const FmmTransform<ResultType>& m_fmmTransform;
-    std::vector<CoordinateType> m_lowerBound, m_upperBound;
+    Vector<CoordinateType> m_lowerBound, m_upperBound;
     shared_ptr<FmmCache<ResultType> > m_fmmCache;
 };
 

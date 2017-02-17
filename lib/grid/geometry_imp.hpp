@@ -99,7 +99,8 @@ inline void Geometry::getCenter(Eigen::Ref<Vector<double>> c) const {
   getCenterImpl(c);
 }
 
-inline void Geometry::getCenter(Eigen::Ref<Vector<float>> c) const {
+template <typename CoordinateType>
+inline void Geometry::getCenter(Eigen::Ref<Vector<CoordinateType>> c) const {
 
   Vector<double> cDouble;
   cDouble.resize(c.rows());

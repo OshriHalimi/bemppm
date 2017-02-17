@@ -91,6 +91,7 @@ void constructGlobalToFlatLocalDofsMappingVectors(
   values.swap(tmp);
 }
 
+
 template <typename BasisFunctionType>
 shared_ptr<RealSparseMatrix> constructGlobalToFlatLocalDofsMappingSparseMatrix(
     const Space<BasisFunctionType> &space) {

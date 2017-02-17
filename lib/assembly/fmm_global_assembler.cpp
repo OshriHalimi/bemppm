@@ -149,7 +149,7 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   // get bounding boxes of spaces
   Vector<double> lowerBoundTest, upperBoundTest;
   Vector<double> lowerBoundTrial, upperBoundTrial;
-  Point3D<CoordinateType> lowerBound, upperBound;
+  Vector<CoordinateType> lowerBound, upperBound;
 
 //  lowerBound.conservativeResize(3);
  // upperBound.conservativeResize(3);
@@ -157,13 +157,10 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   actualTestSpace->grid()->getBoundingBox(lowerBoundTest, upperBoundTest);
   actualTrialSpace->grid()->getBoundingBox(lowerBoundTrial, upperBoundTrial);
 
-  lowerBound.x = std::min(lowerBoundTest(0),lowerBoundTrial(0));
-  lowerBound.y = std::min(lowerBoundTest(1),lowerBoundTrial(1));
-  lowerBound.z = std::min(lowerBoundTest(2),lowerBoundTrial(2));
-
-  upperBound.x = std::min(upperBoundTest(0),upperBoundTrial(0));
-  upperBound.y = std::min(upperBoundTest(1),upperBoundTrial(1));
-  upperBound.z = std::min(upperBoundTest(2),upperBoundTrial(2));
+  for(int i=0;i<3;++i){
+    lowerBound(i) = std::min(lowerBoundTest(i),lowerBoundTrial(i));
+    upperBound(i) = std::min(upperBoundTest(i),upperBoundTrial(i));
+  }
 
 //  FmmTransform<BasisFunctionType> trans;
 //  auto trans = FmmTransform<ResultType>(1,levels,false);
@@ -254,6 +251,8 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   std::vector<unsigned int> trial_p2o, test_p2o;
   octree->assignPoints(symmetry, testDofLocations, trialDofLocations,
                        test_p2o, trial_p2o);
+
+  std::cout << "G";
 
 /*
   auto minBlockSize =
