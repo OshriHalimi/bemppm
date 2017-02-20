@@ -22,7 +22,7 @@
 #include "octree.hpp"
 
 #include "../common/common.hpp"
-#include "../fiber/types.hpp"
+#include "common.hpp"
 #include "../fiber/explicit_instantiation.hpp"
 
 #include "../common/shared_ptr.hpp"
@@ -35,7 +35,7 @@
 #include <functional>   // std::plus
 #include <complex>
 
-namespace Bempp
+namespace fmm
 {
 
 
@@ -401,4 +401,4 @@ FIBER_INSTANTIATE_CLASS_TEMPLATED_ON_RESULT(EvaluateNearFieldHelper);
 FIBER_INSTANTIATE_CLASS_TEMPLATED_ON_RESULT(EvaluateMultipoleCoefficientsHelper);
 FIBER_INSTANTIATE_CLASS_TEMPLATED_ON_RESULT(EvaluateFarFieldMatrixVectorProductHelper);
 
-} // namespace Bempp
+} // namespace fmm

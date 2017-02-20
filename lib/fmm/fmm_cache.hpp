@@ -22,7 +22,7 @@
 #define bempp_fmm_cache_hpp
 
 #include <vector>
-#include "../common/types.hpp"
+#include "common.hpp"
 #include "../fiber/scalar_traits.hpp"
 
 namespace Fiber
@@ -34,7 +34,7 @@ template <typename KernelType> class CollectionOfKernels;
 
 } // namespace Fiber
 
-namespace Bempp
+namespace fmm
 {
 
 /** \cond FORWARD_DECL */
@@ -82,6 +82,6 @@ private:
 	std::vector<std::vector<Matrix<ValueType> > > m_cacheL2L;
 };
 
-} // namespace Bempp
+} // namespace fmm
 
 #endif

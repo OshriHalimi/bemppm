@@ -5,16 +5,17 @@
 #include <complex>
 
 #include "../common/common.hpp"
-#include "../common/types.hpp"
+#include "common.hpp"
 #include "../fiber/scalar_traits.hpp"
 #include "../common/shared_ptr.hpp"
 
 #include "octree_node.hpp"
+#include "dof_permutation.hpp"
 
 #include <iostream>
 #include "../assembly/transposition_mode.hpp"
 
-namespace Bempp
+namespace fmm
 {
 
 unsigned long morton(unsigned long x, unsigned long y, unsigned long z);
@@ -35,7 +36,6 @@ unsigned long getNodesPerLevel(unsigned long level);
 //template <typename ResultType> class OctreeNode;
 template <typename ResultType> class FmmCache;
 template <typename ResultType> class FmmTransform;
-class IndexPermutation;
 /** \endcond */
 
 
@@ -64,10 +64,10 @@ public:
     void downwardsStep(const FmmTransform<ResultType> &fmmTransform);
 
     // affects the local and multipole coefficients in the the leaves
-    void matrixVectorProduct(
-        const std::vector<ResultType>& x_in,
-        std::vector<ResultType>& y_out,
-        const TranspositionMode trans);
+    void apply(
+        const Vector<ResultType>& x_in,
+        Vector<ResultType>& y_out,
+        const Bempp::TranspositionMode trans);
 
     unsigned int levels() const {return m_levels;}
     OctreeNode<ResultType> &getNode(unsigned long number, unsigned int level);
@@ -82,13 +82,13 @@ private:
     const unsigned int m_topLevel;
     // for now use a flat structure
     std::vector<std::vector<OctreeNode<ResultType> > > m_OctreeNodes;
-    shared_ptr<IndexPermutation> m_test_p2o, m_trial_p2o;
+    shared_ptr<DofPermutation> m_test_p2o, m_trial_p2o;
     const FmmTransform<ResultType>& m_fmmTransform;
     Vector<CoordinateType> m_lowerBound, m_upperBound;
     shared_ptr<FmmCache<ResultType> > m_fmmCache;
 };
 
-} // namespace Bempp
+} // namespace fmm
 
 #endif
 

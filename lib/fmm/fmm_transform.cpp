@@ -21,7 +21,7 @@
 #include "fmm_transform.hpp"
 #include "../fiber/explicit_instantiation.hpp"
 
-namespace Bempp
+namespace fmm
 {
 
 template <typename ValueType>
@@ -37,4 +37,4 @@ FmmTransform<ValueType>::interpolate(
 
 FIBER_INSTANTIATE_CLASS_TEMPLATED_ON_RESULT(FmmTransform);
 
-} // namespace Bempp
+} // namespace fmm

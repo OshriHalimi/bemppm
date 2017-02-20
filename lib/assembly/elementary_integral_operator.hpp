@@ -42,12 +42,16 @@ template <typename ResultType> class LocalAssemblerForOperators;
 
 } // namespace Fiber
 
+namespace fmm {
+/** \cond FORWARD_DECL */
+template <typename ResultType> class FmmTransform;
+/** \endcond */
+}
 namespace Bempp {
 
 /** \cond FORWARD_DECL */
 class EvaluationOptions;
 template <typename ValueType> class InterpolatedFunction;
-template <typename ResultType> class FmmTransform;
 /** \endcond */
 
 /** \ingroup abstract_boundary_operators
@@ -165,7 +169,7 @@ private:
   virtual const CollectionOfShapesetTransformations &
   trialTransformations() const = 0;
 
-  virtual const FmmTransform<ResultType>& fmmTransform() const = 0;
+  virtual const fmm::FmmTransform<ResultType>& fmmTransform() const = 0;
 
   /** \brief Return an object representing the integral that is the weak form
    *  of this operator.

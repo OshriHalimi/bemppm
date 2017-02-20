@@ -23,11 +23,11 @@
 
 #include <vector>
 
-#include "../common/types.hpp"
+#include "common.hpp"
 #include "../fiber/scalar_traits.hpp"
 
 
-namespace Bempp
+namespace fmm
 {
 
 // abstract for now, will use Chebyshev as default in future versions
@@ -116,6 +116,6 @@ protected:
 	bool m_isCompressedM2L;
 };
 
-} // namespace Bempp
+} // namespace fmm
 
 #endif

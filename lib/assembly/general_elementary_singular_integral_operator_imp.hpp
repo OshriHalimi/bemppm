@@ -122,7 +122,7 @@ GeneralElementarySingularIntegralOperator(
         const TestTransformationsFunctor& testTransformationsFunctor,
         const TrialTransformationsFunctor& trialTransformationsFunctor,
         const IntegrandFunctor& integrandFunctor,
-        const shared_ptr<FmmTransform<ResultType> > &fmmTransform) :
+        const shared_ptr<fmm::FmmTransform<ResultType> > &fmmTransform) :
     Base(domain, range, dualToRange, label, symmetry),
     m_kernels(
         new Fiber::DefaultCollectionOfKernels<KernelFunctor>(kernelFunctor)),
@@ -156,7 +156,7 @@ GeneralElementarySingularIntegralOperator(
         const TrialTransformationsFunctor& trialTransformationsFunctor,
         const shared_ptr<Fiber::TestKernelTrialIntegral<
         BasisFunctionType_, KernelType_, ResultType_> >& integral,
-        const shared_ptr<FmmTransform<ResultType> > &fmmTransform) :
+        const shared_ptr<fmm::FmmTransform<ResultType> > &fmmTransform) :
     Base(domain, range, dualToRange, label, symmetry),
     m_kernels(
         new Fiber::DefaultCollectionOfKernels<KernelFunctor>(kernelFunctor)),
@@ -185,7 +185,7 @@ GeneralElementarySingularIntegralOperator(
         trialTransformations,
         const shared_ptr<Fiber::TestKernelTrialIntegral<
         BasisFunctionType_, KernelType_, ResultType_> >& integral,
-        const shared_ptr<FmmTransform<ResultType> > &fmmTransform) :
+        const shared_ptr<fmm::FmmTransform<ResultType> > &fmmTransform) :
     Base(domain, range, dualToRange, label, symmetry),
     m_kernels(kernels),
     m_testTransformations(testTransformations),

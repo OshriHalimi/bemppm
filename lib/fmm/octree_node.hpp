@@ -25,12 +25,12 @@
 #include <complex>
 
 #include "../common/common.hpp"
-#include "../common/types.hpp"
+#include "common.hpp"
 
 #include "../common/shared_ptr.hpp"
 #include "../fiber/scalar_traits.hpp"
 
-namespace Bempp
+namespace fmm
 {
 
 /** \cond FORWARD_DECL */
@@ -189,6 +189,6 @@ private:
 	Vector<ResultType>& m_y_in_out;
 };
 
-} // namespace Bempp
+} // namespace fmm
 
 #endif

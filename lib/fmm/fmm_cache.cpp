@@ -29,7 +29,7 @@
 #include <sstream>
 
 
-namespace Bempp
+namespace fmm
 {
 
 template <typename ValueType>
@@ -107,4 +107,4 @@ FmmCache<ValueType>::L2L(unsigned int level, unsigned int item) const
 
 FIBER_INSTANTIATE_CLASS_TEMPLATED_ON_RESULT(FmmCache);
 
-} // namespace Bempp
+} // namespace fmm

@@ -23,10 +23,12 @@
 
 #include "elementary_singular_integral_operator.hpp"
 
-namespace Bempp {
+namespace fmm {
 /** \cond FORWARD_DECL */
 template <typename ResultType> class FmmTransform;
+}
 /** \endcond */
+namespace Bempp {
 
 /** \ingroup abstract_boundary_operators
  *  \brief Standard implementation of an elementary singular integral operator.
@@ -201,7 +203,7 @@ public:
             const TestTransformationsFunctor& testTransformationsFunctor,
             const TrialTransformationsFunctor& trialTransformationsFunctor,
             const IntegrandFunctor& integrandFunctor,
-            const shared_ptr<FmmTransform<ResultType> > &fmmTransform);
+            const shared_ptr<fmm::FmmTransform<ResultType> > &fmmTransform);
 
     /** \overload
      *
@@ -221,7 +223,7 @@ public:
             const TrialTransformationsFunctor& trialTransformationsFunctor,
             const shared_ptr<Fiber::TestKernelTrialIntegral<
             BasisFunctionType_, KernelType_, ResultType_> >& integral,
-            const shared_ptr<FmmTransform<ResultType> > &fmmTransform);
+            const shared_ptr<fmm::FmmTransform<ResultType> > &fmmTransform);
 
     /** \overload
      *
@@ -240,7 +242,7 @@ public:
         trialTransformations,
         const shared_ptr<Fiber::TestKernelTrialIntegral<
         BasisFunctionType_, KernelType_, ResultType_> >& integral,
-        const shared_ptr<FmmTransform<ResultType> > &fmmTransform);
+        const shared_ptr<fmm::FmmTransform<ResultType> > &fmmTransform);
 
 
   virtual const CollectionOfKernels &kernels() const { return *m_kernels; }
@@ -255,7 +257,7 @@ public:
   virtual const TestKernelTrialIntegral &integral() const {
     return *m_integral;
   }
-  virtual const FmmTransform<ResultType>& fmmTransform() const {
+  virtual const fmm::FmmTransform<ResultType>& fmmTransform() const {
     return *m_fmmTransform;
   }
 
@@ -265,7 +267,7 @@ private:
   shared_ptr<CollectionOfShapesetTransformations> m_testTransformations;
   shared_ptr<CollectionOfShapesetTransformations> m_trialTransformations;
   shared_ptr<TestKernelTrialIntegral> m_integral;
-  shared_ptr<FmmTransform<ResultType>> m_fmmTransform;
+  shared_ptr<fmm::FmmTransform<ResultType>> m_fmmTransform;
   /** \endcond */
 };
 

@@ -55,7 +55,6 @@
 #include "../hmat/hmatrix_dense_compressor.hpp"
 
 #include "../fmm/octree.hpp"
-#include "../fmm/fmm_transform.hpp"
 #include "../fmm/fmm_cache.hpp"
 
 #include <fstream>
@@ -126,7 +125,7 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
     const Space<BasisFunctionType> &trialSpace,
     const LocalAssembler &assembler,
     const Context<BasisFunctionType, ResultType> &context,
-    const FmmTransform<ResultType>& fmmTransform,
+    const fmm::FmmTransform<ResultType>& fmmTransform,
     int symmetry) {
 
 
@@ -165,7 +164,7 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
 //  FmmTransform<BasisFunctionType> trans;
 //  auto trans = FmmTransform<ResultType>(1,levels,false);
 
-  shared_ptr<FmmCache<ResultType>> cache = boost::make_shared<FmmCache<ResultType>>(fmmTransform,levels);
+  shared_ptr<fmm::FmmCache<ResultType>> cache = boost::make_shared<fmm::FmmCache<ResultType>>(fmmTransform,levels);
 
   cache->initCache(lowerBound,upperBound);
 
@@ -174,7 +173,7 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
 //////////////////////////////////////////////////
 
   // Make octree
-  shared_ptr<Octree<ResultType>> octree = boost::make_shared<Octree<ResultType>>(
+  shared_ptr<fmm::Octree<ResultType>> octree = boost::make_shared<fmm::Octree<ResultType>>(
         levels,
         fmmTransform,
         cache,

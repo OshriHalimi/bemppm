@@ -25,7 +25,7 @@
 //#include "interpolate_on_sphere.hpp"
 
 #include "../common/common.hpp"
-#include "../fiber/types.hpp"
+#include "common.hpp"
 #include "../fiber/explicit_instantiation.hpp"
 
 //#include "../assembly/index_permutation.hpp"
@@ -42,7 +42,7 @@
 #include <complex>
 
 
-namespace Bempp
+namespace fmm
 {
 
 // N.B. that USE_FMM_CACHE should NOT be used for single level FMM
@@ -292,15 +292,59 @@ template <typename ResultType>
 void Octree<ResultType>::nodeSize(unsigned int level,
 	Vector<CoordinateType> &boxSize) const
 {
+  unsigned int boxesPerSide = getNodesPerSide(level);
+  boxSize = (m_upperBound - m_lowerBound)/boxesPerSide;
 }
 
 
 template <typename ResultType>
-void Octree<ResultType>::matrixVectorProduct(
-		const std::vector<ResultType>& x_in,
-		std::vector<ResultType>& y_out,
-		const TranspositionMode trans)
+void Octree<ResultType>::apply(
+		const Vector<ResultType>& x_in,
+		Vector<ResultType>& y_out,
+		const Bempp::TranspositionMode trans)
 {
+    const unsigned int nLeaves = getNodesPerLevel(m_levels);
+    bool transposed = (trans & Bempp::TRANSPOSE);
+
+    Vector<ResultType> x_in_permuted;
+    if (!transposed) {
+        m_trial_p2o->permute(x_in, x_in_permuted); // o to p
+    } else {
+        m_test_p2o->permute(x_in, x_in_permuted); // o to p
+    }
+
+    Vector<ResultType> y_out_permuted;
+    y_out_permuted.resize(y_out.rows(),y_out.cols());
+    y_out_permuted.fill(0.0);
+
+    EvaluateNearFieldHelper<ResultType> evaluateNearFieldHelper(
+        *this, x_in_permuted, y_out_permuted);
+    tbb::parallel_for<size_t>(0, nLeaves, evaluateNearFieldHelper);
+
+    EvaluateMultipoleCoefficientsHelper<ResultType> 
+        evaluateMultipoleCoefficientsHelper(*this, x_in_permuted);
+    tbb::parallel_for<size_t>(0, nLeaves, evaluateMultipoleCoefficientsHelper);
+
+#if defined MULTILEVEL_FMM
+    upwardsStep(m_fmmTransform);
+#endif
+
+    translationStep(m_fmmTransform);
+
+#if defined MULTILEVEL_FMM
+    downwardsStep(m_fmmTransform);
+#endif
+
+    EvaluateFarFieldMatrixVectorProductHelper<ResultType> 
+        evaluateFarFieldMatrixVectorProductHelper(
+            *this, m_fmmTransform.getWeights(), y_out_permuted);
+    tbb::parallel_for<size_t>(0, nLeaves, evaluateFarFieldMatrixVectorProductHelper);
+
+    if (!transposed) {
+        m_test_p2o->unpermute(y_out_permuted, y_out); // p to o
+    } else {
+        m_trial_p2o->unpermute(y_out_permuted, y_out); // p to o
+    }
 }
 
 
@@ -526,4 +570,4 @@ const OctreeNode<ResultType> &Octree<ResultType>::getNodeConst(unsigned long num
 
 FIBER_INSTANTIATE_CLASS_TEMPLATED_ON_RESULT(Octree);
 
-} // namespace Bempp
+} // namespace fmm
