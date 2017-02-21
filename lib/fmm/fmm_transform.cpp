@@ -25,13 +25,14 @@ namespace fmm
 {
 
 template <typename ValueType>
-void 
+void
 FmmTransform<ValueType>::interpolate(
-		unsigned int levelOld,
-		unsigned int levelNew,
-		const Vector<ValueType>& coefficientsOld, 
-		Vector<ValueType>& coefficientsNew) const
+    unsigned int levelOld,
+    unsigned int levelNew,
+    const Vector<ValueType>& coefficientsOld,
+    Vector<ValueType>& coefficientsNew) const
 {
+  coefficientsNew = coefficiensOld;
 }
 
 
