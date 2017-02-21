@@ -1,23 +1,3 @@
-// Copyright (C) 2011-2012 by the BEM++ Authors
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
-
 #include "octree.hpp"
 #include "octree_node.hpp"
 #include "fmm_transform.hpp"
@@ -36,9 +16,9 @@
 #include <tbb/task_scheduler_init.h>
 #include <tbb/concurrent_queue.h>
 
-#include <iostream>		// std::cout
-#include <vector>		// std::vector
-#include <math.h>		// floor
+#include <iostream>     // std::cout
+#include <vector>       // std::vector
+#include <math.h>       // floor
 #include <complex>
 
 
@@ -63,79 +43,79 @@ unsigned long contract3(unsigned long x);
 // and the children of (n,l) are ((n<<3)+[0,1..7],l+1)
 unsigned long morton(unsigned long x, unsigned long y, unsigned long z)
 {
-	return dilate3(x) | (dilate3(y)<<1) | (dilate3(z)<<2);
+    return dilate3(x) | (dilate3(y)<<1) | (dilate3(z)<<2);
 }
 /** overload */
 unsigned long morton(std::vector<unsigned long> v){
     return morton(v[0],v[1],v[2]);
 }
-void deMorton(	unsigned long *indx, unsigned long *indy, unsigned long *indz, 
-		unsigned long n)
+void deMorton(unsigned long *indx, unsigned long *indy,
+              unsigned long *indz, unsigned long n)
 {
-	*indx = contract3(n);
-	*indy = contract3(n>>1);
-	*indz = contract3(n>>2);
+    *indx = contract3(n);
+    *indy = contract3(n>>1);
+    *indz = contract3(n>>2);
 }
 
 unsigned long getParent(unsigned long n)
 {
-	return n >> 3;
+  return n >> 3;
 }
 unsigned long getFirstChild(unsigned long n)
 {
-	return n << 3;
+  return n << 3;
 }
 unsigned long getLastChild(unsigned long n)
 {
-	return (n << 3) + 7;
+  return (n << 3) + 7;
 }
 unsigned long getNodesPerSide(unsigned long level)
 {
-	return 1 << level; // 2^level
+  return 1 << level; // 2^level
 }
 unsigned long getNodesPerLevel(unsigned long level)
 {
-	return 1 << 3*level; // 8^level;
+  return 1 << 3*level; // 8^level;
 }
 
-// Dilate an integer, in between each and every bit of the number inserting two zero bits
+// Dilate an integer, in between each and every bit of the number inserting
+// two zero bits
 unsigned long dilate3(unsigned long x)
 {
-	if (x > 0x000003FF) {
-		throw std::invalid_argument("dilate3(x): "
-                                    "argument x exceeds maximum allowed (1023)");
-	}
-					  // x = ---- ---- ---- ---- ---- --98 7654 3210
-	x = (x | (x << 16)) & 0x030000FF; // x = ---- --98 ---- ---- ---- ---- 7654 3210
-	x = (x | (x <<  8)) & 0x0300F00F; // x = ---- --98 ---- ---- 7654 ---- ---- 3210
-	x = (x | (x <<  4)) & 0x030C30C3; // x = ---- --98 ---- 76-- --54 ---- 32-- --10
-	x = (x | (x <<  2)) & 0x09249249; // x = ---- 9--8 --7- -6-- 5--4 --3- -2-- 1--0
+  if (x > 0x000003FF)
+    throw std::invalid_argument("dilate3(x): argument x"
+                                "exceeds maximum allowed (1023)");
+                                    // x = ---- ---- ---- ---- ---- --98 7654 3210
+  x = (x | (x << 16)) & 0x030000FF; // x = ---- --98 ---- ---- ---- ---- 7654 3210
+  x = (x | (x <<  8)) & 0x0300F00F; // x = ---- --98 ---- ---- 7654 ---- ---- 3210
+  x = (x | (x <<  4)) & 0x030C30C3; // x = ---- --98 ---- 76-- --54 ---- 32-- --10
+  x = (x | (x <<  2)) & 0x09249249; // x = ---- 9--8 --7- -6-- 5--4 --3- -2-- 1--0
 
-	return x;
+  return x;
 }
 
 // undo Dilate, trashing padding bits
 unsigned long contract3(unsigned long x)
 {
-	x &= 0x09249249;                  // x = ---- 9--8 --7- -6-- 5--4 --3- -2-- 1--0
-	x = (x | (x >>  2)) & 0x030C30C3; // x = ---- --98 ---- 76-- --54 ---- 32-- --10
-	x = (x | (x >>  4)) & 0x0300F00F; // x = ---- --98 ---- ---- 7654 ---- ---- 3210
-	x = (x | (x >>  8)) & 0x030000FF; // x = ---- --98 ---- ---- ---- ---- 7654 3210
-	x = (x | (x >> 16)) & 0x000003FF; // x = ---- ---- ---- ---- ---- --98 7654 3210
+  x &= 0x09249249;                  // x = ---- 9--8 --7- -6-- 5--4 --3- -2-- 1--0
+  x = (x | (x >>  2)) & 0x030C30C3; // x = ---- --98 ---- 76-- --54 ---- 32-- --10
+  x = (x | (x >>  4)) & 0x0300F00F; // x = ---- --98 ---- ---- 7654 ---- ---- 3210
+  x = (x | (x >>  8)) & 0x030000FF; // x = ---- --98 ---- ---- ---- ---- 7654 3210
+  x = (x | (x >> 16)) & 0x000003FF; // x = ---- ---- ---- ---- ---- --98 7654 3210
 
-	return x;
+  return x;
 }
 
 
 template <typename ResultType>
 Octree<ResultType>::Octree(
-		unsigned int levels,
-		const FmmTransform<ResultType>& fmmTransform,
-		const shared_ptr<FmmCache<ResultType> > &fmmCache,
-		const Vector<CoordinateType> &lowerBound,
-		const Vector<CoordinateType> &upperBound)
-	:	m_topLevel(2), m_levels(levels), 
-		m_fmmTransform(fmmTransform), m_fmmCache(fmmCache)
+    unsigned int levels,
+    const FmmTransform<ResultType>& fmmTransform,
+    const shared_ptr<FmmCache<ResultType> > &fmmCache,
+    const Vector<CoordinateType> &lowerBound,
+    const Vector<CoordinateType> &upperBound)
+  : m_topLevel(2), m_levels(levels),
+    m_fmmTransform(fmmTransform), m_fmmCache(fmmCache)
 {
   std::cout << "making octree" << std::endl;
   m_OctreeNodes.resize(levels-m_topLevel+1);
@@ -155,9 +135,10 @@ Octree<ResultType>::Octree(
 // will do this from the constructor in future
 template <typename ResultType>
 void Octree<ResultType>::assignPoints(
-     bool hermitian, const std::vector<Point3D<CoordinateType> > &testDofCenters,
-	const std::vector<Point3D<CoordinateType> > &trialDofCenters,
-	std::vector<unsigned int> &test_p2o, std::vector<unsigned int> &trial_p2o)
+    bool hermitian,
+    const std::vector<Point3D<CoordinateType> > &testDofCenters,
+    const std::vector<Point3D<CoordinateType> > &trialDofCenters,
+    std::vector<unsigned int> &test_p2o, std::vector<unsigned int> &trial_p2o)
 {
   std::cout << "assigning points" << std::endl;
   const unsigned int nLeaves = getNodesPerLevel(m_levels);
@@ -253,7 +234,7 @@ void Octree<ResultType>::assignPoints(
 
 template <typename ResultType>
 unsigned long Octree<ResultType>::getLeafContainingPoint(
-	const Point3D<CoordinateType> &point) const
+    const Point3D<CoordinateType> &point) const
 {
     int invleafsize = getNodesPerSide(m_levels);
 
@@ -268,7 +249,8 @@ unsigned long Octree<ResultType>::getLeafContainingPoint(
 
     std::vector<unsigned long> ind;
     for(int i=0;i<3;++i)
-      ind.push_back(std::min(int(std::max(zero,pt(i))*invleafsize), invleafsize-1));
+      ind.push_back(std::min(int(std::max(zero,pt(i))*invleafsize),
+                             invleafsize-1));
 
     return morton(ind);
 }
@@ -277,7 +259,7 @@ unsigned long Octree<ResultType>::getLeafContainingPoint(
 
 template <typename ResultType>
 void Octree<ResultType>::nodeCentre(unsigned long number, unsigned int level,
-	Vector<CoordinateType> &centre) const
+    Vector<CoordinateType> &centre) const
 {
   Vector<CoordinateType> boxSize;
   nodeSize(level, boxSize);
@@ -290,7 +272,7 @@ void Octree<ResultType>::nodeCentre(unsigned long number, unsigned int level,
 
 template <typename ResultType>
 void Octree<ResultType>::nodeSize(unsigned int level,
-	Vector<CoordinateType> &boxSize) const
+    Vector<CoordinateType> &boxSize) const
 {
   unsigned int boxesPerSide = getNodesPerSide(level);
   boxSize = (m_upperBound - m_lowerBound)/boxesPerSide;
@@ -299,31 +281,31 @@ void Octree<ResultType>::nodeSize(unsigned int level,
 
 template <typename ResultType>
 void Octree<ResultType>::apply(
-		const Vector<ResultType>& x_in,
-		Vector<ResultType>& y_out,
-		const Bempp::TranspositionMode trans)
+    const Vector<ResultType>& x_in,
+    Vector<ResultType>& y_out,
+    const Bempp::TranspositionMode trans)
 {
     const unsigned int nLeaves = getNodesPerLevel(m_levels);
     bool transposed = (trans & Bempp::TRANSPOSE);
 
     Vector<ResultType> x_in_permuted;
-    if (!transposed) {
-        m_trial_p2o->permute(x_in, x_in_permuted); // o to p
-    } else {
+    if (transposed)
         m_test_p2o->permute(x_in, x_in_permuted); // o to p
-    }
+    else
+        m_trial_p2o->permute(x_in, x_in_permuted); // o to p
 
     Vector<ResultType> y_out_permuted;
-    y_out_permuted.resize(y_out.rows(),y_out.cols());
+    y_out_permuted.resize(y_out.rows());
     y_out_permuted.fill(0.0);
 
     EvaluateNearFieldHelper<ResultType> evaluateNearFieldHelper(
         *this, x_in_permuted, y_out_permuted);
     tbb::parallel_for<size_t>(0, nLeaves, evaluateNearFieldHelper);
 
-    EvaluateMultipoleCoefficientsHelper<ResultType> 
+    EvaluateMultipoleCoefficientsHelper<ResultType>
         evaluateMultipoleCoefficientsHelper(*this, x_in_permuted);
-    tbb::parallel_for<size_t>(0, nLeaves, evaluateMultipoleCoefficientsHelper);
+    tbb::parallel_for<size_t>(0, nLeaves,
+                              evaluateMultipoleCoefficientsHelper);
 
 #if defined MULTILEVEL_FMM
     upwardsStep(m_fmmTransform);
@@ -335,16 +317,16 @@ void Octree<ResultType>::apply(
     downwardsStep(m_fmmTransform);
 #endif
 
-    EvaluateFarFieldMatrixVectorProductHelper<ResultType> 
+    EvaluateFarFieldMatrixVectorProductHelper<ResultType>
         evaluateFarFieldMatrixVectorProductHelper(
             *this, m_fmmTransform.getWeights(), y_out_permuted);
-    tbb::parallel_for<size_t>(0, nLeaves, evaluateFarFieldMatrixVectorProductHelper);
+    tbb::parallel_for<size_t>(0, nLeaves,
+                              evaluateFarFieldMatrixVectorProductHelper);
 
-    if (!transposed) {
+    if (!transposed)
         m_test_p2o->unpermute(y_out_permuted, y_out); // p to o
-    } else {
+    else
         m_trial_p2o->unpermute(y_out_permuted, y_out); // p to o
-    }
 }
 
 
@@ -354,40 +336,81 @@ template <typename ResultType>
 class UpwardsStepHelper
 {
 public:
-	typedef typename Fiber::ScalarTraits<ResultType>::RealType CoordinateType;
+  typedef typename Fiber::ScalarTraits<ResultType>::RealType CoordinateType;
 
-	UpwardsStepHelper(
-		Octree<ResultType> &octree,
-		const FmmTransform<ResultType> &fmmTransform,
-		unsigned int level)
-		: m_octree(octree), m_fmmTransform(fmmTransform), m_level(level)
-	{
-	}
+  UpwardsStepHelper(
+      Octree<ResultType> &octree,
+      const FmmTransform<ResultType> &fmmTransform,
+      unsigned int level)
+    : m_octree(octree), m_fmmTransform(fmmTransform), m_level(level)
+  {}
 
-	void operator()(int node) const
-	{
-	} // operator()
+  void operator()(int node) const
+  {
+    if (m_octree.getNode(node,m_level).trialDofCount()==0)
+      return;
+
+    Vector<CoordinateType> R; // center of the node
+    m_octree.nodeCentre(node, m_level, R);
+
+    Vector<ResultType> mcoefs;
+
+    for (unsigned long child = getFirstChild(node);
+         child <= getLastChild(node); ++child) {
+      if (m_octree.getNode(child,m_level+1).trialDofCount()==0)
+        continue;
+      Vector<CoordinateType> Rchild; // center of the node
+      m_octree.nodeCentre(child,m_level+1,Rchild);
+
+      // calculate multipole to multipole (M2M) translation matrix
+      Matrix<ResultType> m2m;
+#if defined USE_FMM_CACHE
+      m2m = m_octree.fmmCache().M2M(m_level, child - getFirstChild(node));
+#else
+      m2m = m_fmmTransform.M2M(Rchild, R, m_level);
+#endif
+      // add contribution of child to the parent
+      const Vector<ResultType>& mcoefsChild =
+          m_octree.getNode(child,m_level+1).getMultipoleCoefficients();
+      // interpolate all multipoles from child layer to higher order, then apply M2M
+      Vector<ResultType> mcoefsChildInterpolated;
+      m_fmmTransform.interpolate(m_level+1, m_level, mcoefsChild,
+          mcoefsChildInterpolated);
+
+      if (mcoefs.rows()==0) {
+        mcoefs.resize(mcoefsChildInterpolated.rows());
+        for(int i=0;i<mcoefs.rows();++i) mcoefs[i]=0;
+      }
+
+      if (m2m.cols()==1) // diagonal m2m operator
+        for(int i=0;i<m2m.rows();++i)
+          mcoefs[i] += m2m(i,0)*mcoefsChildInterpolated[i];
+      else // m2m is a full matrix
+        mcoefs += m2m * mcoefsChildInterpolated;
+
+    } // for each child
+    m_octree.getNode(node,m_level).setMultipoleCoefficients(mcoefs);
+  } // operator()
 private:
-	Octree<ResultType> &m_octree;
-	const FmmTransform<ResultType> &m_fmmTransform;
-	unsigned int m_level;
+  Octree<ResultType> &m_octree;
+  const FmmTransform<ResultType> &m_fmmTransform;
+  unsigned int m_level;
 };
 
 
 template <typename ResultType>
 void Octree<ResultType>::upwardsStep(
-		const FmmTransform<ResultType> &fmmTransform)
+    const FmmTransform<ResultType> &fmmTransform)
 {
-	// make more efficient, by ignoring empty boxes 
-	for (unsigned int level = m_levels-1; level>=m_topLevel; level--) { //L-1 -> 2
-		unsigned int nNodes = getNodesPerLevel(level);
+  // make more efficient, by ignoring empty boxes 
+  for (unsigned int level = m_levels-1; level>=m_topLevel; level--) {
+    //L-1 -> 2
+    unsigned int nNodes = getNodesPerLevel(level);
 
-		UpwardsStepHelper<ResultType> upwardsStepHelper(
-			*this, fmmTransform, level);
-		tbb::parallel_for<size_t>(0, nNodes, upwardsStepHelper);
-		//for (unsigned int k=0; k<nNodes; k++) upwardsStepHelper(k);
-
-	} // for each level
+    UpwardsStepHelper<ResultType> upwardsStepHelper(
+        *this, fmmTransform, level);
+    tbb::parallel_for<size_t>(0, nNodes, upwardsStepHelper);
+  } // for each level
 } // void Octree::upwardsStep(const FmmTransform &fmmTransform)
 
 
@@ -396,90 +419,130 @@ template <typename ResultType>
 class TranslationStepHelper
 {
 public:
-	typedef typename Fiber::ScalarTraits<ResultType>::RealType CoordinateType;
+  typedef typename Fiber::ScalarTraits<ResultType>::RealType CoordinateType;
 
-	TranslationStepHelper(
-		Octree<ResultType> &octree,
-		const FmmTransform<ResultType> &fmmTransform,
-		unsigned int level)
-		: m_octree(octree), m_fmmTransform(fmmTransform), m_level(level)
-	{
-	}
+  TranslationStepHelper(
+    Octree<ResultType> &octree,
+    const FmmTransform<ResultType> &fmmTransform,
+    unsigned int level)
+        : m_octree(octree), m_fmmTransform(fmmTransform), m_level(level)
+    {}
 
-	void operator()(int node) const
-	{
-		if (m_octree.getNode(node,m_level).testDofCount()==0) {
-			return; //continue;
-		}
+  void operator()(int node) const
+  {
+    if (m_octree.getNode(node,m_level).testDofCount()==0)
+      return; //continue;
 
-		Vector<CoordinateType> R; // center of the node
-		m_octree.nodeCentre(node,m_level, R);
-		Vector<ResultType> lcoef;//(m_fmmTransform.quadraturePointCount());
-		//lcoef.fill(0.0);
+    Vector<CoordinateType> R; // center of the node
+    m_octree.nodeCentre(node,m_level, R);
+    Vector<ResultType> lcoef;//(m_fmmTransform.quadraturePointCount());
+    //lcoef.fill(0.0);
 
 #if !defined USE_FMM_CACHE
-		Vector<CoordinateType> boxSize;
-		m_octree.nodeSize(m_level, boxSize);
+    Vector<CoordinateType> boxSize;
+    m_octree.nodeSize(m_level, boxSize);
 #endif
 
-		const std::vector<unsigned long>& neigbourList 
-			= m_octree.getNode(node,m_level).neigbourList();
+    const std::vector<unsigned long>& neigbourList 
+        = m_octree.getNode(node,m_level).neigbourList();
 
 #if defined MULTILEVEL_FMM
-		for (unsigned int ind=0; 
-			ind<m_octree.getNode(node,m_level).interactionListSize();
-			ind++) {
-			unsigned int inter = m_octree.getNode(node,m_level).interactionList(ind);
+    for (unsigned int ind=0;
+         ind<m_octree.getNode(node,m_level).interactionListSize();
+         ++ind) {
+      unsigned int inter=m_octree.getNode(node,m_level).interactionList(ind);
 #else
-		// single level FMM (test), must disable M2M and L2L
-		unsigned int nNodes = getNodesPerLevel(m_level);
-		for (unsigned int inter=0; inter<nNodes; inter++) {
-			// skip if inter and current node are neighbouring or identical
-			if( std::find(neigbourList.begin(), neigbourList.end(), inter)
-				!= neigbourList.end() || inter==node
-				|| m_octree.getNode(inter,m_level).trialDofCount()==0)
-				continue;
+    // single level FMM (test), must disable M2M and L2L
+    unsigned int nNodes = getNodesPerLevel(m_level);
+    for (unsigned int inter=0; inter<nNodes; inter++) {
+      // skip if inter and current node are neighbouring or identical
+      if( std::find(neigbourList.begin(), neigbourList.end(), inter)
+          != neigbourList.end() || inter==node
+          || m_octree.getNode(inter,m_level).trialDofCount()==0)
+        continue;
 #endif
-			Vector<CoordinateType> Rinter; // center of the node
-			m_octree.nodeCentre(inter,m_level,Rinter);
+      Vector<CoordinateType> Rinter; // center of the node
+      m_octree.nodeCentre(inter,m_level,Rinter);
 
-			// calculate multipole to local (M2L) translation matrix
-			Matrix<ResultType> m2l;
+      // calculate multipole to local (M2L) translation matrix
+      Matrix<ResultType> m2l;
 #if defined USE_FMM_CACHE
-			m2l = m_octree.fmmCache().M2L(m_level, 
-				m_octree.getNode(node,m_level).interactionItemList(ind));
+      m2l = m_octree.fmmCache().M2L(m_level, 
+          m_octree.getNode(node,m_level).interactionItemList(ind));
 #else
-			m2l = m_fmmTransform.M2L(Rinter, R, boxSize, m_level);
+      m2l = m_fmmTransform.M2L(Rinter, R, boxSize, m_level);
 #endif
-			// add contribution of interation list node to current node
-			const Vector<ResultType>& mcoefs = 
-				m_octree.getNode(inter,m_level).getMultipoleCoefficients();
+      // add contribution of interation list node to current node
+      const Vector<ResultType>& mcoefs = 
+          m_octree.getNode(inter,m_level).getMultipoleCoefficients();
 
-			if (lcoef.n_rows==0) {
-				lcoef.set_size(mcoefs.n_rows);
-				lcoef.fill(0.0);
-			}
+      if (lcoef.rows()==0) {
+        lcoef.resize(mcoefs.rows());
+        for(int i=0;i<lcoef.rows();++i) lcoef[i] = 0;
+      }
 
-			if (m2l.n_cols==1) { // diagonal m2l operator
-				lcoef += m2l % mcoefs;
-			} else {	// m2l is a full matrix
-				lcoef += m2l * mcoefs;
-			}
+      if (m2l.cols()==1) // diagonal m2l operator
+        for(int i=0;i<m2l.rows();++i) lcoef[i] += m2l(i,0)*mcoefs[i];
+      else // m2l is a full matrix
+        lcoef += m2l * mcoefs;
 
-		} // for each node on the interaction list
-		m_octree.getNode(node,m_level).setLocalCoefficients(lcoef);
-	} // operator()
+    } // for each node on the interaction list
+    m_octree.getNode(node,m_level).setLocalCoefficients(lcoef);
+  } // operator()
 private:
-	Octree<ResultType> &m_octree;
-	const FmmTransform<ResultType> &m_fmmTransform;
-	unsigned int m_level;
+  Octree<ResultType> &m_octree;
+  const FmmTransform<ResultType> &m_fmmTransform;
+  unsigned int m_level;
 };
 
 // multiple to local M2L conversion
 template <typename ResultType>
 void Octree<ResultType>::translationStep(
-		const FmmTransform<ResultType> &fmmTransform)//, Vector<ResultType>& y_inout)
+    const FmmTransform<ResultType> &fmmTransform)
+                                              //, Vector<ResultType>& y_inout)
 {
+  if ( fmmTransform.isCompressedM2L() ) {
+    // Compress Multipole Coefficients 
+    for (unsigned int level = m_topLevel; level<=m_levels; level++) {
+      unsigned int nNodes = getNodesPerLevel(level);
+      for (unsigned int nodeind = 0; nodeind<nNodes; nodeind++) {
+        OctreeNode<ResultType> &node = getNode(nodeind, level);
+        if (node.trialDofCount()==0)
+          continue;
+        Vector<ResultType> mcoefs = node.getMultipoleCoefficients();
+        fmmCache().compressMultipoleCoefficients(mcoefs, level);
+        node.setMultipoleCoefficients(mcoefs);
+      }
+    }
+  }
+#if defined MULTILEVEL_FMM
+  for (unsigned int level = m_topLevel; level<=m_levels; level++) {
+#else
+  {
+    unsigned int level = m_levels;
+#endif
+        //std::cout << " - level " << level << " / " << m_levels << std::endl;
+    unsigned int nNodes = getNodesPerLevel(level);
+
+    TranslationStepHelper<ResultType> translationStepHelper(
+        *this, fmmTransform, level);
+    tbb::parallel_for<size_t>(0, nNodes, translationStepHelper);
+  } // for each level
+
+  if ( fmmTransform.isCompressedM2L() ) {
+    // Explode Local Coefficients
+    for (unsigned int level = m_topLevel; level<=m_levels; level++) {
+      unsigned int nNodes = getNodesPerLevel(level);
+      for (unsigned int nodeind = 0; nodeind<nNodes; nodeind++) {
+        OctreeNode<ResultType> &node = getNode(nodeind, level);
+        if (node.testDofCount()==0)
+          continue;
+        Vector<ResultType> lcoefs = node.getLocalCoefficients();
+        fmmCache().explodeLocalCoefficients(lcoefs, level);
+        node.setLocalCoefficients(lcoefs);
+      }
+    }
+  }
 } // void Octree::translationStep(const FmmTransform &fmmTransform)
 
 
@@ -487,82 +550,89 @@ template <typename ResultType>
 class DownwardsStepHelper
 {
 public:
-	typedef typename Fiber::ScalarTraits<ResultType>::RealType CoordinateType;
+  typedef typename Fiber::ScalarTraits<ResultType>::RealType CoordinateType;
 
-	DownwardsStepHelper(
-		Octree<ResultType> &octree,
-		const FmmTransform<ResultType> &fmmTransform,
-		unsigned int level)
-		: m_octree(octree), m_fmmTransform(fmmTransform), m_level(level)
-	{
-	}
+  DownwardsStepHelper(
+      Octree<ResultType> &octree,
+      const FmmTransform<ResultType> &fmmTransform,
+      unsigned int level)
+    : m_octree(octree), m_fmmTransform(fmmTransform), m_level(level)
+  {/**/}
 
-	void operator()(int node) const
-	{
-		if (m_octree.getNode(node,m_level).testDofCount()==0) {
-			return;
-		}
+  void operator()(int node) const {
+      if (m_octree.getNode(node,m_level).testDofCount()==0) {
+        return;
+      }
 
-		Vector<CoordinateType> R; // center of the node
-		m_octree.nodeCentre(node,m_level,R);
+      Vector<CoordinateType> R; // center of the node
+      m_octree.nodeCentre(node,m_level,R);
 
-		const Vector<ResultType>& lcoefs = 
-			m_octree.getNode(node,m_level).getLocalCoefficients();
+      const Vector<ResultType>& lcoefs = 
+      m_octree.getNode(node,m_level).getLocalCoefficients();
 
-		for (unsigned long child = getFirstChild(node); 
-			child <= getLastChild(node); child++) {
+      for (unsigned long child = getFirstChild(node);
+           child <= getLastChild(node); child++) {
 
-			if (m_octree.getNode(child,m_level+1).trialDofCount()==0) {
-				continue;
-			}
+        if (m_octree.getNode(child,m_level+1).trialDofCount()==0)
+          continue;
+        Vector<CoordinateType> Rchild; // center of the node
+        m_octree.nodeCentre(child,m_level+1,Rchild);
 
-			Vector<CoordinateType> Rchild; // center of the node
-			m_octree.nodeCentre(child,m_level+1,Rchild);
-
-			// calculate local to local (L2L) translation matrix
-			Vector<ResultType> l2l;
+        // calculate local to local (L2L) translation matrix
+        Matrix<ResultType> l2l;
 #if defined USE_FMM_CACHE
-			l2l = m_octree.fmmCache().L2L(m_level, child - getFirstChild(node));
+        l2l = m_octree.fmmCache().L2L(m_level, child - getFirstChild(node));
 #else
-			l2l = m_fmmTransform.L2L(R, Rchild, m_level);
+        l2l = m_fmmTransform.L2L(R, Rchild, m_level);
 #endif
-			// add the local coefficients to the current child
-			Vector<ResultType> lcoefsChildContrib;
-			if (l2l.n_cols==1) { // diagonal l2l operator
-				lcoefsChildContrib = l2l % lcoefs;
-			} else {	// l2l is a full matrix
-				lcoefsChildContrib = l2l * lcoefs;
-			}
-			// apply L2L and then anterpolate down. Same accuracy if anterpolate first?
-			Vector<ResultType> lcoefsChildContribAnterpolated;
-			m_fmmTransform.interpolate(m_level, m_level+1, lcoefsChildContrib, 
-				lcoefsChildContribAnterpolated);
+        // add the local coefficients to the current child
+        Vector<ResultType> lcoefsChildContrib;
+        lcoefsChildContrib = l2l * lcoefs;
+        if (l2l.cols()==1) // diagonal l2l operator
+          for(int i=0;i<l2l.rows();++i)
+            lcoefsChildContrib[i] += l2l(i,0) * lcoefs[i];
+        else // l2l is a full matrix
+          lcoefsChildContrib = l2l * lcoefs;
+        // apply L2L and then anterpolate down. Same accuracy if anterpolate first?
+        Vector<ResultType> lcoefsChildContribAnterpolated;
+        m_fmmTransform.interpolate(m_level, m_level+1, lcoefsChildContrib,
+            lcoefsChildContribAnterpolated);
 
-			m_octree.getNode(child,m_level+1).addLocalCoefficients(
-				lcoefsChildContribAnterpolated);
-		} // for each child
-	} // operator()
+        m_octree.getNode(child,m_level+1).addLocalCoefficients(
+            lcoefsChildContribAnterpolated);
+      } // for each child
+  } // operator()
 private:
-	Octree<ResultType> &m_octree;
-	const FmmTransform<ResultType> &m_fmmTransform;
-	unsigned int m_level;
+    Octree<ResultType> &m_octree;
+    const FmmTransform<ResultType> &m_fmmTransform;
+    unsigned int m_level;
 };
 
 
 template <typename ResultType>
 void Octree<ResultType>::downwardsStep(
-		const FmmTransform<ResultType> &fmmTransform)
+        const FmmTransform<ResultType> &fmmTransform)
 {
+  // translate local expansions from lowest to highest level
+  for (unsigned int level = m_topLevel; level<m_levels; level++) {
+    unsigned int nNodes = getNodesPerLevel(level);
+    DownwardsStepHelper<ResultType> downwardsStepHelper(*this, fmmTransform,
+                                                        level);
+    tbb::parallel_for<size_t>(0, nNodes, downwardsStepHelper);
+  } // for each level
 } // void Octree::downwardsStep(const FmmTransform &fmmTransform)
 
 template <typename ResultType>
-OctreeNode<ResultType> &Octree<ResultType>::getNode(unsigned long number, unsigned int level)
+OctreeNode<ResultType> &Octree<ResultType>::getNode(unsigned long number,
+                                                    unsigned int level)
 {
   return m_OctreeNodes[level-m_topLevel][number];
 }
 
 template <typename ResultType>
-const OctreeNode<ResultType> &Octree<ResultType>::getNodeConst(unsigned long number, unsigned int level) const
+const OctreeNode<ResultType>
+&Octree<ResultType>::getNodeConst(unsigned long number,
+                                  unsigned int level) const
 {
   return m_OctreeNodes[level-m_topLevel][number];
 }

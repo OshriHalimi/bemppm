@@ -29,8 +29,8 @@ void
 FmmTransform<ValueType>::interpolate(
 		unsigned int levelOld,
 		unsigned int levelNew,
-		const std::vector<ValueType>& coefficientsOld, 
-		std::vector<ValueType>& coefficientsNew) const
+		const Vector<ValueType>& coefficientsOld, 
+		Vector<ValueType>& coefficientsNew) const
 {
 }
 

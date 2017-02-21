@@ -1,5 +1,3 @@
-// vi: set et ts=4 sw=2 sts=2:
-
 #ifndef FMM_DOF_PERMUTATION_IMPL_HPP
 #define FMM_DOF_PERMUTATION_IMPL_HPP
 

@@ -85,8 +85,8 @@ public:
 	virtual void interpolate(
 		unsigned int levelOld,
 		unsigned int levelNew,
-		const std::vector<ValueType>& coefficientsOld, 
-		std::vector<ValueType>& coefficientsNew) const;
+		const Vector<ValueType>& coefficientsOld, 
+		Vector<ValueType>& coefficientsNew) const;
 
 	// multipole expansion coefficients (MEC)
 	virtual void evaluateTrial(
