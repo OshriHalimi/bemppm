@@ -69,54 +69,6 @@
 
 namespace Bempp {
 
-namespace {
-
-template <typename CoordinateType>
-class PotentialGeometryInterface : public hmat::GeometryInterface {
-public:
-  PotentialGeometryInterface(const Matrix<CoordinateType> &points,
-                             int componentCount)
-      : m_points(points), m_componentCount(componentCount), m_p(0), m_c(0) {}
-
-  shared_ptr<const hmat::GeometryDataType> next() override {
-
-    std::size_t &p = m_p;
-    std::size_t &c = m_c;
-    const Matrix<CoordinateType> &points = m_points;
-
-    if (p == m_points.cols())
-      return shared_ptr<const hmat::GeometryDataType>();
-
-    shared_ptr<hmat::GeometryDataType> geomData(new hmat::GeometryDataType(
-        hmat::BoundingBox(points(0, p), points(0, p), points(1, p),
-                          points(1, p), points(2, p), points(2, p)),
-        std::array<double, 3>({{points(0, p), points(1, p), points(2, p)}})));
-
-    if (c == m_componentCount - 1) {
-      c = 0;
-      p++;
-    } else
-      c++;
-    return geomData;
-  }
-
-  void reset() override {
-
-    m_p = 0;
-    m_c = 0;
-  }
-
-  std::size_t numberOfEntities() const override {
-    return m_points.cols() * m_componentCount;
-  }
-
-private:
-  size_t m_p;
-  size_t m_c;
-  const Matrix<CoordinateType> &m_points;
-  int m_componentCount;
-};
-}
 
 template <typename BasisFunctionType, typename ResultType>
 std::unique_ptr<DiscreteBoundaryOperator<ResultType>>
@@ -127,7 +79,6 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
     const Context<BasisFunctionType, ResultType> &context,
     const fmm::FmmTransform<ResultType>& fmmTransform,
     int symmetry) {
-
 
   // Get options and parameters
   const AssemblyOptions &options = context.assemblyOptions();
@@ -141,50 +92,58 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   actualTestSpace = testSpacePointer;
   actualTrialSpace = trialSpacePointer;
 
-  auto levels =
-      parameterList.template get<int>("options.fmm.levels");
+  auto levels = parameterList.template get<int>("options.fmm.levels");
+  auto cacheIO = parameterList.template get<bool>("options.fmm.cache");
+  bool multiIO=true;
+  if(levels==1) multiIO=false;
 
+  if(cacheIO){
+    throw NotImplementedError("Cached FMM not implemented");
+  }
 
   // get bounding boxes of spaces
   Vector<double> lowerBoundTest, upperBoundTest;
   Vector<double> lowerBoundTrial, upperBoundTrial;
   Vector<CoordinateType> lowerBound, upperBound;
 
-//  lowerBound.conservativeResize(3);
- // upperBound.conservativeResize(3);
-
   actualTestSpace->grid()->getBoundingBox(lowerBoundTest, upperBoundTest);
   actualTrialSpace->grid()->getBoundingBox(lowerBoundTrial, upperBoundTrial);
+
+  lowerBound.resize(3);
+  upperBound.resize(3);
 
   for(int i=0;i<3;++i){
     lowerBound(i) = std::min(lowerBoundTest(i),lowerBoundTrial(i));
     upperBound(i) = std::min(upperBoundTest(i),upperBoundTrial(i));
   }
 
-//  FmmTransform<BasisFunctionType> trans;
-//  auto trans = FmmTransform<ResultType>(1,levels,false);
-
-  shared_ptr<fmm::FmmCache<ResultType>> cache = boost::make_shared<fmm::FmmCache<ResultType>>(fmmTransform,levels);
-
-  cache->initCache(lowerBound,upperBound);
-
-  //////////////////////////////////////////////////
- //           I AM APPROXIMATELY HERE            //
-//////////////////////////////////////////////////
-
   // Make octree
-  shared_ptr<fmm::Octree<ResultType>> octree = boost::make_shared<fmm::Octree<ResultType>>(
+  shared_ptr<fmm::Octree<ResultType>> octree;
+  if(cacheIO){
+    shared_ptr<fmm::FmmCache<ResultType>>
+      cache = boost::make_shared<fmm::FmmCache<ResultType>>(fmmTransform,
+                                                            levels);
+    cache->initCache(lowerBound,upperBound);
+    octree = boost::make_shared<fmm::Octree<ResultType>>(
         levels,
         fmmTransform,
         cache,
         lowerBound,
         upperBound);
+  } else
+    octree = boost::make_shared<fmm::Octree<ResultType>>(
+        levels,
+        fmmTransform,
+        lowerBound,
+        upperBound);
+
 
   const size_t testDofCount = testSpace.globalDofCount();
   const size_t trialDofCount = trialSpace.globalDofCount();
   // assign each dof a location which is used to determine its leaf in the octree
   // using the barycentre of the triangle for discontinuous spaces
   std::vector<Point3D<CoordinateType> > testDofLocations, trialDofLocations;
+
 
   // trial spaces
   if (trialSpace.isDiscontinuous()) { // default triangle indexed octree
@@ -246,107 +205,11 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
       testSpace.getGlobalDofPositions(testDofLocations);
   }
 
-
   std::vector<unsigned int> trial_p2o, test_p2o;
+  std::cout << "assigning points" << std::endl;
   octree->assignPoints(symmetry, testDofLocations, trialDofLocations,
                        test_p2o, trial_p2o);
-
-  std::cout << "G";
-
-/*
-  auto minBlockSize =
-      parameterList.template get<int>("options.hmat.minBlockSize");
-  auto maxBlockSize =
-      parameterList.template get<int>("options.hmat.maxBlockSize");
-  auto eta = parameterList.template get<double>("options.hmat.eta");
-
-  auto blockClusterTree = generateBlockClusterTree(
-      *actualTestSpace, *actualTrialSpace, parameterList);
-
-  WeakFormHMatAssemblyHelper<BasisFunctionType, ResultType> helper(
-      *actualTestSpace, *actualTrialSpace, blockClusterTree, localAssemblers,
-      sparseTermsToAdd, denseTermMultipliers, sparseTermMultipliers);
-
-  auto compressionAlgorithm = parameterList.template get<std::string>(
-      "options.hmat.compressionAlgorithm");
-
-  auto maxRank = parameterList.template get<int>("options.hmat.maxRank");
-  auto eps = parameterList.template get<double>("options.hmat.eps");
-
-  shared_ptr<hmat::DefaultHMatrixType<ResultType>> hMatrix;
-
-  if (compressionAlgorithm == "aca") {
-
-    hmat::HMatrixAcaCompressor<ResultType, 2> compressor(helper, eps, maxRank);
-    hMatrix.reset(
-        new hmat::DefaultHMatrixType<ResultType>(blockClusterTree, compressor));
-  } else if (compressionAlgorithm == "dense") {
-    hmat::HMatrixDenseCompressor<ResultType, 2> compressor(helper);
-    hMatrix.reset(
-        new hmat::DefaultHMatrixType<ResultType>(blockClusterTree, compressor));
-  } else
-    throw std::runtime_error("FMMGlobalAssember::assembleDetachedWeakForm: "
-                             "Unknown compression algorithm");
-  return std::unique_ptr<DiscreteBoundaryOperator<ResultType>>(
-      static_cast<DiscreteBoundaryOperator<ResultType> *>(
-          new DiscreteHMatBoundaryOperator<ResultType>(hMatrix)));
-*/
-}
-
-template <typename BasisFunctionType, typename ResultType>
-std::unique_ptr<DiscreteBoundaryOperator<ResultType>>
-FMMGlobalAssembler<BasisFunctionType, ResultType>::assemblePotentialOperator(
-    const Matrix<CoordinateType> &points,
-    const Space<BasisFunctionType> &trialSpace,
-    LocalAssemblerForPotentialOperators &localAssembler,
-    const ParameterList &parameterList) {
-
-  const size_t pointCount = points.cols();
-  const int componentCount = localAssembler.resultDimension();
-  const size_t testDofCount = pointCount * componentCount;
-  const size_t trialDofCount = trialSpace.globalDofCount();
-
-  PotentialGeometryInterface<CoordinateType> potentialGeometryInterface(
-      points, componentCount);
-
-  hmat::Geometry testGeometry;
-  hmat::Geometry trialGeometry;
-
-  auto trialSpaceGeometryInterface = shared_ptr<hmat::GeometryInterface>(
-      new SpaceHMatGeometryInterface<BasisFunctionType>(trialSpace));
-
-  hmat::fillGeometry(testGeometry, potentialGeometryInterface);
-  hmat::fillGeometry(trialGeometry, *trialSpaceGeometryInterface);
-
-  auto blockClusterTree =
-      generateBlockClusterTree(testGeometry, trialGeometry, parameterList);
-
-  PotentialOperatorHMatAssemblyHelper<BasisFunctionType, ResultType> helper(
-      points, trialSpace, blockClusterTree, localAssembler, parameterList);
-
-  auto compressionAlgorithm = parameterList.template get<std::string>(
-      "options.hmat.compressionAlgorithm");
-
-  auto maxRank = parameterList.template get<int>("options.hmat.maxRank");
-  auto eps = parameterList.template get<double>("options.hmat.eps");
-
-  shared_ptr<hmat::DefaultHMatrixType<ResultType>> hMatrix;
-
-  if (compressionAlgorithm == "aca") {
-
-    hmat::HMatrixAcaCompressor<ResultType, 2> compressor(helper, eps, maxRank);
-    hMatrix.reset(
-        new hmat::DefaultHMatrixType<ResultType>(blockClusterTree, compressor));
-  } else if (compressionAlgorithm == "dense") {
-    hmat::HMatrixDenseCompressor<ResultType, 2> compressor(helper);
-    hMatrix.reset(
-        new hmat::DefaultHMatrixType<ResultType>(blockClusterTree, compressor));
-  } else
-    throw std::runtime_error("HMatGlobalAssember::assembleDetachedWeakForm: "
-                             "Unknown compression algorithm");
-  return std::unique_ptr<DiscreteBoundaryOperator<ResultType>>(
-      static_cast<DiscreteBoundaryOperator<ResultType> *>(
-          new DiscreteHMatBoundaryOperator<ResultType>(hMatrix)));
+  std::cout << "done assigning points" << std::endl;
 }
 
 FIBER_INSTANTIATE_CLASS_TEMPLATED_ON_BASIS_AND_RESULT(FMMGlobalAssembler);

@@ -26,8 +26,8 @@ namespace fmm
 {
 
 // N.B. that USE_FMM_CACHE should NOT be used for single level FMM
-#define MULTILEVEL_FMM
-#define USE_FMM_CACHE
+//#define MULTILEVEL_FMM
+//#define USE_FMM_CACHE
 
 template <typename CoordinateType>
 CoordinateType getPoint3DCoord(Point3D<CoordinateType> p,int n){
@@ -113,22 +113,59 @@ Octree<ResultType>::Octree(
     const FmmTransform<ResultType>& fmmTransform,
     const shared_ptr<FmmCache<ResultType> > &fmmCache,
     const Vector<CoordinateType> &lowerBound,
+    const Vector<CoordinateType> &upperBound,
+    const bool cacheIO)
+  : m_topLevel(2), m_levels(levels),
+    m_fmmTransform(fmmTransform), m_fmmCache(fmmCache),
+    m_lowerBound(lowerBound), m_upperBound(upperBound),
+    m_cache(cacheIO)
+{
+  initialize();
+}
+
+/** overload **/
+template <typename ResultType>
+Octree<ResultType>::Octree(
+    unsigned int levels,
+    const FmmTransform<ResultType>& fmmTransform,
+    const shared_ptr<FmmCache<ResultType> > &fmmCache,
+    const Vector<CoordinateType> &lowerBound,
     const Vector<CoordinateType> &upperBound)
   : m_topLevel(2), m_levels(levels),
-    m_fmmTransform(fmmTransform), m_fmmCache(fmmCache)
+    m_fmmTransform(fmmTransform), m_fmmCache(fmmCache),
+    m_lowerBound(lowerBound), m_upperBound(upperBound),
+    m_cache(true)
 {
-  std::cout << "making octree" << std::endl;
-  m_OctreeNodes.resize(levels-m_topLevel+1);
+  initialize();
+}
+
+template <typename ResultType>
+Octree<ResultType>::Octree(
+    unsigned int levels,
+    const FmmTransform<ResultType>& fmmTransform,
+    const Vector<CoordinateType> &lowerBound,
+    const Vector<CoordinateType> &upperBound)
+  : m_topLevel(2), m_levels(levels),
+    m_fmmTransform(fmmTransform), m_fmmCache(0),
+    m_lowerBound(lowerBound), m_upperBound(upperBound),
+    m_cache(false)
+{
+  initialize();
+}
+
+template <typename ResultType>
+void Octree<ResultType>::initialize()
+{
+  m_OctreeNodes.resize(m_levels-m_topLevel+1);
   // initialise octree stucture (don't bother storing the lowest two levels)
-  for (unsigned int level = m_topLevel; level<=levels; ++level) {
+  for (unsigned int level = m_topLevel; level<=m_levels; ++level) {
     unsigned int nNodes = getNodesPerLevel(level);
-    std::cout << level << " " << nNodes << std::endl;
     m_OctreeNodes[level-m_topLevel].resize(nNodes);
     for (unsigned int node=0; node<nNodes; ++node)
       getNode(node,level).setIndex(node, level);
   }
-  std::cout << "finished making octree" << std::endl;
 }
+
 
 // fill octree and return p2o permutation vector (shared vector)
 // apply test and trial spaces, use flag to test if the same or shared pointers?
@@ -140,7 +177,6 @@ void Octree<ResultType>::assignPoints(
     const std::vector<Point3D<CoordinateType> > &trialDofCenters,
     std::vector<unsigned int> &test_p2o, std::vector<unsigned int> &trial_p2o)
 {
-  std::cout << "assigning points" << std::endl;
   const unsigned int nLeaves = getNodesPerLevel(m_levels);
 
   // get permutation for test space
@@ -236,23 +272,24 @@ template <typename ResultType>
 unsigned long Octree<ResultType>::getLeafContainingPoint(
     const Point3D<CoordinateType> &point) const
 {
-    int invleafsize = getNodesPerSide(m_levels);
+  int invleafsize = getNodesPerSide(m_levels);
 
-    // be careful of precision, outside allocation bad
-    Vector<CoordinateType> boxSize;
-    boxSize = m_upperBound - m_lowerBound;
-    Vector<CoordinateType> pt;
-    for(int i=0;i<3;++i)
-      pt(i) = (getPoint3DCoord(point,i)-m_lowerBound(i))/boxSize(i);
+  // be careful of precision, outside allocation bad
+  Vector<CoordinateType> boxSize;
+  boxSize = m_upperBound - m_lowerBound;
+  Vector<CoordinateType> pt;
+  pt.resize(3);
+  for(int i=0;i<3;++i)
+    pt(i) = (getPoint3DCoord(point,i)-m_lowerBound[i])/boxSize[i];
 
-    CoordinateType zero = CoordinateType(0);
+  CoordinateType zero = CoordinateType(0);
 
-    std::vector<unsigned long> ind;
-    for(int i=0;i<3;++i)
-      ind.push_back(std::min(int(std::max(zero,pt(i))*invleafsize),
-                             invleafsize-1));
+  std::vector<unsigned long> ind;
+  for(int i=0;i<3;++i)
+    ind.push_back(std::min(int(std::max(zero,pt(i))*invleafsize),
+                           invleafsize-1));
 
-    return morton(ind);
+  return morton(ind);
 }
 
 // might want to cache position in OctreeNode
@@ -307,15 +344,13 @@ void Octree<ResultType>::apply(
     tbb::parallel_for<size_t>(0, nLeaves,
                               evaluateMultipoleCoefficientsHelper);
 
-#if defined MULTILEVEL_FMM
-    upwardsStep(m_fmmTransform);
-#endif
+    if(multilevel())
+      upwardsStep(m_fmmTransform);
 
     translationStep(m_fmmTransform);
 
-#if defined MULTILEVEL_FMM
-    downwardsStep(m_fmmTransform);
-#endif
+    if(multilevel())
+      downwardsStep(m_fmmTransform);
 
     EvaluateFarFieldMatrixVectorProductHelper<ResultType>
         evaluateFarFieldMatrixVectorProductHelper(
@@ -364,11 +399,10 @@ public:
 
       // calculate multipole to multipole (M2M) translation matrix
       Matrix<ResultType> m2m;
-#if defined USE_FMM_CACHE
-      m2m = m_octree.fmmCache().M2M(m_level, child - getFirstChild(node));
-#else
-      m2m = m_fmmTransform.M2M(Rchild, R, m_level);
-#endif
+      if(m_octree.cache())
+        m2m = m_octree.fmmCache().M2M(m_level, child - getFirstChild(node));
+      else
+        m2m = m_fmmTransform.M2M(Rchild, R, m_level);
       // add contribution of child to the parent
       const Vector<ResultType>& mcoefsChild =
           m_octree.getNode(child,m_level+1).getMultipoleCoefficients();
@@ -422,11 +456,11 @@ public:
   typedef typename Fiber::ScalarTraits<ResultType>::RealType CoordinateType;
 
   TranslationStepHelper(
-    Octree<ResultType> &octree,
-    const FmmTransform<ResultType> &fmmTransform,
-    unsigned int level)
-        : m_octree(octree), m_fmmTransform(fmmTransform), m_level(level)
-    {}
+      Octree<ResultType> &octree,
+      const FmmTransform<ResultType> &fmmTransform,
+      unsigned int level)
+    : m_octree(octree), m_fmmTransform(fmmTransform), m_level(level)
+  {}
 
   void operator()(int node) const
   {
@@ -438,55 +472,80 @@ public:
     Vector<ResultType> lcoef;//(m_fmmTransform.quadraturePointCount());
     //lcoef.fill(0.0);
 
-#if !defined USE_FMM_CACHE
     Vector<CoordinateType> boxSize;
-    m_octree.nodeSize(m_level, boxSize);
-#endif
+    if(m_octree.cache()){
+      m_octree.nodeSize(m_level, boxSize);
+    }
 
-    const std::vector<unsigned long>& neigbourList 
+    const std::vector<unsigned long>& neigbourList
         = m_octree.getNode(node,m_level).neigbourList();
 
-#if defined MULTILEVEL_FMM
-    for (unsigned int ind=0;
-         ind<m_octree.getNode(node,m_level).interactionListSize();
-         ++ind) {
-      unsigned int inter=m_octree.getNode(node,m_level).interactionList(ind);
-#else
-    // single level FMM (test), must disable M2M and L2L
-    unsigned int nNodes = getNodesPerLevel(m_level);
-    for (unsigned int inter=0; inter<nNodes; inter++) {
-      // skip if inter and current node are neighbouring or identical
-      if( std::find(neigbourList.begin(), neigbourList.end(), inter)
-          != neigbourList.end() || inter==node
-          || m_octree.getNode(inter,m_level).trialDofCount()==0)
-        continue;
-#endif
-      Vector<CoordinateType> Rinter; // center of the node
-      m_octree.nodeCentre(inter,m_level,Rinter);
+    if(m_octree.multilevel()){
+      for (unsigned int ind=0;
+           ind<m_octree.getNode(node,m_level).interactionListSize();
+           ++ind) {
+        unsigned int inter=m_octree.getNode(node,
+                                            m_level).interactionList(ind);
+        Vector<CoordinateType> Rinter; // center of the node
+        m_octree.nodeCentre(inter,m_level,Rinter);
 
-      // calculate multipole to local (M2L) translation matrix
-      Matrix<ResultType> m2l;
-#if defined USE_FMM_CACHE
-      m2l = m_octree.fmmCache().M2L(m_level, 
-          m_octree.getNode(node,m_level).interactionItemList(ind));
-#else
-      m2l = m_fmmTransform.M2L(Rinter, R, boxSize, m_level);
-#endif
+        // calculate multipole to local (M2L) translation matrix
+        Matrix<ResultType> m2l;
+        if(m_octree.cache())
+          m2l = m_octree.fmmCache().M2L(m_level, 
+              m_octree.getNode(node,m_level).interactionItemList(ind));
+        else
+          m2l = m_fmmTransform.M2L(Rinter, R, boxSize, m_level);
       // add contribution of interation list node to current node
-      const Vector<ResultType>& mcoefs = 
-          m_octree.getNode(inter,m_level).getMultipoleCoefficients();
+        const Vector<ResultType>& mcoefs = 
+            m_octree.getNode(inter,m_level).getMultipoleCoefficients();
 
-      if (lcoef.rows()==0) {
-        lcoef.resize(mcoefs.rows());
-        for(int i=0;i<lcoef.rows();++i) lcoef[i] = 0;
-      }
+        if (lcoef.rows()==0) {
+          lcoef.resize(mcoefs.rows());
+          for(int i=0;i<lcoef.rows();++i) lcoef[i] = 0;
+        }
 
-      if (m2l.cols()==1) // diagonal m2l operator
-        for(int i=0;i<m2l.rows();++i) lcoef[i] += m2l(i,0)*mcoefs[i];
-      else // m2l is a full matrix
-        lcoef += m2l * mcoefs;
+        if (m2l.cols()==1) // diagonal m2l operator
+          for(int i=0;i<m2l.rows();++i) lcoef[i] += m2l(i,0)*mcoefs[i];
+        else // m2l is a full matrix
+          lcoef += m2l * mcoefs;
 
-    } // for each node on the interaction list
+      } // for each node on the interaction list
+    } else {
+      unsigned int nNodes = getNodesPerLevel(m_level);
+      for (unsigned int inter=0; inter<nNodes; inter++) {
+        // skip if inter and current node are neighbouring or identical
+        if( std::find(neigbourList.begin(), neigbourList.end(), inter)
+            != neigbourList.end() || inter==node
+            || m_octree.getNode(inter,m_level).trialDofCount()==0)
+          continue;
+        Vector<CoordinateType> Rinter; // center of the node
+        m_octree.nodeCentre(inter,m_level,Rinter);
+
+        // calculate multipole to local (M2L) translation matrix
+        Matrix<ResultType> m2l;
+        if(m_octree.cache())
+          throw std::invalid_argument("Error in cached M2L: ind not defined here");
+          //m2l = m_octree.fmmCache().M2L(m_level, 
+              //m_octree.getNode(node,m_level).interactionItemList(ind));
+        else
+          m2l = m_fmmTransform.M2L(Rinter, R, boxSize, m_level);
+        // add contribution of interation list node to current node
+        const Vector<ResultType>& mcoefs = 
+            m_octree.getNode(inter,m_level).getMultipoleCoefficients();
+
+        if (lcoef.rows()==0) {
+          lcoef.resize(mcoefs.rows());
+          for(int i=0;i<lcoef.rows();++i) lcoef[i] = 0;
+        }
+
+        if (m2l.cols()==1) // diagonal m2l operator
+          for(int i=0;i<m2l.rows();++i) lcoef[i] += m2l(i,0)*mcoefs[i];
+        else // m2l is a full matrix
+          lcoef += m2l * mcoefs;
+
+      } // for each node on the interaction list
+    }
     m_octree.getNode(node,m_level).setLocalCoefficients(lcoef);
   } // operator()
 private:
@@ -515,19 +574,21 @@ void Octree<ResultType>::translationStep(
       }
     }
   }
-#if defined MULTILEVEL_FMM
-  for (unsigned int level = m_topLevel; level<=m_levels; level++) {
-#else
-  {
+  if(multilevel()){
+    for (unsigned int level = m_topLevel; level<=m_levels; level++) {
+      unsigned int nNodes = getNodesPerLevel(level);
+      TranslationStepHelper<ResultType> translationStepHelper(
+          *this, fmmTransform, level);
+      tbb::parallel_for<size_t>(0, nNodes, translationStepHelper);
+    } // for each level
+  } else {
     unsigned int level = m_levels;
-#endif
-        //std::cout << " - level " << level << " / " << m_levels << std::endl;
     unsigned int nNodes = getNodesPerLevel(level);
 
     TranslationStepHelper<ResultType> translationStepHelper(
         *this, fmmTransform, level);
     tbb::parallel_for<size_t>(0, nNodes, translationStepHelper);
-  } // for each level
+  }
 
   if ( fmmTransform.isCompressedM2L() ) {
     // Explode Local Coefficients
@@ -580,11 +641,10 @@ public:
 
         // calculate local to local (L2L) translation matrix
         Matrix<ResultType> l2l;
-#if defined USE_FMM_CACHE
-        l2l = m_octree.fmmCache().L2L(m_level, child - getFirstChild(node));
-#else
-        l2l = m_fmmTransform.L2L(R, Rchild, m_level);
-#endif
+        if(m_octree.cache())
+          l2l = m_octree.fmmCache().L2L(m_level, child - getFirstChild(node));
+        else
+          l2l = m_fmmTransform.L2L(R, Rchild, m_level);
         // add the local coefficients to the current child
         Vector<ResultType> lcoefsChildContrib;
         lcoefsChildContrib = l2l * lcoefs;

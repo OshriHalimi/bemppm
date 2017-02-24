@@ -49,7 +49,24 @@ public:
         const FmmTransform<ResultType> &fmmTransform,
         const shared_ptr<FmmCache<ResultType> > &fmmCache,
         const Vector<CoordinateType> &lowerBound,
+        const Vector<CoordinateType> &upperBound,
+        const bool cacheIO);
+
+    Octree(
+        unsigned int levels,
+        const FmmTransform<ResultType>& fmmTransform,
+        const shared_ptr<FmmCache<ResultType> > &fmmCache,
+        const Vector<CoordinateType> &lowerBound,
         const Vector<CoordinateType> &upperBound);
+
+    Octree(
+        unsigned int levels,
+        const FmmTransform<ResultType>& fmmTransform,
+        const Vector<CoordinateType> &lowerBound,
+        const Vector<CoordinateType> &upperBound);
+
+
+    void initialize();
 
     const OctreeNode<ResultType> &getNodeConst(
         unsigned long number, unsigned int level) const;
@@ -62,6 +79,12 @@ public:
     void upwardsStep(const FmmTransform<ResultType> &fmmTransform);
     void translationStep(const FmmTransform<ResultType> &fmmTransform);
     void downwardsStep(const FmmTransform<ResultType> &fmmTransform);
+
+    bool cache() const {return m_cache;}
+    bool multilevel() const {
+      if(levels()==1) return false;
+      else return true;
+    }
 
     // affects the local and multipole coefficients in the the leaves
     void apply(
@@ -79,6 +102,7 @@ public:
 private:
     unsigned long getLeafContainingPoint(const Point3D<CoordinateType> &point) const;
     const unsigned int m_levels;
+    const bool m_cache;
     const unsigned int m_topLevel;
     // for now use a flat structure
     std::vector<std::vector<OctreeNode<ResultType> > > m_OctreeNodes;

@@ -25,41 +25,41 @@ template <typename ValueType>
 class FmmCache
 {
 public:
-	typedef typename Fiber::ScalarTraits<ValueType>::RealType CoordinateType;
+  typedef typename Fiber::ScalarTraits<ValueType>::RealType CoordinateType;
 
-	FmmCache(
-		const FmmTransform<ValueType>& fmmTransform,
-		unsigned int levels);
+  FmmCache(
+    const FmmTransform<ValueType>& fmmTransform,
+    unsigned int levels);
 
-	//template <typename KernelType>
-	void initCache(
-		const Vector<CoordinateType> &lowerBound,
-		const Vector<CoordinateType> &upperBound);//,
+  //template <typename KernelType>
+  void initCache(
+    const Vector<CoordinateType> &lowerBound,
+    const Vector<CoordinateType> &upperBound);//,
 //		const Fiber::CollectionOfKernels<KernelType>& kernels);
 
-	void compressM2L(bool isSymmetric);
+  void compressM2L(bool isSymmetric);
 
-	void compressMultipoleCoefficients(
-		Vector<ValueType>& mcoefs, int level) const;
+  void compressMultipoleCoefficients(
+    Vector<ValueType>& mcoefs, int level) const;
 
-	void explodeLocalCoefficients(
-		Vector<ValueType>& lcoefs, int level) const;
+  void explodeLocalCoefficients(
+    Vector<ValueType>& lcoefs, int level) const;
 
-	Matrix<ValueType> M2M(unsigned int level, unsigned int item) const;
-	Matrix<ValueType> M2L(unsigned int level, unsigned int item) const;
-	Matrix<ValueType> L2L(unsigned int level, unsigned int item) const;
+  Matrix<ValueType> M2M(unsigned int level, unsigned int item) const;
+  Matrix<ValueType> M2L(unsigned int level, unsigned int item) const;
+  Matrix<ValueType> L2L(unsigned int level, unsigned int item) const;
 
 private:
-	const unsigned int m_topLevel; // top level in the octee
-	const FmmTransform<ValueType>& m_fmmTransform;
-	unsigned int m_levels;
-	Vector<ValueType> m_kernelWeightVec;
-	std::vector<Matrix<ValueType> > m_Ufat;
-	std::vector<Matrix<ValueType> > m_Vthin;
+  const unsigned int m_topLevel; // top level in the octee
+  const FmmTransform<ValueType>& m_fmmTransform;
+  unsigned int m_levels;
+  Vector<ValueType> m_kernelWeightVec;
+  std::vector<Matrix<ValueType> > m_Ufat;
+  std::vector<Matrix<ValueType> > m_Vthin;
 
-	std::vector<std::vector<Matrix<ValueType> > > m_cacheM2M;
-	std::vector<std::vector<Matrix<ValueType> > > m_cacheM2L;
-	std::vector<std::vector<Matrix<ValueType> > > m_cacheL2L;
+  std::vector<std::vector<Matrix<ValueType> > > m_cacheM2M;
+  std::vector<std::vector<Matrix<ValueType> > > m_cacheM2L;
+  std::vector<std::vector<Matrix<ValueType> > > m_cacheL2L;
 };
 
 } // namespace fmm

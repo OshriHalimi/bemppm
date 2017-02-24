@@ -27,22 +27,28 @@ FmmCache<ValueType>::initCache(
     const Vector<CoordinateType> &upperBound)//,
 //  const Fiber::CollectionOfKernels<KernelType>& kernels)
 {
+  std::cout << "a";
   Vector<CoordinateType> origin(3);
   for(int i=0;i<3;++i) origin[i]=0;
 
   m_cacheM2L.resize(m_levels-m_topLevel+1);
 
+  std::cout << "b";
+
   for (unsigned int level = m_topLevel; level<=m_levels; ++level) {
     // there are 7^3-3^3=316 unique translation matrices for translation
     // invariant operators
+  std::cout << "b0";
     m_cacheM2L[level-m_topLevel].resize(316);
 
     unsigned int boxesPerSide = getNodesPerSide(level);
     Vector<CoordinateType> boxSize;
     boxSize = (upperBound - lowerBound)/boxesPerSide;
+  std::cout << "b1";
 
     Vector<CoordinateType> centre(3);
 
+  std::cout << "b2";
     unsigned int index = 0;
     for (int indx=-3; indx<=3; indx++) {
       centre[0] = indx*boxSize[0];
@@ -50,10 +56,15 @@ FmmCache<ValueType>::initCache(
         centre[1] = indy*boxSize[1];
         for (int indz=-3; indz<=3; indz++) {
           centre[2] = indz*boxSize[2];
+  std::cout << "b3";
           if (abs(indx) > 1 || abs(indy) > 1 || abs(indz) > 1) {
+  std::cout << "b4";
+            //// IT CRASHES HERE!!!
             Matrix<ValueType> m2l = m_fmmTransform.M2L(centre, origin,
                                                        boxSize, level);
+  std::cout << "b5";
             m_cacheM2L[level-m_topLevel][index++] = m2l;
+  std::cout << "b6";
           } // if not a nearest neighbour
         } // for each x offset
       } // for each x offset
@@ -89,8 +100,10 @@ FmmCache<ValueType>::initCache(
       m_cacheL2L[level-m_topLevel][child] = l2l;
     } // for each child
   } // for each level
+  std::cout << "c";
 
   compressM2L(true);
+  std::cout << "d";
 } // initCache
 
 

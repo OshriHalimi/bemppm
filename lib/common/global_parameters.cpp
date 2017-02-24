@@ -115,6 +115,9 @@ ParameterList GlobalParameters::parameterList() {
   // FMM levels
   parameters.put("options.fmm.levels", static_cast<int>(10));
 
+  // FMM cache
+  parameters.put("options.fmm.cache", static_cast<bool>(true));
+
   return parameters;
 }
 }

@@ -15,7 +15,6 @@ FmmTransform<ValueType>::interpolate(
   coefficientsNew = coefficientsOld;
 }
 
-
 FIBER_INSTANTIATE_CLASS_TEMPLATED_ON_RESULT(FmmTransform);
 
 } // namespace fmm
