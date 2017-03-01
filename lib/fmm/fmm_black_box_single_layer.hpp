@@ -23,7 +23,6 @@
 
 #include "fmm_black_box.hpp"
 
-#include "../common/armadillo_fwd.hpp"
 #include "../fiber/scalar_traits.hpp"
 
 namespace fmm

@@ -25,7 +25,6 @@
 
 #include <vector>
 
-#include "../common/armadillo_fwd.hpp"
 #include "../fiber/scalar_traits.hpp"
 #include "../common/shared_ptr.hpp"
 
