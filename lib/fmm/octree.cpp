@@ -265,6 +265,19 @@ void Octree<ResultType>::assignPoints(
       getNode(node,level).makeInteractionList(*this);
     }
   }
+
+  // Print centers of octree nodes
+  for (unsigned int level = 0; level<=m_levels; level++) {
+    unsigned int nNodes = getNodesPerLevel(level);
+    for (unsigned long node=0; node<nNodes; node++) {
+      Vector<CoordinateType> center;
+      nodeCenter(node,level,center);
+      std::cout << level << "," << node << ": (";
+      std::cout << center[0] << ",";
+      std::cout << center[1] << ",";
+      std::cout << center[2] << ")" << std::endl;
+    }
+  }
 }
 
 
@@ -295,16 +308,18 @@ unsigned long Octree<ResultType>::getLeafContainingPoint(
 // might want to cache position in OctreeNode
 
 template <typename ResultType>
-void Octree<ResultType>::nodeCentre(unsigned long number, unsigned int level,
-    Vector<CoordinateType> &centre) const
+void Octree<ResultType>::nodeCenter(unsigned long number, unsigned int level,
+    Vector<CoordinateType> &center) const
 {
   Vector<CoordinateType> boxSize;
   nodeSize(level, boxSize);
 
+  center.resize(3);
+
   unsigned long ind[3];
   deMorton(&ind[0], &ind[1], &ind[2], number);
   for (unsigned int d=0; d<3; ++d)
-      centre[d] = (ind[d] + 0.5)*boxSize[d]+m_lowerBound[d];
+    center[d] = (ind[d] + 0.5)*boxSize(d)+m_lowerBound(d);
 }
 
 template <typename ResultType>
@@ -386,7 +401,7 @@ public:
       return;
 
     Vector<CoordinateType> R; // center of the node
-    m_octree.nodeCentre(node, m_level, R);
+    m_octree.nodeCenter(node, m_level, R);
 
     Vector<ResultType> mcoefs;
 
@@ -395,7 +410,7 @@ public:
       if (m_octree.getNode(child,m_level+1).trialDofCount()==0)
         continue;
       Vector<CoordinateType> Rchild; // center of the node
-      m_octree.nodeCentre(child,m_level+1,Rchild);
+      m_octree.nodeCenter(child,m_level+1,Rchild);
 
       // calculate multipole to multipole (M2M) translation matrix
       Matrix<ResultType> m2m;
@@ -468,7 +483,7 @@ public:
       return; //continue;
 
     Vector<CoordinateType> R; // center of the node
-    m_octree.nodeCentre(node,m_level, R);
+    m_octree.nodeCenter(node,m_level, R);
     Vector<ResultType> lcoef;//(m_fmmTransform.quadraturePointCount());
     //lcoef.fill(0.0);
 
@@ -487,7 +502,7 @@ public:
         unsigned int inter=m_octree.getNode(node,
                                             m_level).interactionList(ind);
         Vector<CoordinateType> Rinter; // center of the node
-        m_octree.nodeCentre(inter,m_level,Rinter);
+        m_octree.nodeCenter(inter,m_level,Rinter);
 
         // calculate multipole to local (M2L) translation matrix
         Matrix<ResultType> m2l;
@@ -520,7 +535,7 @@ public:
             || m_octree.getNode(inter,m_level).trialDofCount()==0)
           continue;
         Vector<CoordinateType> Rinter; // center of the node
-        m_octree.nodeCentre(inter,m_level,Rinter);
+        m_octree.nodeCenter(inter,m_level,Rinter);
 
         // calculate multipole to local (M2L) translation matrix
         Matrix<ResultType> m2l;
@@ -626,7 +641,7 @@ public:
       }
 
       Vector<CoordinateType> R; // center of the node
-      m_octree.nodeCentre(node,m_level,R);
+      m_octree.nodeCenter(node,m_level,R);
 
       const Vector<ResultType>& lcoefs = 
       m_octree.getNode(node,m_level).getLocalCoefficients();
@@ -637,7 +652,7 @@ public:
         if (m_octree.getNode(child,m_level+1).trialDofCount()==0)
           continue;
         Vector<CoordinateType> Rchild; // center of the node
-        m_octree.nodeCentre(child,m_level+1,Rchild);
+        m_octree.nodeCenter(child,m_level+1,Rchild);
 
         // calculate local to local (L2L) translation matrix
         Matrix<ResultType> l2l;

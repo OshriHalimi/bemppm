@@ -48,7 +48,7 @@ ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>::
         const shared_ptr<const Space<BasisFunctionType>> &range,
         const shared_ptr<const Space<BasisFunctionType>> &dualToRange,
         const std::string &label, int symmetry)
-    : Base(domain, range, dualToRange, label, symmetry) {}
+    : Base(domain, range, dualToRange, label, symmetry) {std::cout << label;}
 
 template <typename BasisFunctionType, typename KernelType, typename ResultType>
 bool ElementaryIntegralOperator<BasisFunctionType, KernelType,

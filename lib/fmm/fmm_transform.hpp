@@ -72,7 +72,7 @@ public:
       const Vector<CoordinateType>& point,
       const Vector<CoordinateType>& normal,
       const Vector<CoordinateType>& khat,
-      const Vector<CoordinateType>& nodeCentre,
+      const Vector<CoordinateType>& nodeCenter,
       const Vector<CoordinateType>& nodeSize,
       Vector<ValueType>& result) const = 0;
 
@@ -81,7 +81,7 @@ public:
       const Vector<CoordinateType>& point,
       const Vector<CoordinateType>& normal,
       const Vector<CoordinateType>& khat,
-      const Vector<CoordinateType>& nodeCentre,
+      const Vector<CoordinateType>& nodeCenter,
       const Vector<CoordinateType>& nodeSize,
       Vector<ValueType>& result) const = 0;
 

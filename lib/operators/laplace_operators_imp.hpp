@@ -42,6 +42,9 @@
 #include "../fiber/simple_test_scalar_kernel_trial_integrand_functor.hpp"
 #include "../fiber/scalar_traits.hpp"
 
+#include "../fmm/fmm_transform.hpp"
+#include "../fmm/fmm_black_box_single_layer.hpp"
+
 #include "../fiber/typical_test_scalar_kernel_trial_integral.hpp"
 
 #include <boost/type_traits/is_complex.hpp>
@@ -57,6 +60,7 @@ laplaceSingleLayerBoundaryOperator(
     const shared_ptr<const Space<BasisFunctionType>> &range,
     const shared_ptr<const Space<BasisFunctionType>> &dualToRange,
     const std::string &label, int symmetry) {
+  std::cout << "<<! " << label << " !>>" << std::endl;
   Context<BasisFunctionType, ResultType> context(parameterList);
 
   auto assemblyOptions = context.assemblyOptions();
@@ -79,11 +83,28 @@ laplaceSingleLayerBoundaryOperator(
   else
     integral.reset(new Fiber::DefaultTestKernelTrialIntegral<IntegrandFunctor>(
         IntegrandFunctor()));
-  shared_ptr<
-      ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>>
-      newOp(new Op(domain, range, dualToRange, label, symmetry, KernelFunctor(),
-                   TransformationFunctor(), TransformationFunctor(), integral));
-  return newOp;
+
+  if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
+    shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
+    int expansionOrder =
+        parameterList.template get<int>("options.fmm.expansion_order");
+    int levels = parameterList.template get<int>("options.fmm.levels");
+    fmmTransform = boost::make_shared<fmm::FmmBlackBoxSingleLayer<KernelType,
+                                      ResultType>>(KernelFunctor(),
+                                                   expansionOrder,levels);
+    shared_ptr<
+        ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>>
+        newOp(new Op(domain, range, dualToRange, label, symmetry, KernelFunctor(),
+                     TransformationFunctor(), TransformationFunctor(), integral,
+                     fmmTransform));
+    return newOp;
+  } else {
+    shared_ptr<
+        ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>>
+        newOp(new Op(domain, range, dualToRange, label, symmetry, KernelFunctor(),
+                     TransformationFunctor(), TransformationFunctor(), integral));
+    return newOp;
+  }
 }
 
 template <typename BasisFunctionType, typename KernelType, typename ResultType>

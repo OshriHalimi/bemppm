@@ -46,21 +46,21 @@ FmmCache<ValueType>::initCache(
     boxSize = (upperBound - lowerBound)/boxesPerSide;
   std::cout << "b1";
 
-    Vector<CoordinateType> centre(3);
+    Vector<CoordinateType> center(3);
 
   std::cout << "b2";
     unsigned int index = 0;
     for (int indx=-3; indx<=3; indx++) {
-      centre[0] = indx*boxSize[0];
+      center[0] = indx*boxSize[0];
       for (int indy=-3; indy<=3; indy++) {
-        centre[1] = indy*boxSize[1];
+        center[1] = indy*boxSize[1];
         for (int indz=-3; indz<=3; indz++) {
-          centre[2] = indz*boxSize[2];
+          center[2] = indz*boxSize[2];
   std::cout << "b3";
           if (abs(indx) > 1 || abs(indy) > 1 || abs(indz) > 1) {
   std::cout << "b4";
             //// IT CRASHES HERE!!!
-            Matrix<ValueType> m2l = m_fmmTransform.M2L(centre, origin,
+            Matrix<ValueType> m2l = m_fmmTransform.M2L(center, origin,
                                                        boxSize, level);
   std::cout << "b5";
             m_cacheM2L[level-m_topLevel][index++] = m2l;
@@ -111,7 +111,7 @@ FmmCache<ValueType>::initCache(
 // when the kernel is symmetric. N.B that the order in which the interaction blocks
 // are stored does not matter. However, if symmetry is to be exploited (so that one
 // SVD suffices), the source interaction blocks must be arranged symmetrically about
-// the field centre, e.g. -4 -3 x x f x x 3 4 not -4 -3 x x f x x 3 4 5.
+// the field center, e.g. -4 -3 x x f x x 3 4 not -4 -3 x x f x x 3 4 5.
 // If symmetry is to be exploited note that Ufat_k'*Vthin_k = \pm 1. However, since
 // we calculate multipoleCoefficients = Ufat*(Ufat'*K*Vthin)*Vthin'*multipoleCoefficients
 // the \pm 1 does not matter. For symmetric kernels it is thus safe to assume

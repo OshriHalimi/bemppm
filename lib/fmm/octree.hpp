@@ -94,8 +94,8 @@ public:
 
     unsigned int levels() const {return m_levels;}
     OctreeNode<ResultType> &getNode(unsigned long number, unsigned int level);
-    void nodeCentre(unsigned long number, unsigned int level,
-        Vector<CoordinateType> &centre) const;
+    void nodeCenter(unsigned long number, unsigned int level,
+        Vector<CoordinateType> &center) const;
     void nodeSize(unsigned int level,
         Vector<CoordinateType> &size) const;
     const FmmCache<ResultType>& fmmCache() {return *m_fmmCache;}

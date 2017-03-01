@@ -308,6 +308,14 @@ cdef class _FMMParameterList:
             cdef char* s = b"options.fmm.levels"
             deref(self.impl_).put_int(s,value)
 
+    property expansion_order:
+        def __get__(self):
+            cdef char* s = b"options.fmm.expansion_order"
+            return deref(self.impl_).get_int(s)
+        def __set__(self,int value):
+            cdef char* s = b"options.fmm.expansion_order"
+            deref(self.impl_).put_int(s,value)
+
     property cache:
         def __get__(self):
             cdef char* s = b"options.fmm.cache"

@@ -163,6 +163,22 @@ void OctreeNode<ResultType>::setIndex(unsigned long number,
   m_level = level;
 }
 
+/*
+template <typename CoordinateType,typename ResultType>
+void OctreeNode<ResultType>::center(CoordinateType c[3]) const{
+  /////
+}
+template <typename CoordinateType,typename ResultType>
+void OctreeNode<ResultType>::center(Vector<CoordinateType> &c) const{
+  CoordinateType c_v[3];
+  center(c_v);
+  for(int i=0;i<3;++i)
+    c[i] = c_v[i];
+}
+
+*/
+
+
 // return Morton index
 template <typename ResultType>
 unsigned long OctreeNode<ResultType>::number() const

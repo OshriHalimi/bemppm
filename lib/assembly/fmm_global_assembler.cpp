@@ -45,17 +45,9 @@
 #include "../grid/entity.hpp"
 #include "../grid/entity_iterator.hpp"
 
-#include "../hmat/block_cluster_tree.hpp"
-#include "../hmat/data_accessor.hpp"
-#include "../hmat/geometry.hpp"
-#include "../hmat/geometry_data_type.hpp"
-#include "../hmat/geometry_interface.hpp"
-#include "../hmat/hmatrix.hpp"
-#include "../hmat/hmatrix_aca_compressor.hpp"
-#include "../hmat/hmatrix_dense_compressor.hpp"
-
 #include "../fmm/octree.hpp"
 #include "../fmm/fmm_cache.hpp"
+//#include "../fmm/fmm_near_field_helper.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -206,11 +198,53 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   }
 
   std::vector<unsigned int> trial_p2o, test_p2o;
-  std::cout << "assigning points" << std::endl;
   octree->assignPoints(symmetry, testDofLocations, trialDofLocations,
                        test_p2o, trial_p2o);
-  std::cout << "done assigning points" << std::endl;
+
+  // WORKS UP TO HERE
+/*  FMMNearFieldHelper<BasisFunctionType, ResultType> fmmNearFieldHelper(
+        octree, testSpace, trialSpace, localAssemblers, denseTermsMultipliers, 
+        options, test_p2o, trial_p2o, indexWithGlobalDofs);
+  unsigned int nLeaves = getNodesPerLevel(octree->levels());
+    tbb::parallel_for<unsigned int>(0, nLeaves, fmmNearFieldHelper);
+
+/*  FmmFarFieldHelper<BasisFunctionType, ResultType> fmmFarFieldHelper(
+        octree, testSpace, trialSpace, options, test_p2o, trial_p2o, 
+        indexWithGlobalDofs, fmmTransform);
+
+  tbb::parallel_for(tbb::blocked_range<unsigned int>(0, nLeaves, 100), 
+      fmmFarFieldHelper);
+
+  unsigned int symmetry = NO_SYMMETRY;
+  if (hermitian) {
+      symmetry |= HERMITIAN;
+      if (boost::is_complex<ResultType>())
+          symmetry |= SYMMETRIC;
+  }
+
+  // this is a problem, need to hide BasisFunctionType argument somehow
+  typedef DiscreteFmmBoundaryOperator<ResultType> DiscreteFmmLinOp;
+  std::auto_ptr<DiscreteFmmLinOp> fmmOp(
+              new DiscreteFmmLinOp(testDofCount, trialDofCount,
+                                   octree,
+                                   Symmetry(symmetry) ));
+
+  std::auto_ptr<DiscreteBndOp> result;
+  result = fmmOp;
+
+  return result;*/
 }
+
+
+template <typename BasisFunctionType, typename ResultType>
+std::unique_ptr<DiscreteBoundaryOperator<ResultType>>
+FMMGlobalAssembler<BasisFunctionType, ResultType>::assemblePotentialOperator(
+    const Matrix<CoordinateType> &points,
+    const Space<BasisFunctionType> &trialSpace,
+    LocalAssemblerForPotentialOperators &localAssembler,
+    const ParameterList &parameterList)
+{}
+
 
 FIBER_INSTANTIATE_CLASS_TEMPLATED_ON_BASIS_AND_RESULT(FMMGlobalAssembler);
 
