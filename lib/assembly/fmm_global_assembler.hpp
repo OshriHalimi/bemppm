@@ -73,10 +73,22 @@ public:
   static std::unique_ptr<DiscreteBndOp> assembleDetachedWeakForm(
       const Space<BasisFunctionType> &testSpace,
       const Space<BasisFunctionType> &trialSpace,
-      const LocalAssembler &assembler,
+      //const LocalAssembler &assembler,
+      const std::vector<LocalAssembler*> &localAssemblers,
+      const std::vector<const DiscreteBndOp*>& sparseTermsToAdd,
+      const std::vector<ResultType>& denseTermsMultipliers,
+      const std::vector<ResultType>& sparseTermsMultipliers,
       const Context<BasisFunctionType, ResultType> &context,
       const fmm::FmmTransform<ResultType>& fmmTransform,
       int symmetry);
+
+  static std::unique_ptr<DiscreteBndOp> assembleDetachedWeakForm(
+        const Space<BasisFunctionType>& testSpace,
+        const Space<BasisFunctionType>& trialSpace,
+        LocalAssembler& localAssembler,
+        const Context<BasisFunctionType, ResultType>& context,
+        const fmm::FmmTransform<ResultType>& fmmTransform,
+        int symmetry);
 
   static std::unique_ptr<DiscreteBndOp> assemblePotentialOperator(
       const Matrix<CoordinateType> &points,

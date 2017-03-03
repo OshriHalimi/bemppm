@@ -4,7 +4,6 @@
 #include <vector>
 #include <complex>
 
-#include "../common/common.hpp"
 #include "common.hpp"
 
 #include "../common/shared_ptr.hpp"

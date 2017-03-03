@@ -4,7 +4,6 @@
 #include <vector>
 #include <complex>
 
-#include "../common/common.hpp"
 #include "common.hpp"
 #include "../fiber/scalar_traits.hpp"
 #include "../common/shared_ptr.hpp"
@@ -74,7 +73,7 @@ public:
     void assignPoints(
         bool hermitian, const std::vector<Point3D<CoordinateType> > &testDofCenters,
         const std::vector<Point3D<CoordinateType> > &trialDofCenters,
-        std::vector<unsigned int> &test_p2o, std::vector<unsigned int> &trial_p2o);
+        std::vector<long unsigned int> &test_p2o, std::vector<long unsigned int> &trial_p2o);
 
     void upwardsStep(const FmmTransform<ResultType> &fmmTransform);
     void translationStep(const FmmTransform<ResultType> &fmmTransform);

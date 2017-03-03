@@ -175,7 +175,8 @@ void Octree<ResultType>::assignPoints(
     bool hermitian,
     const std::vector<Point3D<CoordinateType> > &testDofCenters,
     const std::vector<Point3D<CoordinateType> > &trialDofCenters,
-    std::vector<unsigned int> &test_p2o, std::vector<unsigned int> &trial_p2o)
+    std::vector<long unsigned int> &test_p2o,
+    std::vector<long unsigned int> &trial_p2o)
 {
   const unsigned int nLeaves = getNodesPerLevel(m_levels);
 
@@ -203,7 +204,7 @@ void Octree<ResultType>::assignPoints(
   }
 
   // for the permutation vector and intialise the leaves
-  test_p2o = std::vector<unsigned int>(nTestDofs, 0);
+  test_p2o = std::vector<long unsigned int>(nTestDofs, 0);
 
   for (unsigned int dof=0; dof<nTestDofs; dof++) {
     unsigned long number = getLeafContainingPoint(testDofCenters[dof]);
@@ -243,7 +244,7 @@ void Octree<ResultType>::assignPoints(
   }
 
   // for the permutation vector and intialise the leaves
-  trial_p2o = std::vector<unsigned int>(nTrialDofs, 0);
+  trial_p2o = std::vector<long unsigned int>(nTrialDofs, 0);
   for (unsigned int dof=0; dof<nTrialDofs; dof++) {
     unsigned long number = getLeafContainingPoint(trialDofCenters[dof]);
     OctreeNode<ResultType> &node = getNode(number, m_levels);

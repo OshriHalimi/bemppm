@@ -47,7 +47,8 @@
 
 #include "../fmm/octree.hpp"
 #include "../fmm/fmm_cache.hpp"
-//#include "../fmm/fmm_near_field_helper.hpp"
+#include "../fmm/fmm_near_field_helper.hpp"
+//#include "../fmm/fmm_far_field_helper.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -67,9 +68,15 @@ std::unique_ptr<DiscreteBoundaryOperator<ResultType>>
 FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
     const Space<BasisFunctionType> &testSpace,
     const Space<BasisFunctionType> &trialSpace,
-    const LocalAssembler &assembler,
+    //const LocalAssembler &assembler,
+    const std::vector<LocalAssembler*> &localAssemblers,
+    const std::vector<const DiscreteBndOp*>& sparseTermsToAdd,
+    const std::vector<ResultType>& denseTermsMultipliers,
+    const std::vector<ResultType>& sparseTermsMultipliers,
     const Context<BasisFunctionType, ResultType> &context,
     const fmm::FmmTransform<ResultType>& fmmTransform,
+    // localAssemblers
+    // denseTermsMultipliers
     int symmetry) {
 
   // Get options and parameters
@@ -197,16 +204,19 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
       testSpace.getGlobalDofPositions(testDofLocations);
   }
 
-  std::vector<unsigned int> trial_p2o, test_p2o;
+  const bool indexWithGlobalDofs=true;
+
+  std::vector<long unsigned int> trial_p2o, test_p2o;
   octree->assignPoints(symmetry, testDofLocations, trialDofLocations,
                        test_p2o, trial_p2o);
-
+  std::cout << "A";
   // WORKS UP TO HERE
-/*  FMMNearFieldHelper<BasisFunctionType, ResultType> fmmNearFieldHelper(
+  fmm::FmmNearFieldHelper<BasisFunctionType, ResultType> fmmNearFieldHelper(
         octree, testSpace, trialSpace, localAssemblers, denseTermsMultipliers, 
         options, test_p2o, trial_p2o, indexWithGlobalDofs);
-  unsigned int nLeaves = getNodesPerLevel(octree->levels());
+  unsigned int nLeaves = fmm::getNodesPerLevel(octree->levels());
     tbb::parallel_for<unsigned int>(0, nLeaves, fmmNearFieldHelper);
+  std::cout << "B";
 
 /*  FmmFarFieldHelper<BasisFunctionType, ResultType> fmmFarFieldHelper(
         octree, testSpace, trialSpace, options, test_p2o, trial_p2o, 
@@ -235,6 +245,29 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   return result;*/
 }
 
+/** overload */
+template <typename BasisFunctionType, typename ResultType>
+std::unique_ptr<DiscreteBoundaryOperator<ResultType>>
+FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
+        const Space<BasisFunctionType>& testSpace,
+        const Space<BasisFunctionType>& trialSpace,
+        LocalAssembler& localAssembler,
+        const Context<BasisFunctionType, ResultType>& context,
+        const fmm::FmmTransform<ResultType>& fmmTransform,
+        int symmetry)
+{
+    std::vector<LocalAssembler*> localAssemblers(1, &localAssembler);
+    std::vector<const DiscreteBndOp*> sparseTermsToAdd;
+    std::vector<ResultType> denseTermsMultipliers(1, 1.0);
+    std::vector<ResultType> sparseTermsMultipliers;
+
+    return assembleDetachedWeakForm(testSpace, trialSpace, localAssemblers,
+                            sparseTermsToAdd,
+                            denseTermsMultipliers,
+                            sparseTermsMultipliers,
+                            context, fmmTransform, symmetry);
+
+}
 
 template <typename BasisFunctionType, typename ResultType>
 std::unique_ptr<DiscreteBoundaryOperator<ResultType>>
@@ -249,3 +282,4 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assemblePotentialOperator(
 FIBER_INSTANTIATE_CLASS_TEMPLATED_ON_BASIS_AND_RESULT(FMMGlobalAssembler);
 
 } // namespace Bempp
+

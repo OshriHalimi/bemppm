@@ -21,6 +21,7 @@
 #ifndef bempp_fmm_black_box_single_layer_hpp
 #define bempp_fmm_black_box_single_layer_hpp
 
+#include "common.hpp"
 #include "fmm_black_box.hpp"
 
 #include "../fiber/scalar_traits.hpp"
