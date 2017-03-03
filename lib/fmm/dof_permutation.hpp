@@ -20,10 +20,18 @@ public:
   const std::vector<std::size_t> &fmmDofToOriginalDofMap() const;
   const std::vector<std::size_t> &originalDofToFmmDofMap() const;
 
-  template <typename ValueType> void permute(const Vector<ValueType> vIn, Vector<ValueType> vOut);
-  template <typename ValueType> void unpermute(const Vector<ValueType> vIn, Vector<ValueType> vOut);
-  template <typename ValueType> void permute(const Matrix<ValueType> mIn, Matrix<ValueType> mOut);
-  template <typename ValueType> void unpermute(const Matrix<ValueType> mIn, Matrix<ValueType> mOut);
+  template <typename ValueType> void permute(
+      const Eigen::Ref<const Vector<ValueType>>& vIn,
+      Eigen::Ref<Vector<ValueType>> vOut);
+  template <typename ValueType> void unpermute(
+      const Eigen::Ref<const Vector<ValueType>>& vIn,
+      Eigen::Ref<Vector<ValueType>> vOut);
+/*  template <typename ValueType> void permute(
+      const Eigen::Ref<Matrix<ValueType>> vIn,
+      Eigen::Ref<Matrix<ValueType>> vOut);
+  template <typename ValueType> void unpermute(
+      const Eigen::Ref<Matrix<ValueType>> vIn,
+      Eigen::Ref<Matrix<ValueType>> vOut);*/
 
 private:
   std::size_t m_numberOfDofs;

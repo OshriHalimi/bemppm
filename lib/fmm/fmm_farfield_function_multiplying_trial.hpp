@@ -50,8 +50,8 @@ public:
 
     // Evaluate the function at the point "point" and store result in
     // the array "result"
-    void evaluate(Vector<const Matrix<CoordinateType>& point,
-                Vector<CoordinateType>& normal,
+    void evaluate(const Vector<CoordinateType>& point,
+                const Vector<CoordinateType>& normal,
                 Vector<ValueType>& result) const;
 private: 
     const Vector<CoordinateType> &m_khat;

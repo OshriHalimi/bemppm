@@ -40,29 +40,23 @@ namespace fmm {
     return m_originalDofToFmmDofMap;
   }
 
-  template <typename ValueType>
-  inline void
-  DofPermutation::permute(const Vector<ValueType> vIn, Vector<ValueType> vOut){
+  template <typename ValueType> inline void DofPermutation::permute(
+      const Eigen::Ref<const Vector<ValueType>>& vIn,
+      Eigen::Ref<Vector<ValueType>> vOut)
+  {
     vOut.resize(vIn.rows());
     for(int i=0;i<vIn.rows();++i)
       vOut[mapOriginalDofToFmmDof(i)]=vIn[i];
   }
-
-  template <typename ValueType>
-  inline void
-  DofPermutation::unpermute(const Vector<ValueType> vIn, Vector<ValueType> vOut){
-  }
-
-  template <typename ValueType>
-  inline void
-  DofPermutation::permute(const Matrix<ValueType> mIn, Matrix<ValueType> mOut){
-  }
-
-  template <typename ValueType>
-  inline void
-  DofPermutation::unpermute(const Matrix<ValueType> mIn, Matrix<ValueType> mOut){
-  }
-
+  template <typename ValueType> inline void DofPermutation::unpermute(
+      const Eigen::Ref<const Vector<ValueType>>& vIn,
+      Eigen::Ref<Vector<ValueType>> vOut){}
+//  template <typename ValueType> inline void DofPermutation::permute(
+//      const Eigen::Ref<Matrix<ValueType>> vIn,
+//      Eigen::Ref<Matrix<ValueType>> vOut){}
+//  template <typename ValueType> inline void DofPermutation::unpermute(
+//      const Eigen::Ref<Matrix<ValueType>> vIn,
+//      Eigen::Ref<Matrix<ValueType>> vOut){}
 } // namespace fmm
 
 #endif

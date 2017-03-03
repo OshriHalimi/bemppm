@@ -28,6 +28,7 @@
 #include "hmat_interface.hpp"
 #include "potential_operator_hmat_assembly_helper.hpp"
 #include "weak_form_hmat_assembly_helper.hpp"
+#include "discrete_fmm_boundary_operator.hpp"
 
 #include "../common/auto_timer.hpp"
 #include "../common/bounding_box.hpp"
@@ -48,7 +49,7 @@
 #include "../fmm/octree.hpp"
 #include "../fmm/fmm_cache.hpp"
 #include "../fmm/fmm_near_field_helper.hpp"
-//#include "../fmm/fmm_far_field_helper.hpp"
+#include "../fmm/fmm_far_field_helper.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -218,31 +219,30 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
     tbb::parallel_for<unsigned int>(0, nLeaves, fmmNearFieldHelper);
   std::cout << "B";
 
-/*  FmmFarFieldHelper<BasisFunctionType, ResultType> fmmFarFieldHelper(
+  fmm::FmmFarFieldHelper<BasisFunctionType, ResultType> fmmFarFieldHelper(
         octree, testSpace, trialSpace, options, test_p2o, trial_p2o, 
         indexWithGlobalDofs, fmmTransform);
 
   tbb::parallel_for(tbb::blocked_range<unsigned int>(0, nLeaves, 100), 
       fmmFarFieldHelper);
 
-  unsigned int symmetry = NO_SYMMETRY;
-  if (hermitian) {
-      symmetry |= HERMITIAN;
+  unsigned int symm = NO_SYMMETRY;
+  if (symmetry) {
+      symm |= HERMITIAN;
       if (boost::is_complex<ResultType>())
-          symmetry |= SYMMETRIC;
+          symm |= SYMMETRIC;
   }
-
+  
   // this is a problem, need to hide BasisFunctionType argument somehow
   typedef DiscreteFmmBoundaryOperator<ResultType> DiscreteFmmLinOp;
   std::auto_ptr<DiscreteFmmLinOp> fmmOp(
               new DiscreteFmmLinOp(testDofCount, trialDofCount,
-                                   octree,
-                                   Symmetry(symmetry) ));
+                                   octree, Symmetry(symm) ));
 
   std::auto_ptr<DiscreteBndOp> result;
   result = fmmOp;
 
-  return result;*/
+  //return result;// */
 }
 
 /** overload */

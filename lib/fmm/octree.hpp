@@ -87,8 +87,8 @@ public:
 
     // affects the local and multipole coefficients in the the leaves
     void apply(
-        const Vector<ResultType>& x_in,
-        Vector<ResultType>& y_out,
+        const Eigen::Ref<const Vector<ResultType>> &x_in,
+        Eigen::Ref<Vector<ResultType>> y_out,
         const Bempp::TranspositionMode trans);
 
     unsigned int levels() const {return m_levels;}

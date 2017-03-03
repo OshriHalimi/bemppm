@@ -334,8 +334,8 @@ void Octree<ResultType>::nodeSize(unsigned int level,
 
 template <typename ResultType>
 void Octree<ResultType>::apply(
-    const Vector<ResultType>& x_in,
-    Vector<ResultType>& y_out,
+    const Eigen::Ref<const Vector<ResultType>> &x_in,
+    Eigen::Ref<Vector<ResultType>> y_out,
     const Bempp::TranspositionMode trans)
 {
     const unsigned int nLeaves = getNodesPerLevel(m_levels);
@@ -343,9 +343,11 @@ void Octree<ResultType>::apply(
 
     Vector<ResultType> x_in_permuted;
     if (transposed)
-        m_test_p2o->permute(x_in, x_in_permuted); // o to p
+        m_test_p2o->permute(x_in,
+                            Eigen::Ref<Vector<ResultType>>(x_in_permuted));
     else
-        m_trial_p2o->permute(x_in, x_in_permuted); // o to p
+        m_trial_p2o->permute(x_in,
+                             Eigen::Ref<Vector<ResultType>>(x_in_permuted));
 
     Vector<ResultType> y_out_permuted;
     y_out_permuted.resize(y_out.rows());
@@ -375,9 +377,11 @@ void Octree<ResultType>::apply(
                               evaluateFarFieldMatrixVectorProductHelper);
 
     if (!transposed)
-        m_test_p2o->unpermute(y_out_permuted, y_out); // p to o
+        m_test_p2o->unpermute(Eigen::Ref<const Vector<ResultType>>(y_out_permuted),
+                              y_out);
     else
-        m_trial_p2o->unpermute(y_out_permuted, y_out); // p to o
+        m_trial_p2o->unpermute(Eigen::Ref<const Vector<ResultType>>(y_out_permuted),
+                               y_out);
 }
 
 

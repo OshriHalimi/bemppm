@@ -57,8 +57,8 @@ int FmmFarfieldFunctionMultiplyingTrial<ResultType>::resultDimension() const
 
 template <typename ResultType>
 inline void FmmFarfieldFunctionMultiplyingTrial<ResultType>::evaluate(
-            Eigen::Block<const Matrix<CoordinateType>>& point,
-            Eigen::Block<const Matrix<CoordinateType>>& normal,
+            const Vector<CoordinateType>& point,
+            const Vector<CoordinateType>& normal,
             Vector<ValueType>& result) const
 {
     m_fmmTransform.evaluateTrial(point, normal, 
