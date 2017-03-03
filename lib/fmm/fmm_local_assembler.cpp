@@ -175,15 +175,19 @@ void FmmLocalAssembler<BasisFunctionType, ResultType>::evaluateLocalWeakForms(
   const std::vector<int>& elementIndices,
   std::vector<Vector<ResultType> > & result)
 {
+  std::cout << "%1";
   typedef Fiber::Shapeset<BasisFunctionType> Shapeset;
 
+  std::cout << "%2";
   const int elementCount = elementIndices.size();
   result.resize(elementCount);
 
+  std::cout << "%3";
   // Find cached matrices; select integrators to calculate non-cached ones
   typedef std::pair<const Integrator*, const Shapeset*> QuadVariant;
   std::vector<QuadVariant> quadVariants(elementCount);
 
+  std::cout << "%4";
   for (int testIndex = 0; testIndex < elementCount; ++testIndex){
     const int activeTestElementIndex = elementIndices[testIndex];
     const Integrator* integrator = &selectIntegrator(activeTestElementIndex);
@@ -191,6 +195,7 @@ void FmmLocalAssembler<BasisFunctionType, ResultType>::evaluateLocalWeakForms(
                                (*m_shapesets)[activeTestElementIndex]);
   }
 
+  std::cout << "%5";
   // Integration will proceed in batches of element pairs having the same
   // "quadrature variant", i.e. integrator and test basis
 
@@ -199,17 +204,21 @@ void FmmLocalAssembler<BasisFunctionType, ResultType>::evaluateLocalWeakForms(
   // Set of unique quadrature variants
   QuadVariantSet uniqueQuadVariants(quadVariants.begin(), quadVariants.end());
 
+  std::cout << "%6";
   std::vector<int> activeElementIndices;
   activeElementIndices.reserve(elementCount);
 
+  std::cout << "%7";
   // Now loop over unique quadrature variants
   for (typename QuadVariantSet::const_iterator
        it = uniqueQuadVariants.begin();
        it != uniqueQuadVariants.end(); ++it){
+  std::cout << "%a";
     const QuadVariant activeQuadVariant = *it;
     const Integrator& activeIntegrator = *it->first;
     const Shapeset& activeTestShapeset = *it->second;
 
+  std::cout << "%b";
     // Find all the test elements for which quadrature should proceed
     // according to the current quadrature variant
     activeElementIndices.clear();
@@ -217,18 +226,24 @@ void FmmLocalAssembler<BasisFunctionType, ResultType>::evaluateLocalWeakForms(
       if (quadVariants[e] == activeQuadVariant)
         activeElementIndices.push_back(elementIndices[e]);
 
+  std::cout << "%c";
     // Integrate!
     Matrix<ResultType> localResult;
+  std::cout << "%d";
     activeIntegrator.integrate(activeElementIndices, activeTestShapeset,
                                localResult);
 
+  std::cout << "%e";
     // Distribute the just calculated integrals into the result array
     // that will be returned to caller
     int i = 0;
     for (int e = 0; e < elementCount; ++e)
       if (quadVariants[e] == activeQuadVariant)
         result[e] = localResult.col(i++);
+  std::cout << "%f";
+
   } // for each quadrature variant
+  std::cout << "%8";
 }
 
 

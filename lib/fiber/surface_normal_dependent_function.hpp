@@ -90,11 +90,23 @@ public:
 #endif
 
     const size_t pointCount = points.cols();
+    const size_t dim = points.rows();
     result.resize(codomainDimension(), pointCount);
     for (size_t i = 0; i < pointCount; ++i) {
-      Eigen::Map<Vector<ValueType>> activeResultColumn(result.col(i).data(),
-                                                       result.rows());
-      m_functor.evaluate(points.col(i), normals.col(i), activeResultColumn);
+      Vector<ValueType> activeResultColumn;//(result.col(i).data(),
+                                           //result.rows());
+      Vector<CoordinateType> p_coli;
+      p_coli.resize(dim);
+      Vector<CoordinateType> n_coli;
+      n_coli.resize(dim);
+      for (size_t j=0;j<dim;++j){
+        p_coli[j]=points(i,j);
+        n_coli[j]=normals(i,j);
+      }
+      //m_functor.evaluate(points.col(i), normals.col(i), activeResultColumn);
+      m_functor.evaluate(p_coli, n_coli, activeResultColumn);
+      for (size_t j=0;j<dim;++j)
+        result(i,j)=activeResultColumn(j);
     }
   }
 

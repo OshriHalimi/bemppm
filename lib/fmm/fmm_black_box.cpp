@@ -263,7 +263,13 @@ void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointS(
     S *= localS/(this->getN());
   }
 
+  std::cout << "<:G";
+
+  result.resize(1);
+
   result(0) =  S;
+  std::cout << "G:>";
+
 }
 
 template <typename KernelType, typename ValueType>
@@ -302,6 +308,7 @@ void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointDiffS(
     S[dim] /= this->getN();
     diffS[dim] /= this->getN();
   }
+  result.resize(1);
   result(0) = normal(0)*diffS[0]*S[1]*S[2]*(2./nodeSize(0))
             + normal(1)*S[0]*diffS[1]*S[2]*(2./nodeSize(1))
             + normal(2)*S[0]*S[1]*diffS[2]*(2./nodeSize(2));

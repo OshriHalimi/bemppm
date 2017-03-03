@@ -223,8 +223,12 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
         octree, testSpace, trialSpace, options, test_p2o, trial_p2o, 
         indexWithGlobalDofs, fmmTransform);
 
+  std::cout << "C";
+
   tbb::parallel_for(tbb::blocked_range<unsigned int>(0, nLeaves, 100), 
       fmmFarFieldHelper);
+
+  std::cout << "D";
 
   unsigned int symm = NO_SYMMETRY;
   if (symmetry) {
@@ -234,15 +238,22 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   }
   
   // this is a problem, need to hide BasisFunctionType argument somehow
-  typedef DiscreteFmmBoundaryOperator<ResultType> DiscreteFmmLinOp;
+  /*typedef DiscreteFmmBoundaryOperator<ResultType> DiscreteFmmLinOp;
   std::auto_ptr<DiscreteFmmLinOp> fmmOp(
-              new DiscreteFmmLinOp(testDofCount, trialDofCount,
-                                   octree, Symmetry(symm) ));
+              new DiscreteFmmLinOp(
 
   std::auto_ptr<DiscreteBndOp> result;
   result = fmmOp;
+  std::cout << "C";
+  return result;// */
+  std::cout << "E";
 
-  //return result;// */
+  return std::unique_ptr<DiscreteBoundaryOperator<ResultType>> (
+      static_cast<DiscreteBoundaryOperator<ResultType> *>(
+          new DiscreteFmmBoundaryOperator<ResultType>(testDofCount,
+                                                      trialDofCount,
+                                                      octree,
+                                                      Symmetry(symm))));
 }
 
 /** overload */
