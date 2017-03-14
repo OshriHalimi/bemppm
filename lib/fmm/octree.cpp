@@ -354,16 +354,16 @@ void Octree<ResultType>::apply(
 
     EvaluateNearFieldHelper<ResultType> evaluateNearFieldHelper(
         *this, x_in_permuted, y_out_permuted);
-    for(size_t i=0;i<nLeaves;++i)
-      evaluateNearFieldHelper(i);
-//    tbb::parallel_for<size_t>(0, nLeaves, evaluateNearFieldHelper);
+//    for(size_t i=0;i<nLeaves;++i)
+  //    evaluateNearFieldHelper(i);
+    tbb::parallel_for<size_t>(0, nLeaves, evaluateNearFieldHelper);
 
     EvaluateMultipoleCoefficientsHelper<ResultType>
         evaluateMultipoleCoefficientsHelper(*this, x_in_permuted);
-    for(size_t i=0;i<nLeaves;++i)
-      evaluateMultipoleCoefficientsHelper(i);
-//    tbb::parallel_for<size_t>(0, nLeaves,
-//                              evaluateMultipoleCoefficientsHelper);
+//    for(size_t i=0;i<nLeaves;++i)
+  //    evaluateMultipoleCoefficientsHelper(i);
+    tbb::parallel_for<size_t>(0, nLeaves,
+                              evaluateMultipoleCoefficientsHelper);
 
     if(multilevel())
       upwardsStep(m_fmmTransform);
