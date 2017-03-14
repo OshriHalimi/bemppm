@@ -72,6 +72,13 @@ private:
         const Vector<CoordinateType> &nodeCenter, 
         const Vector<CoordinateType> &nodeSize, 
         unsigned int dofStartTrial, unsigned int dofCountTrial, bool isTest) const;
+    Matrix<ResultType> evaluateFarFieldIntegrals(
+        FmmLocalAssembler<BasisFunctionType, ResultType> &fmmLocalAssembler,
+        const FmmTransform<ResultType> &fmmTransform,
+        const Vector<CoordinateType> &nodeCenter, 
+        const Vector<CoordinateType> &nodeSize, 
+        unsigned int dofStartTrial, unsigned int dofCountTrial, bool isTest,
+        bool transposed) const;
 
     shared_ptr<Bempp::LocalDofListsCache<BasisFunctionType> > m_testDofListsCache;
     shared_ptr<Bempp::LocalDofListsCache<BasisFunctionType> > m_trialDofListsCache;

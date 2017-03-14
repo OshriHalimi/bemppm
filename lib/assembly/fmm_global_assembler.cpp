@@ -207,28 +207,26 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
 
   const bool indexWithGlobalDofs=true;
 
-  std::vector<long unsigned int> trial_p2o, test_p2o;
+  std::vector<long unsigned int> trial_p2o;
+  std::vector<long unsigned int> test_p2o;
+
   octree->assignPoints(symmetry, testDofLocations, trialDofLocations,
                        test_p2o, trial_p2o);
-  std::cout << "A";
   // WORKS UP TO HERE
   fmm::FmmNearFieldHelper<BasisFunctionType, ResultType> fmmNearFieldHelper(
         octree, testSpace, trialSpace, localAssemblers, denseTermsMultipliers, 
         options, test_p2o, trial_p2o, indexWithGlobalDofs);
   unsigned int nLeaves = fmm::getNodesPerLevel(octree->levels());
-    tbb::parallel_for<unsigned int>(0, nLeaves, fmmNearFieldHelper);
-  std::cout << "B";
+  tbb::parallel_for<unsigned int>(0, nLeaves, fmmNearFieldHelper);
+//  for(int i=0;i<nLeaves;++i) fmmNearFieldHelper.evaluateNearField(octree,i);
 
   fmm::FmmFarFieldHelper<BasisFunctionType, ResultType> fmmFarFieldHelper(
         octree, testSpace, trialSpace, options, test_p2o, trial_p2o, 
         indexWithGlobalDofs, fmmTransform);
 
-  std::cout << "C";
-
   tbb::parallel_for(tbb::blocked_range<unsigned int>(0, nLeaves, 100), 
       fmmFarFieldHelper);
-
-  std::cout << "D";
+  //for(int i=0;i<nLeaves;++i) fmmFarFieldHelper(i);
 
   unsigned int symm = NO_SYMMETRY;
   if (symmetry) {
@@ -244,9 +242,7 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
 
   std::auto_ptr<DiscreteBndOp> result;
   result = fmmOp;
-  std::cout << "C";
   return result;// */
-  std::cout << "E";
 
   return std::unique_ptr<DiscreteBoundaryOperator<ResultType>> (
       static_cast<DiscreteBoundaryOperator<ResultType> *>(

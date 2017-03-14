@@ -26,7 +26,7 @@
 #include "../fiber/geometrical_data.hpp"
 #include "../fiber/collection_of_4d_arrays.hpp"
 
-#include <iostream> // std::cout
+#include <iostream> // //std::cout
 #include <limits>
 
 namespace fmm
@@ -263,13 +263,9 @@ void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointS(
     S *= localS/(this->getN());
   }
 
-  std::cout << "<:G";
-
   result.resize(1);
 
   result(0) =  S;
-  std::cout << "G:>";
-
 }
 
 template <typename KernelType, typename ValueType>

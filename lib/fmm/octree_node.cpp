@@ -133,7 +133,6 @@ void OctreeNode<ResultType>::makeInteractionList(const Octree<ResultType>
   childrenOfParentNeighList.end(),
   m_neigbourList.begin(), m_neigbourList.end(), m_InteractionList.begin());
   m_InteractionList.resize(it-m_InteractionList.begin());
-  //std::cout << m_InteractionList.size() << ' '; 
   // the parents with children that do not intersect the neigbour list
   // could be detected here
 
@@ -281,7 +280,7 @@ EvaluateNearFieldHelper<ResultType>::EvaluateNearFieldHelper(
 
 template <typename ResultType>
 void 
-EvaluateNearFieldHelper<ResultType>::operator()(int nodenumber) const
+EvaluateNearFieldHelper<ResultType>::operator()(size_t nodenumber) const
 {
   OctreeNode<ResultType> &node = m_octree.getNode(nodenumber,
                                                   m_octree.levels());
@@ -294,8 +293,13 @@ EvaluateNearFieldHelper<ResultType>::operator()(int nodenumber) const
     unsigned int trialStart = node.trialDofStart();
     unsigned int trialEnd = trialStart + node.trialDofCount() - 1;
 
-//		const Vector<ResultType>& xLocal = m_x_in.rows(trialStart, trialEnd);
-//		m_y_in_out.rows(testStart, testEnd) += node.getNearFieldMat(0)*xLocal;
+    Vector<ResultType> xLocal;
+    xLocal.resize(trialEnd-trialStart);
+    for(int i=0;i<trialEnd-trialStart;++i)
+      xLocal[i] = m_x_in[trialStart+i];
+    const Vector<ResultType>& yLocal = node.getNearFieldMat(0)*xLocal;
+    for(int i=0;i<testEnd-testStart;++i)
+      m_y_in_out[testStart+i] += yLocal[i];
   }
 
   // repeat for the neighbours: trial functions are fixed in the current node
@@ -309,8 +313,13 @@ EvaluateNearFieldHelper<ResultType>::operator()(int nodenumber) const
     unsigned int trialStart = nodeneigh.trialDofStart();
     unsigned int trialEnd = trialStart + nodeneigh.trialDofCount() - 1;
 
-//		const Vector<ResultType>& xLocal = m_x_in.rows(trialStart, trialEnd);
-//		m_y_in_out.rows(testStart, testEnd) += node.getNearFieldMat(neigh+1)*xLocal;
+    Vector<ResultType> xLocal;
+    xLocal.resize(trialEnd-trialStart);
+    for(int i=0;i<trialEnd-trialStart;++i)
+      xLocal[i] = m_x_in[trialStart+i];
+    const Vector<ResultType>& yLocal = node.getNearFieldMat(neigh+1)*xLocal;
+    for(int i=0;i<testEnd-testStart;++i)
+      m_y_in_out[testStart+i] += yLocal[i];
   }
 }
 
@@ -324,7 +333,7 @@ EvaluateMultipoleCoefficientsHelper<ResultType>::EvaluateMultipoleCoefficientsHe
 
 template <typename ResultType>
 void
-EvaluateMultipoleCoefficientsHelper<ResultType>::operator()(int nodenumber)
+EvaluateMultipoleCoefficientsHelper<ResultType>::operator()(size_t nodenumber)
 const
 {
   OctreeNode<ResultType> &node = m_octree.getNode(nodenumber,
@@ -353,7 +362,7 @@ EvaluateFarFieldMatrixVectorProductHelper<ResultType>::EvaluateFarFieldMatrixVec
 
 template <typename ResultType>
 void 
-EvaluateFarFieldMatrixVectorProductHelper<ResultType>::operator()(int
+EvaluateFarFieldMatrixVectorProductHelper<ResultType>::operator()(size_t
         nodenumber) const
 {
   OctreeNode<ResultType> &node = m_octree.getNode(nodenumber,

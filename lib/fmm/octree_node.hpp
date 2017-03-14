@@ -127,7 +127,7 @@ public:
       const Vector<ResultType>& x_in,
       Vector<ResultType>& y_in_out);
 
-  void operator()(int nodenumber) const;
+  void operator()(size_t nodenumber) const;
 
 private:
   Octree<ResultType> &m_octree;
@@ -145,7 +145,7 @@ public:
       Octree<ResultType> &octree,
       const Vector<ResultType>& x_in);
 
-  void operator()(int nodenumber) const;
+  void operator()(size_t nodenumber) const;
 
 private:
   Octree<ResultType> &m_octree;
@@ -165,7 +165,7 @@ public:
       const Vector<CoordinateType>& weights,
       Vector<ResultType>& y_in_out);
 
-  void operator()(int nodenumber) const;
+  void operator()(size_t nodenumber) const;
 
 private:
   Octree<ResultType> &m_octree;

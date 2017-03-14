@@ -85,6 +85,7 @@ public:
       else return true;
     }
 
+
     // affects the local and multipole coefficients in the the leaves
     void apply(
         const Eigen::Ref<const Vector<ResultType>> &x_in,
@@ -105,7 +106,7 @@ private:
     const unsigned int m_topLevel;
     // for now use a flat structure
     std::vector<std::vector<OctreeNode<ResultType> > > m_OctreeNodes;
-    shared_ptr<DofPermutation> m_test_p2o, m_trial_p2o;
+    shared_ptr<DofPermutation> m_test_perm, m_trial_perm;
     const FmmTransform<ResultType>& m_fmmTransform;
     Vector<CoordinateType> m_lowerBound, m_upperBound;
     shared_ptr<FmmCache<ResultType> > m_fmmCache;

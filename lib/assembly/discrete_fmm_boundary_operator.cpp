@@ -36,12 +36,11 @@ namespace Bempp
 template <typename ValueType>
 DiscreteFmmBoundaryOperator<ValueType>::
 DiscreteFmmBoundaryOperator(
-		unsigned int rowCount, unsigned int columnCount,
-		const shared_ptr<fmm::Octree<ValueType> > &octree,
-		int symmetry_) :
-    m_rowCount(rowCount), m_columnCount(columnCount),
-	m_octree(octree),
-	m_symmetry(symmetry_)
+    unsigned int rowCount, unsigned int columnCount,
+    const shared_ptr<fmm::Octree<ValueType> > &octree,
+    int symmetry_) :
+  m_rowCount(rowCount), m_columnCount(columnCount), m_octree(octree),
+  m_symmetry(symmetry_)
 {
 }
 
@@ -85,7 +84,8 @@ shared_ptr<const DiscreteBoundaryOperator<ValueType> >
 DiscreteFmmBoundaryOperator<ValueType>::asDiscreteFmmBoundaryOperator(
         double eps, int maximumRank, bool interleave) const
 {
-    return this->shared_from_this(); // this-> needed for template name resolution.
+  return this->shared_from_this();
+  // this-> needed for template name resolution.
 }
 
 template <typename ValueType>
@@ -93,8 +93,8 @@ const DiscreteFmmBoundaryOperator<ValueType>&
 DiscreteFmmBoundaryOperator<ValueType>::castToFmm(
         const DiscreteBoundaryOperator<ValueType>& discreteOperator)
 {
-    return dynamic_cast<const DiscreteFmmBoundaryOperator<ValueType>&>(
-                discreteOperator);
+  return dynamic_cast<const DiscreteFmmBoundaryOperator<ValueType>&>(
+         discreteOperator);
 }
 
 template <typename ValueType>
@@ -130,7 +130,7 @@ applyBuiltInImpl(const TranspositionMode trans,
     else
         m_domainPermutation.unpermuteVector(permutedResult, y_inout);
 */
-    if (trans != NO_TRANSPOSE && trans != TRANSPOSE && trans != CONJUGATE_TRANSPOSE)
+  if (trans != NO_TRANSPOSE && trans != TRANSPOSE && trans != CONJUGATE_TRANSPOSE)
         throw std::runtime_error(
                 "DiscreteFmmBoundaryOperator::applyBuiltInImpl(): "
                 "transposition modes other than NO_TRANSPOSE and "

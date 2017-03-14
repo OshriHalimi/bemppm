@@ -2,6 +2,7 @@
 #include "octree_node.hpp"
 #include "fmm_transform.hpp"
 #include "fmm_cache.hpp"
+#include "dof_permutation.hpp"
 //#include "interpolate_on_sphere.hpp"
 
 #include "../common/common.hpp"
@@ -166,7 +167,6 @@ void Octree<ResultType>::initialize()
   }
 }
 
-
 // fill octree and return p2o permutation vector (shared vector)
 // apply test and trial spaces, use flag to test if the same or shared pointers?
 // will do this from the constructor in future
@@ -203,22 +203,23 @@ void Octree<ResultType>::assignPoints(
         getNode(n-1, m_levels).testDofStart() + valold );
   }
 
-  // for the permutation vector and intialise the leaves
-  test_p2o = std::vector<long unsigned int>(nTestDofs, 0);
+  test_p2o.resize(nTestDofs);
 
-  for (unsigned int dof=0; dof<nTestDofs; dof++) {
+  // for the permutation vector and intialise the leaves
+  for (unsigned int dof=0; dof<nTestDofs; ++dof) {
     unsigned long number = getLeafContainingPoint(testDofCenters[dof]);
     OctreeNode<ResultType> &node = getNode(number, m_levels);
-    test_p2o[node.postIncTestDofCount() + node.testDofStart()] = dof;
+    test_p2o[node.postIncTestDofCount()+node.testDofStart()]=dof;
 
     unsigned long parent = getParent(number);
 
-    for (unsigned int level = m_levels-1; level!=1; level--) {
+    for (unsigned int level = m_levels-1; level!=1; --level) {
       getNode(parent,level).postIncTestDofCount();
       parent = getParent(parent);
     }
   }
-//  m_test_p2o = boost::make_shared<IndexPermutation>(test_p2o); // check p2o persists
+    // check p2o persists
+  m_test_perm = boost::make_shared<DofPermutation>(test_p2o);
 
   // get permutation for trial space (COPY PASTE - FACTOR OUT LATER)
   const unsigned int nTrialDofs = trialDofCenters.size();
@@ -244,11 +245,11 @@ void Octree<ResultType>::assignPoints(
   }
 
   // for the permutation vector and intialise the leaves
-  trial_p2o = std::vector<long unsigned int>(nTrialDofs, 0);
+  trial_p2o.resize(nTrialDofs);
   for (unsigned int dof=0; dof<nTrialDofs; dof++) {
     unsigned long number = getLeafContainingPoint(trialDofCenters[dof]);
     OctreeNode<ResultType> &node = getNode(number, m_levels);
-    trial_p2o[node.postIncTrialDofCount() + node.trialDofStart()] = dof;
+    trial_p2o[node.postIncTrialDofCount()+node.trialDofStart()]=dof;
     unsigned long parent = getParent(number);
     // propagate filled flag up tree, might assume dofCount==1 is full for non-leaves
     for (unsigned int level = m_levels-1; level!=1; level--) {
@@ -256,7 +257,9 @@ void Octree<ResultType>::assignPoints(
       parent = getParent(parent);
     }
   }
-//  m_trial_p2o = boost::make_shared<IndexPermutation>(trial_p2o); // check p2o persists
+  //m_trial_perm->set_p2o(trial_p2o);
+  m_trial_perm = boost::make_shared<DofPermutation>(trial_p2o);
+    // check p2o persists
 
   // generate neighbour information and interaction lists, taking into account empty leaves
   for (unsigned int level = m_topLevel; level<=m_levels; level++) {
@@ -273,10 +276,6 @@ void Octree<ResultType>::assignPoints(
     for (unsigned long node=0; node<nNodes; node++) {
       Vector<CoordinateType> center;
       nodeCenter(node,level,center);
-      std::cout << level << "," << node << ": (";
-      std::cout << center[0] << ",";
-      std::cout << center[1] << ",";
-      std::cout << center[2] << ")" << std::endl;
     }
   }
 }
@@ -340,13 +339,13 @@ void Octree<ResultType>::apply(
 {
     const unsigned int nLeaves = getNodesPerLevel(m_levels);
     bool transposed = (trans & Bempp::TRANSPOSE);
-
     Vector<ResultType> x_in_permuted;
+    x_in_permuted.resize(x_in.rows());
     if (transposed)
-        m_test_p2o->permute(x_in,
+        m_test_perm->permute(x_in,
                             Eigen::Ref<Vector<ResultType>>(x_in_permuted));
     else
-        m_trial_p2o->permute(x_in,
+        m_trial_perm->permute(x_in,
                              Eigen::Ref<Vector<ResultType>>(x_in_permuted));
 
     Vector<ResultType> y_out_permuted;
@@ -355,12 +354,16 @@ void Octree<ResultType>::apply(
 
     EvaluateNearFieldHelper<ResultType> evaluateNearFieldHelper(
         *this, x_in_permuted, y_out_permuted);
-    tbb::parallel_for<size_t>(0, nLeaves, evaluateNearFieldHelper);
+    for(size_t i=0;i<nLeaves;++i)
+      evaluateNearFieldHelper(i);
+//    tbb::parallel_for<size_t>(0, nLeaves, evaluateNearFieldHelper);
 
     EvaluateMultipoleCoefficientsHelper<ResultType>
         evaluateMultipoleCoefficientsHelper(*this, x_in_permuted);
-    tbb::parallel_for<size_t>(0, nLeaves,
-                              evaluateMultipoleCoefficientsHelper);
+    for(size_t i=0;i<nLeaves;++i)
+      evaluateMultipoleCoefficientsHelper(i);
+//    tbb::parallel_for<size_t>(0, nLeaves,
+//                              evaluateMultipoleCoefficientsHelper);
 
     if(multilevel())
       upwardsStep(m_fmmTransform);
@@ -376,12 +379,12 @@ void Octree<ResultType>::apply(
     tbb::parallel_for<size_t>(0, nLeaves,
                               evaluateFarFieldMatrixVectorProductHelper);
 
-    if (!transposed)
-        m_test_p2o->unpermute(Eigen::Ref<const Vector<ResultType>>(y_out_permuted),
-                              y_out);
-    else
-        m_trial_p2o->unpermute(Eigen::Ref<const Vector<ResultType>>(y_out_permuted),
+    if (transposed)
+        m_trial_perm->unpermute(Eigen::Ref<const Vector<ResultType>>(y_out_permuted),
                                y_out);
+    else
+        m_test_perm->unpermute(Eigen::Ref<const Vector<ResultType>>(y_out_permuted),
+                              y_out);
 }
 
 
@@ -580,7 +583,7 @@ void Octree<ResultType>::translationStep(
     const FmmTransform<ResultType> &fmmTransform)
                                               //, Vector<ResultType>& y_inout)
 {
-  if ( fmmTransform.isCompressedM2L() ) {
+  if (cache() && fmmTransform.isCompressedM2L() ) {
     // Compress Multipole Coefficients 
     for (unsigned int level = m_topLevel; level<=m_levels; level++) {
       unsigned int nNodes = getNodesPerLevel(level);
@@ -589,6 +592,7 @@ void Octree<ResultType>::translationStep(
         if (node.trialDofCount()==0)
           continue;
         Vector<ResultType> mcoefs = node.getMultipoleCoefficients();
+        ///////// HERE IS ERROR ////////////////////
         fmmCache().compressMultipoleCoefficients(mcoefs, level);
         node.setMultipoleCoefficients(mcoefs);
       }
@@ -610,7 +614,7 @@ void Octree<ResultType>::translationStep(
     tbb::parallel_for<size_t>(0, nNodes, translationStepHelper);
   }
 
-  if ( fmmTransform.isCompressedM2L() ) {
+  if (cache() && fmmTransform.isCompressedM2L() ) {
     // Explode Local Coefficients
     for (unsigned int level = m_topLevel; level<=m_levels; level++) {
       unsigned int nNodes = getNodesPerLevel(level);
