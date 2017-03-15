@@ -344,10 +344,13 @@ const
   const unsigned int trialStart = node.trialDofStart();
   const unsigned int trialCount = trialStart + node.trialDofCount() - 1;
 
-//	const Vector<ResultType>& xLocal = m_x_in.rows(trialStart, trialCount);
+  Vector<ResultType> xLocal;
+  xLocal.resize(trialCount);
+  for(size_t i=0;i<trialCount;++i)
+    xLocal(i) = m_x_in(trialStart+i);
 
   // m_trialFarFieldMat(multipole coefficients, dofTrial)
-//	node.setMultipoleCoefficients(node.getTrialFarFieldMat()*xLocal);
+  node.setMultipoleCoefficients(node.getTrialFarFieldMat()*xLocal);
 }
 
 // local coefficients in each leaf, to far field contributation at each test dof
@@ -378,8 +381,11 @@ EvaluateFarFieldMatrixVectorProductHelper<ResultType>::operator()(size_t
   // equilvalent to ylocal += [ m_testFarFieldMat*(weight.*lcoef)
   // part between [] is the local coefficient at each test dof, calc weighted sum
   // special case, simplification possible since L2L operation is diagonal
-//	m_y_in_out.rows(testStart, testCount) += node.getTestFarFieldMat()
-//		*(node.getLocalCoefficients() % m_weights);
+  Matrix<ResultType> nff = node.getTestFarFieldMat();
+  for(size_t i=0;i<nff.rows();++i)
+    for(size_t j=0;j<nff.cols();++j)
+      m_y_in_out(j) += nff(i,j)
+          *(node.getLocalCoefficients()(j) * m_weights(j));
 }
 
 template <typename ResultType>

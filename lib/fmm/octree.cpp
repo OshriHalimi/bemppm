@@ -429,6 +429,7 @@ public:
       // add contribution of child to the parent
       const Vector<ResultType>& mcoefsChild =
           m_octree.getNode(child,m_level+1).getMultipoleCoefficients();
+            // this returns a 0 dim vector
       // interpolate all multipoles from child layer to higher order, then apply M2M
       Vector<ResultType> mcoefsChildInterpolated;
       m_fmmTransform.interpolate(m_level+1, m_level, mcoefsChild,
@@ -444,7 +445,6 @@ public:
           mcoefs[i] += m2m(i,0)*mcoefsChildInterpolated[i];
       else // m2m is a full matrix
         mcoefs += m2m * mcoefsChildInterpolated;
-
     } // for each child
     m_octree.getNode(node,m_level).setMultipoleCoefficients(mcoefs);
   } // operator()
@@ -492,8 +492,9 @@ public:
 
     Vector<CoordinateType> R; // center of the node
     m_octree.nodeCenter(node,m_level, R);
-    Vector<ResultType> lcoef;//(m_fmmTransform.quadraturePointCount());
-    //lcoef.fill(0.0);
+    Vector<ResultType> lcoef;
+    lcoef.resize(m_fmmTransform.quadraturePointCount());
+    lcoef.fill(0.0);
 
     Vector<CoordinateType> boxSize;
     if(m_octree.cache()){
@@ -583,7 +584,8 @@ void Octree<ResultType>::translationStep(
     const FmmTransform<ResultType> &fmmTransform)
                                               //, Vector<ResultType>& y_inout)
 {
-  if (cache() && fmmTransform.isCompressedM2L() ) {
+  //////////////////////////////// ERROR IN HERE /////////////////////
+  if (fmmTransform.isCompressedM2L() ) {
     // Compress Multipole Coefficients 
     for (unsigned int level = m_topLevel; level<=m_levels; level++) {
       unsigned int nNodes = getNodesPerLevel(level);
@@ -593,7 +595,7 @@ void Octree<ResultType>::translationStep(
           continue;
         Vector<ResultType> mcoefs = node.getMultipoleCoefficients();
         ///////// HERE IS ERROR ////////////////////
-        fmmCache().compressMultipoleCoefficients(mcoefs, level);
+        if(cache()) fmmCache().compressMultipoleCoefficients(mcoefs, level);
         node.setMultipoleCoefficients(mcoefs);
       }
     }
@@ -614,7 +616,7 @@ void Octree<ResultType>::translationStep(
     tbb::parallel_for<size_t>(0, nNodes, translationStepHelper);
   }
 
-  if (cache() && fmmTransform.isCompressedM2L() ) {
+  if (fmmTransform.isCompressedM2L() ) {
     // Explode Local Coefficients
     for (unsigned int level = m_topLevel; level<=m_levels; level++) {
       unsigned int nNodes = getNodesPerLevel(level);
@@ -623,7 +625,7 @@ void Octree<ResultType>::translationStep(
         if (node.testDofCount()==0)
           continue;
         Vector<ResultType> lcoefs = node.getLocalCoefficients();
-        fmmCache().explodeLocalCoefficients(lcoefs, level);
+        if(cache()) fmmCache().explodeLocalCoefficients(lcoefs, level);
         node.setLocalCoefficients(lcoefs);
       }
     }
