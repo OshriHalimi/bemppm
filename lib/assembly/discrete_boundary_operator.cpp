@@ -71,7 +71,6 @@ void DiscreteBoundaryOperator<ValueType>::apply(const TranspositionMode trans,
     throw std::invalid_argument("DiscreteBoundaryOperator::apply(): "
                                 "vectors x_in and y_inout must have "
                                 "the same number of columns");
-
   for (size_t i = 0; i < x_in.cols(); ++i) {
 
     applyBuiltInImpl(trans, Eigen::Ref<Vector<ValueType>>(

@@ -384,7 +384,7 @@ EvaluateFarFieldMatrixVectorProductHelper<ResultType>::operator()(size_t
   Matrix<ResultType> nff = node.getTestFarFieldMat();
   for(size_t i=0;i<nff.rows();++i)
     for(size_t j=0;j<nff.cols();++j)
-      m_y_in_out(j) += nff(i,j)
+      m_y_in_out(i) += nff(i,j)
           *(node.getLocalCoefficients()(j) * m_weights(j));
 }
 

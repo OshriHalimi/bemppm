@@ -182,7 +182,6 @@ void FmmFarFieldHelper<BasisFunctionType, ResultType>::operator()(
       testFarFieldMat = evaluateFarFieldIntegrals(
           fmmTestLocalAssembler, m_fmmTransform, nodeCenter,
           nodeSize, testDofStart, testDofCount, true, true);
-      testFarFieldMat = testFarFieldMat.transpose();
       node.setTestFarFieldMat(testFarFieldMat);
     }
     // evaluate and store trial far-field

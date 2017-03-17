@@ -28,7 +28,6 @@
 #include <boost/smart_ptr/shared_ptr.hpp>
 #include <boost/type_traits/is_complex.hpp>
 
-
 namespace Bempp
 {
 
