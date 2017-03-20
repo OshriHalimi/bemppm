@@ -440,7 +440,7 @@ public:
 
       if (mcoefs.rows()==0) {
         mcoefs.resize(mcoefsChildInterpolated.rows());
-        for(int i=0;i<mcoefs.rows();++i) mcoefs[i]=0;
+        mcoefs.fill(0);
       }
 
       if (m2m.cols()==1) // diagonal m2m operator
@@ -500,9 +500,8 @@ public:
     lcoef.fill(0.0);
 
     Vector<CoordinateType> boxSize;
-    if(m_octree.cache()){
+    if(m_octree.cache())
       m_octree.nodeSize(m_level, boxSize);
-    }
 
     const std::vector<unsigned long>& neigbourList
         = m_octree.getNode(node,m_level).neigbourList();
@@ -529,7 +528,7 @@ public:
 
         if (lcoef.rows()==0) {
           lcoef.resize(mcoefs.rows());
-          for(int i=0;i<lcoef.rows();++i) lcoef[i] = 0;
+          lcoef.fill(0);
         }
 
         if (m2l.cols()==1) // diagonal m2l operator
@@ -563,7 +562,7 @@ public:
 
         if (lcoef.rows()==0) {
           lcoef.resize(mcoefs.rows());
-          for(int i=0;i<lcoef.rows();++i) lcoef[i] = 0;
+          lcoef.fill(0);
         }
 
         if (m2l.cols()==1) // diagonal m2l operator

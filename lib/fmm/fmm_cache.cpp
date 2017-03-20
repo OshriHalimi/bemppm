@@ -8,7 +8,6 @@
 #include <string>
 #include <sstream>
 
-
 namespace fmm
 {
 
@@ -28,7 +27,8 @@ FmmCache<ValueType>::initCache(
 //  const Fiber::CollectionOfKernels<KernelType>& kernels)
 {
   Vector<CoordinateType> origin(3);
-  for(int i=0;i<3;++i) origin[i]=0;
+  origin.fill(0);
+//  for(int i=0;i<3;++i) origin[i]=0;
 
   m_cacheM2L.resize(m_levels-m_topLevel+1);
 
@@ -52,7 +52,6 @@ FmmCache<ValueType>::initCache(
         for (int indz=-3; indz<=3; indz++) {
           center[2] = indz*boxSize[2];
           if (abs(indx) > 1 || abs(indy) > 1 || abs(indz) > 1) {
-            //// IT CRASHES HERE!!!
             Matrix<ValueType> m2l = m_fmmTransform.M2L(center, origin,
                                                        boxSize, level);
             m_cacheM2L[level-m_topLevel][index++] = m2l;
@@ -122,9 +121,9 @@ FmmCache<ValueType>::compressM2L(bool isSymmetric)
 
   m_Ufat.resize(m_levels-m_topLevel+1);
   m_Vthin.resize(m_levels-m_topLevel+1);
-  Matrix<ValueType> Ufat(npt, npt);
-  Vector<CoordinateType> sigma(npt);
-  Matrix<ValueType> Vfat;
+//  Matrix<ValueType> Ufat(npt, npt);
+//  Vector<CoordinateType> sigma(npt);
+//  Matrix<ValueType> Vfat;
   Matrix<ValueType> kernelsFat(npt, 316*npt);
 
   for (unsigned int level = m_topLevel; level<=m_levels; ++level) {
@@ -139,9 +138,11 @@ FmmCache<ValueType>::compressM2L(bool isSymmetric)
           = m_cacheM2L[level-m_topLevel][item];
     }
 
-    Eigen::JacobiSVD<Matrix<ValueType>> svd(kernelsFat,
-                                            Eigen::ComputeFullV
-                                          | Eigen::ComputeFullU);
+    Eigen::JacobiSVD<Matrix<ValueType>> svd=kernelsFat.jacobiSvd(
+                                   Eigen::ComputeThinU);
+//                                   Eigen::ComputeFullV | Eigen::ComputeFullU);
+
+    Matrix<ValueType> Ufat = svd.matrixU();
 
     // Compute the SVD of the scaled fat collection of Kernels
     //if ( !arma::svd_econ(Ufat, sigma, Vfat, kernelsFat, 'l') )
@@ -151,17 +152,20 @@ FmmCache<ValueType>::compressM2L(bool isSymmetric)
     // store the first few columns of U used for the reduced rank
     // approximation into m_Ured
     int cutoff = npt/2 - 1;
+    m_Ufat[level-m_topLevel].resize(npt,cutoff-1);
     m_Ufat[level-m_topLevel] = Ufat.block(0, 0, npt, cutoff-1);
 
     if (isSymmetric) // if M2L or Kernel is asymmetric
       m_Vthin[level-m_topLevel] = m_Ufat[level-m_topLevel];
     else {
       Matrix<ValueType> kernelsThin(316*npt, npt);
-      Matrix<ValueType> Uthin;
-      Matrix<ValueType> Vthin(npt, npt);
       for (unsigned int item = 0; item<316; ++item)
         kernelsThin.block(item*npt, 0, npt, npt)
             = m_cacheM2L[level-m_topLevel][item];
+
+    Eigen::JacobiSVD<Matrix<ValueType>> svd2=kernelsThin.jacobiSvd(
+                                   Eigen::ComputeThinV);
+      Matrix<ValueType> Vthin=svd.matrixV();
 
       //if (!arma::svd_econ(Uthin, sigma, Vthin, kernelsThin, 'r') )
       //  throw std::invalid_argument("FmmCache<ValueType>::compressM2L(): "
@@ -186,10 +190,9 @@ FmmCache<ValueType>::compressMultipoleCoefficients(
     int level) const
 {
   if (m_fmmTransform.isCompressedM2L()){
-    Matrix<ValueType> multiplied;
+    Vector<ValueType> multiplied(mcoefs.rows());
     for(int i=0;i<m_kernelWeightVec.rows();++i)
-      for(int j=0;j<m_kernelWeightVec.cols();++j)
-        multiplied(i,j) = m_kernelWeightVec(i,j) * mcoefs(i,j);
+        multiplied(i) = m_kernelWeightVec(i) * mcoefs(i);
     mcoefs = m_Vthin[level-m_topLevel].transpose() * multiplied;
   }
 }
@@ -201,11 +204,11 @@ FmmCache<ValueType>::explodeLocalCoefficients(
     Vector<ValueType>& lcoefs,
     int level) const
 {
-  if (m_fmmTransform.isCompressedM2L())
+  if (m_fmmTransform.isCompressedM2L()){
+    Vector<ValueType> mult = m_Ufat[level-m_topLevel]*lcoefs;
     for(int i=0;i<m_kernelWeightVec.rows();++i)
-      for(int j=0;j<m_kernelWeightVec.cols();++j)
-        lcoefs(i,j) = m_kernelWeightVec(i,j)
-                      * (m_Ufat[level-m_topLevel]*lcoefs)(i,j);
+      lcoefs(i) = m_kernelWeightVec(i) * mult(i);
+  }
 }
 
 template <typename ValueType>

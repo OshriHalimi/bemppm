@@ -293,13 +293,11 @@ EvaluateNearFieldHelper<ResultType>::operator()(size_t nodenumber) const
     unsigned int trialStart = node.trialDofStart();
     unsigned int trialEnd = trialStart + node.trialDofCount() - 1;
 
-    Vector<ResultType> xLocal;
-    xLocal.resize(trialEnd-trialStart);
-    for(int i=0;i<trialEnd-trialStart;++i)
-      xLocal[i] = m_x_in[trialStart+i];
+    const Vector<ResultType> xLocal=m_x_in.block(trialStart,0,
+                                                 trialEnd-trialStart,1);
     const Vector<ResultType>& yLocal = node.getNearFieldMat(0)*xLocal;
-    for(int i=0;i<testEnd-testStart;++i)
-      m_y_in_out[testStart+i] += yLocal[i];
+    m_y_in_out.block(testStart,0,testEnd-testStart,1)
+        += node.getNearFieldMat(0)*xLocal;
   }
 
   // repeat for the neighbours: trial functions are fixed in the current node

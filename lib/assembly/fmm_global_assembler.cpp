@@ -97,10 +97,6 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   bool multiIO=true;
   if(levels==1) multiIO=false;
 
-  if(cacheIO){
-    throw NotImplementedError("Cached FMM not implemented");
-  }
-
   // get bounding boxes of spaces
   Vector<double> lowerBoundTest, upperBoundTest;
   Vector<double> lowerBoundTrial, upperBoundTrial;
