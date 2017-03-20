@@ -162,22 +162,6 @@ void OctreeNode<ResultType>::setIndex(unsigned long number,
   m_level = level;
 }
 
-/*
-template <typename CoordinateType,typename ResultType>
-void OctreeNode<ResultType>::center(CoordinateType c[3]) const{
-  /////
-}
-template <typename CoordinateType,typename ResultType>
-void OctreeNode<ResultType>::center(Vector<CoordinateType> &c) const{
-  CoordinateType c_v[3];
-  center(c_v);
-  for(int i=0;i<3;++i)
-    c[i] = c_v[i];
-}
-
-*/
-
-
 // return Morton index
 template <typename ResultType>
 unsigned long OctreeNode<ResultType>::number() const
@@ -311,13 +295,10 @@ EvaluateNearFieldHelper<ResultType>::operator()(size_t nodenumber) const
     unsigned int trialStart = nodeneigh.trialDofStart();
     unsigned int trialEnd = trialStart + nodeneigh.trialDofCount() - 1;
 
-    Vector<ResultType> xLocal;
-    xLocal.resize(trialEnd-trialStart);
-    for(int i=0;i<trialEnd-trialStart;++i)
-      xLocal[i] = m_x_in[trialStart+i];
-    const Vector<ResultType>& yLocal = node.getNearFieldMat(neigh+1)*xLocal;
-    for(int i=0;i<testEnd-testStart;++i)
-      m_y_in_out[testStart+i] += yLocal[i];
+    const Vector<ResultType> xLocal = m_x_in.block(trialStart,0,
+                                                   trialEnd-trialStart,1);
+    m_y_in_out.block(testStart,0,testEnd-testStart,1)
+        += node.getNearFieldMat(neigh+1)*xLocal;
   }
 }
 

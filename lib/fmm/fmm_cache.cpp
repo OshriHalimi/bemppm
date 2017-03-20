@@ -139,7 +139,7 @@ FmmCache<ValueType>::compressM2L(bool isSymmetric)
     }
 
     Eigen::JacobiSVD<Matrix<ValueType>> svd=kernelsFat.jacobiSvd(
-                                   Eigen::ComputeThinU);
+                                   Eigen::ComputeFullU);
 //                                   Eigen::ComputeFullV | Eigen::ComputeFullU);
 
     Matrix<ValueType> Ufat = svd.matrixU();
