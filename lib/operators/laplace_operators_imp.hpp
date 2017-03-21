@@ -44,6 +44,7 @@
 
 #include "../fmm/fmm_transform.hpp"
 #include "../fmm/fmm_black_box_single_layer.hpp"
+#include "../fmm/fmm_black_box_double_layer.hpp"
 
 #include "../fiber/typical_test_scalar_kernel_trial_integral.hpp"
 
@@ -140,11 +141,27 @@ laplaceDoubleLayerBoundaryOperator(
     integral.reset(new Fiber::DefaultTestKernelTrialIntegral<IntegrandFunctor>(
         IntegrandFunctor()));
 
-  shared_ptr<Op> newOp(new Op(domain, range, dualToRange, label, symmetry,
-                              KernelFunctor(), TransformationFunctor(),
-                              TransformationFunctor(), integral));
+  if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
+    shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
+    int expansionOrder =
+        parameterList.template get<int>("options.fmm.expansion_order");
+    int levels = parameterList.template get<int>("options.fmm.levels");
+    fmmTransform = boost::make_shared<fmm::FmmBlackBoxDoubleLayer<KernelType,
+                                      ResultType>>(KernelFunctor(),
+                                                   expansionOrder,levels);
+    shared_ptr<
+        ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>>
+        newOp(new Op(domain, range, dualToRange, label, symmetry, KernelFunctor(),
+                     TransformationFunctor(), TransformationFunctor(), integral,
+                     fmmTransform));
+    return newOp;
+  } else {
+    shared_ptr<Op> newOp(new Op(domain, range, dualToRange, label, symmetry,
+                                KernelFunctor(), TransformationFunctor(),
+                                TransformationFunctor(), integral));
 
-  return newOp;
+    return newOp;
+  }
 }
 
 template <typename BasisFunctionType, typename KernelType, typename ResultType>
