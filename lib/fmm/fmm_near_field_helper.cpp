@@ -184,8 +184,7 @@ void FmmNearFieldHelper<BasisFunctionType, ResultType>::evaluateNearField(
         //node.m_neigbourList = neigbourList;
 
         // size of the neigbourhood plus the current node
-        std::vector<Matrix<ResultType> > nearFieldMats;
-        nearFieldMats.resize(neigbourList.size()+1);
+        std::vector<Matrix<ResultType> > nearFieldMats(neigbourList.size()+1);
 
         const unsigned int testDofStart = node.testDofStart();
         const unsigned int testDofCount = node.testDofCount();

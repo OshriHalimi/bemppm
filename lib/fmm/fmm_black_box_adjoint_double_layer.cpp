@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "fmm_black_box_hypersingular.hpp"
+#include "fmm_black_box_adjoint_double_layer.hpp"
 #include "fmm_black_box.hpp"
 #include "fmm_transform.hpp"
 
@@ -28,7 +28,7 @@ namespace fmm
 {
 
 template <typename KernelType, typename ValueType>
-void FmmBlackBoxHypersingular<KernelType, ValueType>::evaluateTrial(
+void FmmBlackBoxAdjointDoubleLayer<KernelType, ValueType>::evaluateTrial(
             const Vector<CoordinateType>& point,
             const Vector<CoordinateType>& normal,
             const Vector<CoordinateType>& multipole, // [-1,1]
@@ -36,12 +36,12 @@ void FmmBlackBoxHypersingular<KernelType, ValueType>::evaluateTrial(
             const Vector<CoordinateType>& nodeSize,
             Vector<ValueType>& result) const
 {
-    this->evaluateAtGaussPointDiffS(point, normal, multipole, 
+    this->evaluateAtGaussPointS(point, normal, multipole, 
         nodeCentre, nodeSize, result);
 }
 
 template <typename KernelType, typename ValueType>
-void FmmBlackBoxHypersingular<KernelType, ValueType>::evaluateTest(
+void FmmBlackBoxAdjointDoubleLayer<KernelType, ValueType>::evaluateTest(
             const Vector<CoordinateType>& point,
             const Vector<CoordinateType>& normal,
             const Vector<CoordinateType>& multipole,
@@ -51,12 +51,11 @@ void FmmBlackBoxHypersingular<KernelType, ValueType>::evaluateTest(
 {
     this->evaluateAtGaussPointDiffS(point, normal, multipole, 
         nodeCentre, nodeSize, result);
-    result*=-1;
 }
 
 
 // should be templated on KernelType and ResultType, but not added to explicit 
 // instantiation yet. The following is equivalent.
-FIBER_INSTANTIATE_CLASS_TEMPLATED_ON_BASIS_AND_RESULT(FmmBlackBoxHypersingular);
+FIBER_INSTANTIATE_CLASS_TEMPLATED_ON_BASIS_AND_RESULT(FmmBlackBoxAdjointDoubleLayer);
 
 } // namespace Bempp

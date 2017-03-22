@@ -290,8 +290,7 @@ unsigned long Octree<ResultType>::getLeafContainingPoint(
   // be careful of precision, outside allocation bad
   Vector<CoordinateType> boxSize;
   boxSize = m_upperBound - m_lowerBound;
-  Vector<CoordinateType> pt;
-  pt.resize(3);
+  Vector<CoordinateType> pt(3);
   for(int i=0;i<3;++i)
     pt(i) = (getPoint3DCoord(point,i)-m_lowerBound[i])/boxSize[i];
 
@@ -339,8 +338,7 @@ void Octree<ResultType>::apply(
 {
     const unsigned int nLeaves = getNodesPerLevel(m_levels);
     bool transposed = (trans & Bempp::TRANSPOSE);
-    Vector<ResultType> x_in_permuted;
-    x_in_permuted.resize(x_in.rows());
+    Vector<ResultType> x_in_permuted(x_in.rows());
     if (transposed)
         m_test_perm->permute(x_in,
                             Eigen::Ref<Vector<ResultType>>(x_in_permuted));
@@ -348,8 +346,7 @@ void Octree<ResultType>::apply(
         m_trial_perm->permute(x_in,
                              Eigen::Ref<Vector<ResultType>>(x_in_permuted));
 
-    Vector<ResultType> y_out_permuted;
-    y_out_permuted.resize(y_out.rows());
+    Vector<ResultType> y_out_permuted(y_out.rows());
     y_out_permuted.fill(0.0);
 
 
@@ -360,12 +357,14 @@ void Octree<ResultType>::apply(
     tbb::parallel_for<size_t>(0, nLeaves, evaluateNearFieldHelper);
 
 
+
     EvaluateMultipoleCoefficientsHelper<ResultType>
         evaluateMultipoleCoefficientsHelper(*this, x_in_permuted);
 //    for(size_t i=0;i<nLeaves;++i)
   //    evaluateMultipoleCoefficientsHelper(i);
     tbb::parallel_for<size_t>(0, nLeaves,
                               evaluateMultipoleCoefficientsHelper);
+
 
 
     if(multilevel())
@@ -376,11 +375,13 @@ void Octree<ResultType>::apply(
     if(multilevel())
       downwardsStep(m_fmmTransform);
 
+
     EvaluateFarFieldMatrixVectorProductHelper<ResultType>
         evaluateFarFieldMatrixVectorProductHelper(
             *this, m_fmmTransform.getWeights(), y_out_permuted);
     tbb::parallel_for<size_t>(0, nLeaves,
                               evaluateFarFieldMatrixVectorProductHelper);
+
 
     if (transposed)
         m_trial_perm->unpermute(Eigen::Ref<const Vector<ResultType>>(y_out_permuted),
@@ -495,8 +496,7 @@ public:
 
     Vector<CoordinateType> R; // center of the node
     m_octree.nodeCenter(node,m_level, R);
-    Vector<ResultType> lcoef;
-    lcoef.resize(m_fmmTransform.quadraturePointCount());
+    Vector<ResultType> lcoef(m_fmmTransform.quadraturePointCount());
     lcoef.fill(0.0);
 
     Vector<CoordinateType> boxSize;

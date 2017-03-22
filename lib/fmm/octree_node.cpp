@@ -270,17 +270,17 @@ EvaluateNearFieldHelper<ResultType>::operator()(size_t nodenumber) const
                                                   m_octree.levels());
   if (node.testDofCount()==0) return;
   const unsigned int testStart = node.testDofStart();
-  const unsigned int testEnd = testStart + node.testDofCount() - 1;
+  const unsigned int testLen = node.testDofCount();
 
   // first entry is the self-interaction
   if (node.trialDofCount()) {
-    unsigned int trialStart = node.trialDofStart();
-    unsigned int trialEnd = trialStart + node.trialDofCount() - 1;
+    const unsigned int trialStart = node.trialDofStart();
+    const unsigned int trialLen = node.trialDofCount();
 
     const Vector<ResultType> xLocal=m_x_in.block(trialStart,0,
-                                                 trialEnd-trialStart,1);
+                                                 trialLen,1);
     const Vector<ResultType>& yLocal = node.getNearFieldMat(0)*xLocal;
-    m_y_in_out.block(testStart,0,testEnd-testStart,1)
+    m_y_in_out.block(testStart,0,testLen,1)
         += node.getNearFieldMat(0)*xLocal;
   }
 
@@ -292,12 +292,12 @@ EvaluateNearFieldHelper<ResultType>::operator()(size_t nodenumber) const
     const OctreeNode<ResultType> &nodeneigh
         = m_octree.getNodeConst(neigbourList[neigh], m_octree.levels());
 
-    unsigned int trialStart = nodeneigh.trialDofStart();
-    unsigned int trialEnd = trialStart + nodeneigh.trialDofCount() - 1;
+    const unsigned int trialStart = nodeneigh.trialDofStart();
+    const unsigned int trialLen = nodeneigh.trialDofCount();
 
     const Vector<ResultType> xLocal = m_x_in.block(trialStart,0,
-                                                   trialEnd-trialStart,1);
-    m_y_in_out.block(testStart,0,testEnd-testStart,1)
+                                                   trialLen,1);
+    m_y_in_out.block(testStart,0,testLen,1)
         += node.getNearFieldMat(neigh+1)*xLocal;
   }
 }
@@ -321,12 +321,10 @@ const
   if (node.trialDofCount()==0) return;
 
   const unsigned int trialStart = node.trialDofStart();
-  const unsigned int trialCount = trialStart + node.trialDofCount() - 1;
+  const unsigned int trialLen = node.trialDofCount();
 
-  Vector<ResultType> xLocal;
-  xLocal.resize(trialCount);
-  for(size_t i=0;i<trialCount;++i)
-    xLocal(i) = m_x_in(trialStart+i);
+  Vector<ResultType> xLocal(trialLen);
+  xLocal.block(0,0,trialLen,1) = m_x_in.block(trialStart,0,trialLen,1);
 
   // m_trialFarFieldMat(multipole coefficients, dofTrial)
   node.setMultipoleCoefficients(node.getTrialFarFieldMat()*xLocal);
@@ -353,7 +351,7 @@ EvaluateFarFieldMatrixVectorProductHelper<ResultType>::operator()(size_t
   if (node.testDofCount()==0) return;
 
   const unsigned int testStart = node.testDofStart();
-  const unsigned int testCount = testStart + node.testDofCount() - 1;
+  const unsigned int testLen = node.testDofCount();
 
   // m_testFarFieldMat(dofTest, local coefficients)
   // ylocal += [ (diag(lcoef)*m_testFarFieldMat^T)^T ]*weight

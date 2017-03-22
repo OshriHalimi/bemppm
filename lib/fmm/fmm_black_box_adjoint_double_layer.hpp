@@ -18,45 +18,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "fmm_black_box_hypersingular.hpp"
-#include "fmm_black_box.hpp"
-#include "fmm_transform.hpp"
+#ifndef bempp_fmm_black_box_adjoint_double_layer_hpp
+#define bempp_fmm_black_box_adjoint_double_layer_hpp
 
-#include "../fiber/explicit_instantiation.hpp"
+#include "common.hpp"
+#include "fmm_black_box.hpp"
+
+#include "../fiber/scalar_traits.hpp"
 
 namespace fmm
 {
 
 template <typename KernelType, typename ValueType>
-void FmmBlackBoxHypersingular<KernelType, ValueType>::evaluateTrial(
+class FmmBlackBoxAdjointDoubleLayer : public FmmBlackBox<KernelType, ValueType>
+{
+public:
+    typedef typename FmmBlackBox<KernelType,
+                                 ValueType>::CoordinateType CoordinateType;
+
+    template <typename KernelFunctor>
+    FmmBlackBoxAdjointDoubleLayer(const KernelFunctor& kernelFunctor, unsigned int n,
+                           unsigned int levels)
+        : FmmBlackBox<KernelType, ValueType>(kernelFunctor, n, levels) {}
+
+    virtual void evaluateTrial(
             const Vector<CoordinateType>& point,
             const Vector<CoordinateType>& normal,
-            const Vector<CoordinateType>& multipole, // [-1,1]
+            const Vector<CoordinateType>& khat,
             const Vector<CoordinateType>& nodeCentre,
             const Vector<CoordinateType>& nodeSize,
-            Vector<ValueType>& result) const
-{
-    this->evaluateAtGaussPointDiffS(point, normal, multipole, 
-        nodeCentre, nodeSize, result);
-}
+            Vector<ValueType>& result) const;
 
-template <typename KernelType, typename ValueType>
-void FmmBlackBoxHypersingular<KernelType, ValueType>::evaluateTest(
+    virtual void evaluateTest(
             const Vector<CoordinateType>& point,
             const Vector<CoordinateType>& normal,
-            const Vector<CoordinateType>& multipole,
+            const Vector<CoordinateType>& khat,
             const Vector<CoordinateType>& nodeCentre,
             const Vector<CoordinateType>& nodeSize,
-            Vector<ValueType>& result) const
-{
-    this->evaluateAtGaussPointDiffS(point, normal, multipole, 
-        nodeCentre, nodeSize, result);
-    result*=-1;
-}
-
-
-// should be templated on KernelType and ResultType, but not added to explicit 
-// instantiation yet. The following is equivalent.
-FIBER_INSTANTIATE_CLASS_TEMPLATED_ON_BASIS_AND_RESULT(FmmBlackBoxHypersingular);
+            Vector<ValueType>& result) const;
+};
 
 } // namespace Bempp
+
+#endif

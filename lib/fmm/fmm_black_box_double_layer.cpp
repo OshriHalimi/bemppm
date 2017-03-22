@@ -36,7 +36,7 @@ void FmmBlackBoxDoubleLayer<KernelType, ValueType>::evaluateTrial(
             const Vector<CoordinateType>& nodeSize,
             Vector<ValueType>& result) const
 {
-    this->evaluateAtGaussPointS(point, normal, multipole, 
+    this->evaluateAtGaussPointDiffS(point, normal, multipole, 
         nodeCentre, nodeSize, result);
 }
 
