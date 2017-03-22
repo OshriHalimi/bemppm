@@ -52,6 +52,12 @@
 
 #include "../grid/max_distance.hpp"
 
+#include "../fmm/fmm_transform.hpp"
+#include "../fmm/fmm_black_box_single_layer.hpp"
+#include "../fmm/fmm_black_box_double_layer.hpp"
+#include "../fmm/fmm_black_box_adjoint_double_layer.hpp"
+#include "../fmm/fmm_black_box_hypersingular.hpp"
+
 #include "../fiber/typical_test_scalar_kernel_trial_integral.hpp"
 
 #include <boost/type_traits/is_complex.hpp>
@@ -100,19 +106,39 @@ modifiedHelmholtzSingleLayerBoundaryOperator(
         IntegrandFunctor()));
 
   shared_ptr<Op> newOp;
-  if (useInterpolation)
-    newOp.reset(
-        new Op(domain, range, dualToRange, label, symmetry,
-               InterpolatedKernelFunctor(
-                   waveNumber,
-                   1.1 * maxDistance(*domain->grid(), *dualToRange->grid()),
-                   interpPtsPerWavelength),
-               TransformationFunctor(), TransformationFunctor(), integral));
-  else
-    newOp.reset(new Op(domain, range, dualToRange, label, symmetry,
-                       NoninterpolatedKernelFunctor(waveNumber),
-                       TransformationFunctor(), TransformationFunctor(),
-                       integral));
+  if (useInterpolation){
+    auto kernel = InterpolatedKernelFunctor(waveNumber,
+                  1.1 * maxDistance(*domain->grid(), *dualToRange->grid()),
+                  interpPtsPerWavelength);
+    if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
+      shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
+      int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
+      int levels = parameterList.template get<int>("options.fmm.levels");
+      fmmTransform = boost::make_shared<fmm::FmmBlackBoxSingleLayer<KernelType,ResultType>>(kernel,expansionOrder,levels);
+      newOp.reset(
+          new Op(domain, range, dualToRange, label, symmetry, kernel,
+                 TransformationFunctor(), TransformationFunctor(), integral,
+                 fmmTransform));
+    } else
+      newOp.reset(
+          new Op(domain, range, dualToRange, label, symmetry, kernel,
+                 TransformationFunctor(), TransformationFunctor(), integral));
+  } else {
+    auto kernel = NoninterpolatedKernelFunctor(waveNumber);
+    if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
+      shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
+      int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
+      int levels = parameterList.template get<int>("options.fmm.levels");
+      fmmTransform = boost::make_shared<fmm::FmmBlackBoxSingleLayer<KernelType,ResultType>>(kernel,expansionOrder,levels);
+      newOp.reset(
+          new Op(domain, range, dualToRange, label, symmetry, kernel,
+                 TransformationFunctor(), TransformationFunctor(), integral,
+                 fmmTransform));
+    } else
+      newOp.reset(
+          new Op(domain, range, dualToRange, label, symmetry, kernel,
+                 TransformationFunctor(), TransformationFunctor(), integral));
+  }
   return newOp;
 }
 
@@ -159,21 +185,41 @@ modifiedHelmholtzDoubleLayerBoundaryOperator(
         IntegrandFunctor()));
 
   shared_ptr<Op> newOp;
-  if (useInterpolation)
-    newOp.reset(
-        new Op(domain, range, dualToRange, label, symmetry,
-               InterpolatedKernelFunctor(
-                   waveNumber,
-                   1.1 * maxDistance(*domain->grid(), *dualToRange->grid()),
-                   interpPtsPerWavelength),
-               TransformationFunctor(), TransformationFunctor(), integral));
-  else
-    newOp.reset(new Op(domain, range, dualToRange, label, symmetry,
-                       NoninterpolatedKernelFunctor(waveNumber),
-                       TransformationFunctor(), TransformationFunctor(),
-                       integral));
-
+  if (useInterpolation){
+    auto kernel = InterpolatedKernelFunctor(waveNumber,
+                  1.1 * maxDistance(*domain->grid(), *dualToRange->grid()),
+                  interpPtsPerWavelength);
+    if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
+      shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
+      int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
+      int levels = parameterList.template get<int>("options.fmm.levels");
+      fmmTransform = boost::make_shared<fmm::FmmBlackBoxDoubleLayer<KernelType,ResultType>>(kernel,expansionOrder,levels);
+      newOp.reset(
+          new Op(domain, range, dualToRange, label, symmetry, kernel,
+                 TransformationFunctor(), TransformationFunctor(), integral,
+                 fmmTransform));
+    } else
+      newOp.reset(
+          new Op(domain, range, dualToRange, label, symmetry, kernel,
+                 TransformationFunctor(), TransformationFunctor(), integral));
+  } else {
+    auto kernel = NoninterpolatedKernelFunctor(waveNumber);
+    if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
+      shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
+      int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
+      int levels = parameterList.template get<int>("options.fmm.levels");
+      fmmTransform = boost::make_shared<fmm::FmmBlackBoxDoubleLayer<KernelType,ResultType>>(kernel,expansionOrder,levels);
+      newOp.reset(
+          new Op(domain, range, dualToRange, label, symmetry, kernel,
+                 TransformationFunctor(), TransformationFunctor(), integral,
+                 fmmTransform));
+    } else
+      newOp.reset(
+          new Op(domain, range, dualToRange, label, symmetry, kernel,
+                 TransformationFunctor(), TransformationFunctor(), integral));
+  }
   return newOp;
+
 }
 
 template <typename BasisFunctionType, typename KernelType, typename ResultType>
@@ -219,19 +265,39 @@ modifiedHelmholtzAdjointDoubleLayerBoundaryOperator(
   typedef GeneralElementarySingularIntegralOperator<BasisFunctionType,
                                                     KernelType, ResultType> Op;
   shared_ptr<Op> newOp;
-  if (useInterpolation)
-    newOp.reset(
-        new Op(domain, range, dualToRange, label, symmetry,
-               InterpolatedKernelFunctor(
-                   waveNumber,
-                   1.1 * maxDistance(*domain->grid(), *dualToRange->grid()),
-                   interpPtsPerWavelength),
-               TransformationFunctor(), TransformationFunctor(), integral));
-  else
-    newOp.reset(new Op(domain, range, dualToRange, label, symmetry,
-                       NoninterpolatedKernelFunctor(waveNumber),
-                       TransformationFunctor(), TransformationFunctor(),
-                       integral));
+  if (useInterpolation){
+    auto kernel = InterpolatedKernelFunctor(waveNumber,
+                  1.1 * maxDistance(*domain->grid(), *dualToRange->grid()),
+                  interpPtsPerWavelength);
+    if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
+      shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
+      int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
+      int levels = parameterList.template get<int>("options.fmm.levels");
+      fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(kernel,expansionOrder,levels);
+      newOp.reset(
+          new Op(domain, range, dualToRange, label, symmetry, kernel,
+                 TransformationFunctor(), TransformationFunctor(), integral,
+                 fmmTransform));
+    } else
+      newOp.reset(
+          new Op(domain, range, dualToRange, label, symmetry, kernel,
+                 TransformationFunctor(), TransformationFunctor(), integral));
+  } else {
+    auto kernel = NoninterpolatedKernelFunctor(waveNumber);
+    if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
+      shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
+      int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
+      int levels = parameterList.template get<int>("options.fmm.levels");
+      fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(kernel,expansionOrder,levels);
+      newOp.reset(
+          new Op(domain, range, dualToRange, label, symmetry, kernel,
+                 TransformationFunctor(), TransformationFunctor(), integral,
+                 fmmTransform));
+    } else
+      newOp.reset(
+          new Op(domain, range, dualToRange, label, symmetry, kernel,
+                 TransformationFunctor(), TransformationFunctor(), integral));
+  }
   return newOp;
 }
 
@@ -290,32 +356,76 @@ modifiedHelmholtzHypersingularBoundaryOperator(
                                               ResultType>> integral;
     integral.reset(new Fiber::TypicalTestScalarKernelTrialIntegral<
                    BasisFunctionType, KernelType, ResultType>());
-    if (useInterpolation)
-      newOp.reset(new Op(domain, range, dualToRange, label, symmetry,
-                         InterpolatedKernelFunctor(waveNumber, maxDistance_,
-                                                   interpPtsPerWavelength),
-                         TransformationFunctorWithBlas(),
-                         TransformationFunctorWithBlas(), integral));
-    else
-      newOp.reset(new Op(domain, range, dualToRange, label, symmetry,
-                         NoninterpolatedKernelFunctor(waveNumber),
-                         TransformationFunctorWithBlas(),
-                         TransformationFunctorWithBlas(), integral));
-  } else { // no blas
-    if (useInterpolation)
-      newOp.reset(new Op(domain, range, dualToRange, label, symmetry,
-                         InterpolatedKernelFunctor(waveNumber, maxDistance_,
-                                                   interpPtsPerWavelength),
-                         TransformationFunctor(), TransformationFunctor(),
-                         IntegrandFunctor()));
-    else
-      newOp.reset(new Op(domain, range, dualToRange, label, symmetry,
-                         NoninterpolatedKernelFunctor(waveNumber),
-                         TransformationFunctor(), TransformationFunctor(),
-                         IntegrandFunctor()));
+  if (useInterpolation){
+    auto kernel = InterpolatedKernelFunctor(waveNumber,maxDistance_,
+                  interpPtsPerWavelength);
+    if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
+      shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
+      int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
+      int levels = parameterList.template get<int>("options.fmm.levels");
+      fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(kernel,expansionOrder,levels);
+      newOp.reset(
+          new Op(domain, range, dualToRange, label, symmetry, kernel,
+                 TransformationFunctorWithBlas(), TransformationFunctorWithBlas(),integral,
+                 fmmTransform));
+    } else
+      newOp.reset(
+          new Op(domain, range, dualToRange, label, symmetry, kernel,
+                 TransformationFunctorWithBlas(), TransformationFunctorWithBlas(),integral));
+  } else {
+    auto kernel = NoninterpolatedKernelFunctor(waveNumber);
+    if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
+      shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
+      int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
+      int levels = parameterList.template get<int>("options.fmm.levels");
+      fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(kernel,expansionOrder,levels);
+      newOp.reset(
+          new Op(domain, range, dualToRange, label, symmetry, kernel,
+                 TransformationFunctorWithBlas(), TransformationFunctorWithBlas(),integral,
+                 fmmTransform));
+    } else
+      newOp.reset(
+          new Op(domain, range, dualToRange, label, symmetry, kernel,
+                 TransformationFunctorWithBlas(), TransformationFunctorWithBlas(),integral));
   }
-
+  } else { // no blas
+  if (useInterpolation){
+    auto kernel = InterpolatedKernelFunctor(waveNumber,maxDistance_,
+                  interpPtsPerWavelength);
+    if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
+      shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
+      int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
+      int levels = parameterList.template get<int>("options.fmm.levels");
+      fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(kernel,expansionOrder,levels);
+      newOp.reset(
+          new Op(domain, range, dualToRange, label, symmetry, kernel,
+                 TransformationFunctor(), TransformationFunctor(),
+                 IntegrandFunctor(),fmmTransform));
+    } else
+      newOp.reset(
+          new Op(domain, range, dualToRange, label, symmetry, kernel,
+                 TransformationFunctor(), TransformationFunctor(),
+                 IntegrandFunctor()));
+  } else {
+    auto kernel = NoninterpolatedKernelFunctor(waveNumber);
+    if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
+      shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
+      int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
+      int levels = parameterList.template get<int>("options.fmm.levels");
+      fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(kernel,expansionOrder,levels);
+      newOp.reset(
+          new Op(domain, range, dualToRange, label, symmetry, kernel,
+                 TransformationFunctor(), TransformationFunctor(),
+                 IntegrandFunctor(),fmmTransform));
+    } else
+      newOp.reset(
+          new Op(domain, range, dualToRange, label, symmetry, kernel,
+                 TransformationFunctor(), TransformationFunctor(),
+                 IntegrandFunctor()));
+  }
+  }
   return newOp;
+
 }
 
 template <typename BasisFunctionType, typename ResultType>
