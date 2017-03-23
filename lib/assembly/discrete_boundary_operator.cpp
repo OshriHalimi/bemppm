@@ -71,14 +71,12 @@ void DiscreteBoundaryOperator<ValueType>::apply(const TranspositionMode trans,
     throw std::invalid_argument("DiscreteBoundaryOperator::apply(): "
                                 "vectors x_in and y_inout must have "
                                 "the same number of columns");
-  for (size_t i = 0; i < x_in.cols(); ++i) {
-
+  for (size_t i = 0; i < x_in.cols(); ++i)
     applyBuiltInImpl(trans, Eigen::Ref<Vector<ValueType>>(
                                 const_cast<Matrix<ValueType> &>(x_in).col(i)),
                      Eigen::Ref<Vector<ValueType>>(
                          const_cast<Matrix<ValueType> &>(y_inout).col(i)),
                      alpha, beta);
-  }
 }
 
 template <typename ValueType>
@@ -105,6 +103,7 @@ Matrix<ValueType> DiscreteBoundaryOperator<ValueType>::apply(
   unsigned int cols = (transposed ? rowCount() : columnCount());
 
   Matrix<ValueType> result(rows, x_in.cols());
+  result.fill(0.0);
 
   apply(trans, x_in, result, 1.0, 0.0);
   return result;

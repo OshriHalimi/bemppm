@@ -117,18 +117,7 @@ applyBuiltInImpl(const TranspositionMode trans,
                  Eigen::Ref<Vector<ValueType>> y_inout,
                  const ValueType alpha,
                  const ValueType beta) const
-//applyBuiltInImpl(const TranspositionMode trans,
-//                 const Eigen::Ref<Vector<ValueType>>& x_in,
-//                 Eigen::Ref<Vector<ValueType>>& y_inout,
-//                 const ValueType alpha,
-//                 const ValueType beta) const
 {
-/*
-    if (!transposed)
-        m_rangePermutation.unpermuteVector(permutedResult, y_inout);
-    else
-        m_domainPermutation.unpermuteVector(permutedResult, y_inout);
-*/
   if (trans != NO_TRANSPOSE && trans != TRANSPOSE && trans != CONJUGATE_TRANSPOSE)
         throw std::runtime_error(
                 "DiscreteFmmBoundaryOperator::applyBuiltInImpl(): "
