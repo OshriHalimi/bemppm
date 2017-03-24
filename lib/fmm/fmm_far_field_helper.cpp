@@ -22,12 +22,11 @@
 #include "../fiber/surface_normal_independent_function.hpp"
 #include "../fiber/surface_normal_dependent_function.hpp"
 
-#include <tbb/parallel_for.h>
 #include <tbb/task_scheduler_init.h>
 
-#include <iostream>        // //std::cout
-#include <vector>        // std::vector
-#include <math.h>        // floor
+#include <iostream>
+#include <vector>
+#include <math.h>
 
 namespace fmm
 {
@@ -53,7 +52,7 @@ FmmFarFieldHelper<BasisFunctionType, ResultType>::FmmFarFieldHelper(
 }
 
 template <typename BasisFunctionType, typename ResultType>
-Matrix<ResultType> //Col
+Matrix<ResultType>
 FmmFarFieldHelper<BasisFunctionType, ResultType>::evaluateFarFieldIntegrals(
         FmmLocalAssembler<BasisFunctionType, ResultType>& fmmLocalAssembler,
         const FmmTransform<ResultType>& fmmTransform,
@@ -65,7 +64,7 @@ FmmFarFieldHelper<BasisFunctionType, ResultType>::evaluateFarFieldIntegrals(
       nodeCenter, nodeSize, dofStart, dofCount, isTest, false);
 }
 template <typename BasisFunctionType, typename ResultType>
-Matrix<ResultType> //Col
+Matrix<ResultType>
 FmmFarFieldHelper<BasisFunctionType, ResultType>::evaluateFarFieldIntegrals(
         FmmLocalAssembler<BasisFunctionType, ResultType>& fmmLocalAssembler,
         const FmmTransform<ResultType>& fmmTransform,

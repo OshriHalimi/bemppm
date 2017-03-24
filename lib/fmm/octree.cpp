@@ -3,13 +3,11 @@
 #include "fmm_transform.hpp"
 #include "fmm_cache.hpp"
 #include "dof_permutation.hpp"
-//#include "interpolate_on_sphere.hpp"
 
 #include "../common/common.hpp"
 #include "common.hpp"
 #include "../fiber/explicit_instantiation.hpp"
 
-//#include "../assembly/index_permutation.hpp"
 #include "../common/boost_make_shared_fwd.hpp"
 
 #include <tbb/atomic.h>
@@ -17,9 +15,9 @@
 #include <tbb/task_scheduler_init.h>
 #include <tbb/concurrent_queue.h>
 
-#include <iostream>     // std::cout
-#include <vector>       // std::vector
-#include <math.h>       // floor
+#include <iostream>
+#include <vector>
+#include <math.h>
 #include <complex>
 
 
@@ -27,8 +25,6 @@ namespace fmm
 {
 
 // N.B. that USE_FMM_CACHE should NOT be used for single level FMM
-//#define MULTILEVEL_FMM
-//#define USE_FMM_CACHE
 
 template <typename CoordinateType>
 CoordinateType getPoint3DCoord(Point3D<CoordinateType> p,int n){
@@ -349,22 +345,15 @@ void Octree<ResultType>::apply(
     Vector<ResultType> y_out_permuted(y_out.rows());
     y_out_permuted.fill(0.0);
 
-
     EvaluateNearFieldHelper<ResultType> evaluateNearFieldHelper(
         *this, x_in_permuted, y_out_permuted);
-//    for(size_t i=0;i<nLeaves;++i)
-  //    evaluateNearFieldHelper(i);
     tbb::parallel_for<size_t>(0, nLeaves, evaluateNearFieldHelper);
-
 
 
     EvaluateMultipoleCoefficientsHelper<ResultType>
         evaluateMultipoleCoefficientsHelper(*this, x_in_permuted);
-//    for(size_t i=0;i<nLeaves;++i)
-  //    evaluateMultipoleCoefficientsHelper(i);
     tbb::parallel_for<size_t>(0, nLeaves,
                               evaluateMultipoleCoefficientsHelper);
-
 
 
     if(multilevel())
@@ -375,13 +364,11 @@ void Octree<ResultType>::apply(
     if(multilevel())
       downwardsStep(m_fmmTransform);
 
-
     EvaluateFarFieldMatrixVectorProductHelper<ResultType>
         evaluateFarFieldMatrixVectorProductHelper(
             *this, m_fmmTransform.getWeights(), y_out_permuted);
     tbb::parallel_for<size_t>(0, nLeaves,
                               evaluateFarFieldMatrixVectorProductHelper);
-
 
     if (transposed)
         m_trial_perm->unpermute(Eigen::Ref<const Vector<ResultType>>(y_out_permuted),
@@ -586,7 +573,6 @@ void Octree<ResultType>::translationStep(
     const FmmTransform<ResultType> &fmmTransform)
                                               //, Vector<ResultType>& y_inout)
 {
-  //////////////////////////////// ERROR IN HERE /////////////////////
   if (fmmTransform.isCompressedM2L() ) {
     // Compress Multipole Coefficients 
     for (unsigned int level = m_topLevel; level<=m_levels; level++) {
@@ -596,7 +582,6 @@ void Octree<ResultType>::translationStep(
         if (node.trialDofCount()==0)
           continue;
         Vector<ResultType> mcoefs = node.getMultipoleCoefficients();
-        ///////// HERE IS ERROR ////////////////////
         if(cache()) fmmCache().compressMultipoleCoefficients(mcoefs, level);
         node.setMultipoleCoefficients(mcoefs);
       }
@@ -608,7 +593,7 @@ void Octree<ResultType>::translationStep(
       TranslationStepHelper<ResultType> translationStepHelper(
           *this, fmmTransform, level);
       tbb::parallel_for<size_t>(0, nNodes, translationStepHelper);
-    } // for each level
+    }
   } else {
     unsigned int level = m_levels;
     unsigned int nNodes = getNodesPerLevel(level);
@@ -656,8 +641,8 @@ public:
       Vector<CoordinateType> R; // center of the node
       m_octree.nodeCenter(node,m_level,R);
 
-      const Vector<ResultType>& lcoefs = 
-      m_octree.getNode(node,m_level).getLocalCoefficients();
+      const Vector<ResultType>& lcoefs =
+          m_octree.getNode(node,m_level).getLocalCoefficients();
 
       for (unsigned long child = getFirstChild(node);
            child <= getLastChild(node); child++) {
@@ -707,7 +692,7 @@ void Octree<ResultType>::downwardsStep(
     DownwardsStepHelper<ResultType> downwardsStepHelper(*this, fmmTransform,
                                                         level);
     tbb::parallel_for<size_t>(0, nNodes, downwardsStepHelper);
-  } // for each level
+  }
 } // void Octree::downwardsStep(const FmmTransform &fmmTransform)
 
 template <typename ResultType>

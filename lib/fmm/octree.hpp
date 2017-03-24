@@ -32,7 +32,6 @@ unsigned long getNodesPerLevel(unsigned long level);
 
 
 /** \cond FORWARD_DECL */
-//template <typename ResultType> class OctreeNode;
 template <typename ResultType> class FmmCache;
 template <typename ResultType> class FmmTransform;
 /** \endcond */

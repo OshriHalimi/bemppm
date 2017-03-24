@@ -31,11 +31,9 @@ public:
     const FmmTransform<ValueType>& fmmTransform,
     unsigned int levels);
 
-  //template <typename KernelType>
   void initCache(
     const Vector<CoordinateType> &lowerBound,
-    const Vector<CoordinateType> &upperBound);//,
-//		const Fiber::CollectionOfKernels<KernelType>& kernels);
+    const Vector<CoordinateType> &upperBound);
 
   void compressM2L(bool isSymmetric);
 
@@ -50,7 +48,7 @@ public:
   Matrix<ValueType> L2L(unsigned int level, unsigned int item) const;
 
 private:
-  const unsigned int m_topLevel; // top level in the octee
+  const unsigned int m_topLevel;
   const FmmTransform<ValueType>& m_fmmTransform;
   unsigned int m_levels;
   Vector<ValueType> m_kernelWeightVec;

@@ -3,7 +3,7 @@
 #include "octree.hpp"
 #include "../fiber/explicit_instantiation.hpp"
 
-#include <iostream>     // //std::cout
+#include <iostream>
 #include <complex>
 #include <string>
 #include <sstream>
@@ -19,16 +19,13 @@ FmmCache<ValueType>::FmmCache(
 {/**/}
 
 template <typename ValueType>
-//template <typename KernelType>
 void
 FmmCache<ValueType>::initCache(
     const Vector<CoordinateType> &lowerBound,
-    const Vector<CoordinateType> &upperBound)//,
-//  const Fiber::CollectionOfKernels<KernelType>& kernels)
+    const Vector<CoordinateType> &upperBound)
 {
   Vector<CoordinateType> origin(3);
   origin.fill(0);
-//  for(int i=0;i<3;++i) origin[i]=0;
 
   m_cacheM2L.resize(m_levels-m_topLevel+1);
 
@@ -55,11 +52,11 @@ FmmCache<ValueType>::initCache(
             Matrix<ValueType> m2l = m_fmmTransform.M2L(center, origin,
                                                        boxSize, level);
             m_cacheM2L[level-m_topLevel][index++] = m2l;
-          } // if not a nearest neighbour
-        } // for each x offset
-      } // for each x offset
-    } // for each x offset
-  } // for each level
+          }
+        }
+      }
+    }
+  }
 
   // M2M & L2L cache
   m_cacheM2M.resize(m_levels-m_topLevel);
@@ -88,8 +85,8 @@ FmmCache<ValueType>::initCache(
       Matrix<ValueType> l2l = m_fmmTransform.L2L(origin, Rchild, level);
 
       m_cacheL2L[level-m_topLevel][child] = l2l;
-    } // for each child
-  } // for each level
+    }
+  }
 
   compressM2L(true);
 } // initCache
@@ -121,9 +118,6 @@ FmmCache<ValueType>::compressM2L(bool isSymmetric)
 
   m_Ufat.resize(m_levels-m_topLevel+1);
   m_Vthin.resize(m_levels-m_topLevel+1);
-//  Matrix<ValueType> Ufat(npt, npt);
-//  Vector<CoordinateType> sigma(npt);
-//  Matrix<ValueType> Vfat;
   Matrix<ValueType> kernelsFat(npt, 316*npt);
 
   for (unsigned int level = m_topLevel; level<=m_levels; ++level) {
@@ -140,7 +134,6 @@ FmmCache<ValueType>::compressM2L(bool isSymmetric)
 
     Eigen::JacobiSVD<Matrix<ValueType>> svd=kernelsFat.jacobiSvd(
                                    Eigen::ComputeFullU);
-//                                   Eigen::ComputeFullV | Eigen::ComputeFullU);
 
     Matrix<ValueType> Ufat = svd.matrixU();
 
@@ -167,9 +160,6 @@ FmmCache<ValueType>::compressM2L(bool isSymmetric)
                                    Eigen::ComputeThinV);
       Matrix<ValueType> Vthin=svd.matrixV();
 
-      //if (!arma::svd_econ(Uthin, sigma, Vthin, kernelsThin, 'r') )
-      //  throw std::invalid_argument("FmmCache<ValueType>::compressM2L(): "
-      //                              "singular value decomposition failed");
       m_Vthin[level-m_topLevel] = Vthin.block(0, 0, npt, cutoff-1);
     }
 

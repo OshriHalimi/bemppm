@@ -8,11 +8,11 @@
 #include "../common/shared_ptr.hpp"
 #include "../common/boost_make_shared_fwd.hpp"
 
-#include <iostream>     // std::cout
-#include <algorithm>    // std::set_difference, std::sort
-#include <vector>       // std::vector
-#include <math.h>       // floor
-#include <functional>   // std::plus
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <math.h>
+#include <functional>
 #include <complex>
 
 namespace fmm
