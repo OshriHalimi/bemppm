@@ -209,7 +209,7 @@ void Octree<ResultType>::assignPoints(
 
     unsigned long parent = getParent(number);
 
-    for (unsigned int level = m_levels-1; level!=1; --level) {
+    for (unsigned int level = m_levels-1; level>=m_topLevel; --level) {
       getNode(parent,level).postIncTestDofCount();
       parent = getParent(parent);
     }
@@ -258,22 +258,14 @@ void Octree<ResultType>::assignPoints(
     // check p2o persists
 
   // generate neighbour information and interaction lists, taking into account empty leaves
-  for (unsigned int level = m_topLevel; level<=m_levels; level++) {
+  for (unsigned int level = m_topLevel; level<=m_levels; ++level) {
     unsigned int nNodes = getNodesPerLevel(level);
     for (unsigned int node=0; node<nNodes; node++) {
-      getNode(node,level).makeNeigbourList(*this);
+      getNode(node,level).makeNeighbourList(*this);
       getNode(node,level).makeInteractionList(*this);
     }
   }
 
-  // Print centers of octree nodes
-  for (unsigned int level = 0; level<=m_levels; level++) {
-    unsigned int nNodes = getNodesPerLevel(level);
-    for (unsigned long node=0; node<nNodes; node++) {
-      Vector<CoordinateType> center;
-      nodeCenter(node,level,center);
-    }
-  }
 }
 
 
@@ -349,12 +341,10 @@ void Octree<ResultType>::apply(
         *this, x_in_permuted, y_out_permuted);
     tbb::parallel_for<size_t>(0, nLeaves, evaluateNearFieldHelper);
 
-
     EvaluateMultipoleCoefficientsHelper<ResultType>
         evaluateMultipoleCoefficientsHelper(*this, x_in_permuted);
     tbb::parallel_for<size_t>(0, nLeaves,
                               evaluateMultipoleCoefficientsHelper);
-
 
     if(multilevel())
       upwardsStep(m_fmmTransform);
@@ -367,9 +357,10 @@ void Octree<ResultType>::apply(
     EvaluateFarFieldMatrixVectorProductHelper<ResultType>
         evaluateFarFieldMatrixVectorProductHelper(
             *this, m_fmmTransform.getWeights(), y_out_permuted);
-    tbb::parallel_for<size_t>(0, nLeaves,
-                              evaluateFarFieldMatrixVectorProductHelper);
-
+//    tbb::parallel_for<size_t>(0, nLeaves,
+  //                            evaluateFarFieldMatrixVectorProductHelper);
+    for(size_t i=0;i<nLeaves;++i)
+                              evaluateFarFieldMatrixVectorProductHelper(i);
     if (transposed)
         m_trial_perm->unpermute(Eigen::Ref<const Vector<ResultType>>(y_out_permuted),
                                y_out);
@@ -379,7 +370,7 @@ void Octree<ResultType>::apply(
 }
 
 
-// step up tree from level L-1 to 2, generating multipole coefficients 
+// step up tree from level L-1 to 2, generating multipole coefficients
 // from those of the children
 template <typename ResultType>
 class UpwardsStepHelper
@@ -396,6 +387,11 @@ public:
 
   void operator()(int node) const
   {
+    std::cout << "::::"
+              << node
+              << " " << m_octree.getNode(node,m_level).trialDofCount()
+              << " " << m_octree.getNode(node,m_level).testDofCount()
+              << std::endl;
     if (m_octree.getNode(node,m_level).trialDofCount()==0)
       return;
 
@@ -457,7 +453,8 @@ void Octree<ResultType>::upwardsStep(
 
     UpwardsStepHelper<ResultType> upwardsStepHelper(
         *this, fmmTransform, level);
-    tbb::parallel_for<size_t>(0, nNodes, upwardsStepHelper);
+    //tbb::parallel_for<size_t>(0, nNodes, upwardsStepHelper);
+    for(size_t i=0;i<nNodes;++i) upwardsStepHelper(i);
   } // for each level
 } // void Octree::upwardsStep(const FmmTransform &fmmTransform)
 
@@ -487,11 +484,10 @@ public:
     lcoef.fill(0.0);
 
     Vector<CoordinateType> boxSize;
-    if(m_octree.cache())
-      m_octree.nodeSize(m_level, boxSize);
+    m_octree.nodeSize(m_level, boxSize);
 
-    const std::vector<unsigned long>& neigbourList
-        = m_octree.getNode(node,m_level).neigbourList();
+    const std::vector<unsigned long>& neighbourList
+        = m_octree.getNode(node,m_level).neighbourList();
 
     if(m_octree.multilevel()){
       for (unsigned int ind=0;
@@ -528,8 +524,8 @@ public:
       unsigned int nNodes = getNodesPerLevel(m_level);
       for (unsigned int inter=0; inter<nNodes; inter++) {
         // skip if inter and current node are neighbouring or identical
-        if( std::find(neigbourList.begin(), neigbourList.end(), inter)
-            != neigbourList.end() || inter==node
+        if( std::find(neighbourList.begin(), neighbourList.end(), inter)
+            != neighbourList.end() || inter==node
             || m_octree.getNode(inter,m_level).trialDofCount()==0)
           continue;
         Vector<CoordinateType> Rinter; // center of the node
@@ -592,7 +588,8 @@ void Octree<ResultType>::translationStep(
       unsigned int nNodes = getNodesPerLevel(level);
       TranslationStepHelper<ResultType> translationStepHelper(
           *this, fmmTransform, level);
-      tbb::parallel_for<size_t>(0, nNodes, translationStepHelper);
+      //tbb::parallel_for<size_t>(0, nNodes, translationStepHelper);
+      for(size_t i=0;i<nNodes;++i) translationStepHelper(i);
     }
   } else {
     unsigned int level = m_levels;

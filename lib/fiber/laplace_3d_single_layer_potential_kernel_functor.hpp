@@ -58,7 +58,7 @@ public:
   template <template <typename T> class CollectionOf2dSlicesOfNdArrays>
   void evaluate(const ConstGeometricalDataSlice<CoordinateType> &testGeomData,
                 const ConstGeometricalDataSlice<CoordinateType> &trialGeomData,
-                CollectionOf2dSlicesOfNdArrays<ValueType> &result) const {
+                CollectionOf2dSlicesOfNdArrays<ValueType> &result) const {  
     const int coordCount = 3;
     assert(testGeomData.dimWorld() == coordCount);
     assert(result.size() == 1);

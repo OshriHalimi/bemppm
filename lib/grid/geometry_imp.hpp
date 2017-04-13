@@ -110,7 +110,7 @@ inline void Geometry::getCenter(Eigen::Ref<Vector<CoordinateType>> c) const {
 }
 
 template <typename CoordinateType>
-inline void Geometry::getCenter(Point3D<CoordinateType> c) const {
+inline void Geometry::getCenter(Point3D<CoordinateType> &c) const {
 
   Vector<double> cDouble;
   cDouble.resize(3);

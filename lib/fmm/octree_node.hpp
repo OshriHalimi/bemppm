@@ -30,7 +30,7 @@ public:
   // must be a bit careful, since our neighbour lists are stored explicity
   // without empty boxes
 
-  void makeNeigbourList(const Octree<ResultType> &octree);
+  void makeNeighbourList(const Octree<ResultType> &octree);
 
   // genererate the interation list. Need access to the Octree, to get references
   // to other nodes. We want to check if these nodes are empty.
@@ -69,8 +69,8 @@ public:
   unsigned int trialDofStart() const {return m_trialDofStart;}
   unsigned int trialDofCount() const {return m_trialDofCount;}
 
-  const std::vector<unsigned long>& neigbourList()
-      const {return m_neigbourList;}
+  const std::vector<unsigned long>& neighbourList()
+      const {return m_neighbourList;}
 
   void setNearFieldMats(const std::vector<Matrix<ResultType> > &nearFieldMats)
       {m_nearFieldMats=nearFieldMats;}
@@ -79,7 +79,7 @@ public:
   void setTestFarFieldMat(const Matrix<ResultType> &testFarFieldMat)
       {m_testFarFieldMat=testFarFieldMat;}
   const Matrix<ResultType>& getNearFieldMat(unsigned int index) const;
-  const std::vector<unsigned long>& getNeigbourList() const;
+  const std::vector<unsigned long>& getNeighbourList() const;
   const Matrix<ResultType>& getTrialFarFieldMat() const;
   const Matrix<ResultType>& getTestFarFieldMat() const;
 private:
@@ -89,7 +89,7 @@ private:
   unsigned int m_trialDofCount;
   unsigned int m_testDofStart;
   unsigned int m_testDofCount;
-  std::vector<unsigned long> m_neigbourList;
+  std::vector<unsigned long> m_neighbourList;
   std::vector<unsigned long> m_InteractionList;
   std::vector<unsigned long> m_InteractionItemList;
   Vector<ResultType> m_mcoef;

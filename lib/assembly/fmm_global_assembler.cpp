@@ -163,7 +163,7 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
     std::iota(indices.begin(), indices.end(), 0); // fill 0..trialDofCount-1
     std::vector<LocalDof> localDofs;
     trialSpace.flatLocal2localDofs(indices, localDofs);
-    for (unsigned int dof = 0; dof < trialDofCount; dof++) {
+    for (unsigned int dof = 0; dof < trialDofCount; ++dof) {
       unsigned int element = localDofs[dof].entityIndex;
       trialDofLocations[dof] = barycentres[element];
     }
@@ -193,13 +193,12 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
     std::iota(indices.begin(), indices.end(), 0); // fill 0..testDofCount-1
     std::vector<LocalDof> localDofs;
     testSpace.flatLocal2localDofs(indices, localDofs);
-    for (unsigned int dof = 0; dof < testDofCount; dof++) {
+    for (unsigned int dof = 0; dof < testDofCount; ++dof) {
       unsigned int element = localDofs[dof].entityIndex;
       testDofLocations[dof] = barycentres[element];
     }
-  } else {
-      testSpace.getGlobalDofPositions(testDofLocations);
-  }
+  } else
+    testSpace.getGlobalDofPositions(testDofLocations);
 
   const bool indexWithGlobalDofs=true;
 

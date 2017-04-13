@@ -24,13 +24,13 @@ OctreeNode<ResultType>::OctreeNode(unsigned long number, unsigned int level)
   : m_number(number), m_level(level), m_testDofStart(0), m_testDofCount(0),
     m_trialDofStart(0), m_trialDofCount(0)
 {/**/}
-//, m_neigbourList(26), m_InteractionList(189) {/**/} this messes up push_back
+//, m_neighbourList(26), m_InteractionList(189) {/**/} this messes up push_back
 // note that our neighbour lists neglect the current node
 
 // must be a bit careful, since our neighbour lists are stored explicity
 // without empty boxes
 template <typename ResultType>
-void OctreeNode<ResultType>::makeNeigbourList(const Octree<ResultType>
+void OctreeNode<ResultType>::makeNeighbourList(const Octree<ResultType>
                                               &octree)
 {
   // can of course still be empty and have neighbours, but it turns
@@ -57,11 +57,12 @@ void OctreeNode<ResultType>::makeNeigbourList(const Octree<ResultType>
                                 || indNeigh[2]!=ind[2]) {
           unsigned long numberNeigh;
           numberNeigh = morton(indNeigh[0], indNeigh[1], indNeigh[2]);
+          const OctreeNode<ResultType> &neigh = octree.getNodeConst(numberNeigh, level());
           if (octree.getNodeConst(numberNeigh, level()).trialDofCount())
-            m_neigbourList.push_back(numberNeigh);
+            m_neighbourList.push_back(numberNeigh);
         } // if neighbour is not the current node
-  std::sort (m_neigbourList.begin(), m_neigbourList.end());
-} // OctreeNode::makeNeigbourList
+  std::sort (m_neighbourList.begin(), m_neighbourList.end());
+} // OctreeNode::makeNeighbourList
 
 
 class RelativePositionToInteractionItem
@@ -98,25 +99,25 @@ void OctreeNode<ResultType>::makeInteractionList(const Octree<ResultType>
   if (testDofCount()==0) return;
   // isolated points, might not have any immediate neighbours, but
   // might interact on a larger scale 
-  // if (m_neigbourList.size()==0) {
+  // if (m_neighbourList.size()==0) {
   // throw new NeighbourListMissing();
   //}
 
   unsigned int parent = getParent(number());
 
   // for level 2, assume all boxes besides parent are neighbours
-  std::vector<unsigned long> parentNeigbourListLevel2(7);
+  std::vector<unsigned long> parentNeighbourListLevel2(7);
   for (int k=0; k<7; k++)
-    parentNeigbourListLevel2[k] = (parent+k+1)%8;
+    parentNeighbourListLevel2[k] = (parent+k+1)%8;
 
-  const std::vector<unsigned long> &parentNeigbourList
-    = ((level()==2) ? parentNeigbourListLevel2 :
-      octree.getNodeConst(parent, level()-1).m_neigbourList);
+  const std::vector<unsigned long> &parentNeighbourList
+    = ((level()==2) ? parentNeighbourListLevel2 :
+      octree.getNodeConst(parent, level()-1).m_neighbourList);
 
   std::vector<unsigned long> childrenOfParentNeighList;
   for (std::vector<unsigned long>::const_iterator
-       parentNeighbour = parentNeigbourList.begin(); 
-       parentNeighbour != parentNeigbourList.end(); ++parentNeighbour)
+       parentNeighbour = parentNeighbourList.begin(); 
+       parentNeighbour != parentNeighbourList.end(); ++parentNeighbour)
     // loop over the Morton indices of the parent's children
     for (unsigned long child = getFirstChild(*parentNeighbour); 
          child <= getLastChild(*parentNeighbour); child++)
@@ -125,15 +126,15 @@ void OctreeNode<ResultType>::makeInteractionList(const Octree<ResultType>
 
   std::sort(childrenOfParentNeighList.begin(),
             childrenOfParentNeighList.end());
-  std::sort (m_neigbourList.begin(), m_neigbourList.end());
+  std::sort (m_neighbourList.begin(), m_neighbourList.end());
 
   m_InteractionList.resize(childrenOfParentNeighList.size());
   std::vector<unsigned long>::iterator it;
   it = std::set_difference (childrenOfParentNeighList.begin(), 
   childrenOfParentNeighList.end(),
-  m_neigbourList.begin(), m_neigbourList.end(), m_InteractionList.begin());
+  m_neighbourList.begin(), m_neighbourList.end(), m_InteractionList.begin());
   m_InteractionList.resize(it-m_InteractionList.begin());
-  // the parents with children that do not intersect the neigbour list
+  // the parents with children that do not intersect the neighbour list
   // could be detected here
 
 
@@ -285,12 +286,12 @@ EvaluateNearFieldHelper<ResultType>::operator()(size_t nodenumber) const
   }
 
   // repeat for the neighbours: trial functions are fixed in the current node
-  // test functions are in the neigbourhood
-  const std::vector<unsigned long>& neigbourList = node.getNeigbourList();
+  // test functions are in the neighbourhood
+  const std::vector<unsigned long>& neighbourList = node.getNeighbourList();
 
-  for (unsigned long neigh = 0; neigh < neigbourList.size(); neigh++) {
+  for (unsigned long neigh = 0; neigh < neighbourList.size(); neigh++) {
     const OctreeNode<ResultType> &nodeneigh
-        = m_octree.getNodeConst(neigbourList[neigh], m_octree.levels());
+        = m_octree.getNodeConst(neighbourList[neigh], m_octree.levels());
 
     const unsigned int trialStart = nodeneigh.trialDofStart();
     const unsigned int trialLen = nodeneigh.trialDofCount();
@@ -359,35 +360,35 @@ EvaluateFarFieldMatrixVectorProductHelper<ResultType>::operator()(size_t
   // part between [] is the local coefficient at each test dof, calc weighted sum
   // special case, simplification possible since L2L operation is diagonal
   Matrix<ResultType> nff = node.getTestFarFieldMat();
+  Vector<ResultType> nlc = node.getLocalCoefficients();
   for(size_t i=0;i<nff.rows();++i)
     for(size_t j=0;j<nff.cols();++j)
-      m_y_in_out(i) += nff(i,j)
-          *(node.getLocalCoefficients()(j) * m_weights(j));
+      m_y_in_out(testStart+i) += nff(i,j) * nlc(j) * m_weights(j);
 }
 
 template <typename ResultType>
-const Matrix<ResultType>& 
+const Matrix<ResultType>&
 OctreeNode<ResultType>::getNearFieldMat(unsigned int index) const
 {
   return m_nearFieldMats[index];
 }
 
 template <typename ResultType>
-const std::vector<unsigned long>& 
-OctreeNode<ResultType>::getNeigbourList() const
+const std::vector<unsigned long>&
+OctreeNode<ResultType>::getNeighbourList() const
 {
-  return m_neigbourList;
+  return m_neighbourList;
 }
 
 template <typename ResultType>
-const Matrix<ResultType>& 
+const Matrix<ResultType>&
 OctreeNode<ResultType>::getTrialFarFieldMat() const
 {
   return m_trialFarFieldMat;
 }
 
 template <typename ResultType>
-const Matrix<ResultType>& 
+const Matrix<ResultType>&
 OctreeNode<ResultType>::getTestFarFieldMat() const
 {
   return m_testFarFieldMat;

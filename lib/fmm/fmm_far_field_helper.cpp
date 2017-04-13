@@ -177,8 +177,7 @@ void FmmFarFieldHelper<BasisFunctionType, ResultType>::operator()(
     if (node.testDofCount()) {
       const unsigned int testDofStart = node.testDofStart();
       const unsigned int testDofCount = node.testDofCount();
-      Matrix<ResultType> testFarFieldMat;
-      testFarFieldMat = evaluateFarFieldIntegrals(
+      const Matrix<ResultType> testFarFieldMat = evaluateFarFieldIntegrals(
           fmmTestLocalAssembler, m_fmmTransform, nodeCenter,
           nodeSize, testDofStart, testDofCount, true, true);
       node.setTestFarFieldMat(testFarFieldMat);
@@ -187,8 +186,7 @@ void FmmFarFieldHelper<BasisFunctionType, ResultType>::operator()(
     if (node.trialDofCount()) {
       const unsigned int trialDofStart = node.trialDofStart();
       const unsigned int trialDofCount = node.trialDofCount();
-      Matrix<ResultType> trialFarFieldMat;
-      trialFarFieldMat = evaluateFarFieldIntegrals(
+      const Matrix<ResultType> trialFarFieldMat = evaluateFarFieldIntegrals(
           fmmTrialLocalAssembler, m_fmmTransform, nodeCenter,
           nodeSize, trialDofStart, trialDofCount, false);
       node.setTrialFarFieldMat(trialFarFieldMat);

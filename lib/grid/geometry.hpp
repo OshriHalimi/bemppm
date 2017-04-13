@@ -170,7 +170,7 @@ public:
   void getCenter(Eigen::Ref<Vector<double>> c) const;
 
   /** \overload */
-  template <typename CoordinateType> void getCenter(Point3D<CoordinateType> c) const;
+  template <typename CoordinateType> void getCenter(Point3D<CoordinateType> &c) const;
   template <typename CoordinateType> void getCenter(Eigen::Ref<Vector<CoordinateType>> c) const;
 
   /** \brief Get transposed Jacobian matrices at specified points.

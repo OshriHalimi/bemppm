@@ -151,17 +151,17 @@ void FmmNearFieldHelper<BasisFunctionType, ResultType>::evaluateNearField(
         if (node.testDofCount()==0) {
             return; //continue;
         }
-        const std::vector<unsigned long>& neigbourList = node.neigbourList();
+        const std::vector<unsigned long>& neighbourList = node.neighbourList();
 
         // test near field interactions by including all other leaves in neighbour list
-        //std::vector<unsigned long> neigbourList(nLeaves-1);
+        //std::vector<unsigned long> neighbourList(nLeaves-1);
         //for (unsigned int k=1; k<nLeaves; k++) {
-        //    neigbourList[k-1] = (n+k)%nLeaves;
+        //    neighbourList[k-1] = (n+k)%nLeaves;
         //}
-        //node.m_neigbourList = neigbourList;
+        //node.m_neighbourList = neighbourList;
 
-        // size of the neigbourhood plus the current node
-        std::vector<Matrix<ResultType> > nearFieldMats(neigbourList.size()+1);
+        // size of the neighbourhood plus the current node
+        std::vector<Matrix<ResultType> > nearFieldMats(neighbourList.size()+1);
 
         const unsigned int testDofStart = node.testDofStart();
         const unsigned int testDofCount = node.testDofCount();
@@ -177,10 +177,10 @@ void FmmNearFieldHelper<BasisFunctionType, ResultType>::evaluateNearField(
         }
 
         // repeat for the neighbours: trial functions are fixed in the current node
-        // test functions are in the neigbourhood
-        for (unsigned long neigh = 0; neigh < neigbourList.size(); neigh++) {
+        // test functions are in the neighbourhood
+        for (unsigned long neigh = 0; neigh < neighbourList.size(); neigh++) {
             const OctreeNode<ResultType> &nodeneigh = octree->getNodeConst(
-                neigbourList[neigh], octree->levels());
+                neighbourList[neigh], octree->levels());
             unsigned int trialDofStart = nodeneigh.trialDofStart();
             unsigned int trialDofCount = nodeneigh.trialDofCount();
     
