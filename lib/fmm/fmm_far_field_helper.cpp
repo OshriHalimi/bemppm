@@ -151,7 +151,6 @@ FmmFarFieldHelper<BasisFunctionType, ResultType>::evaluateFarFieldIntegrals(
               * localResult[nElem](localDofs[nElem][nDof]);
     } // if test
   } // for each multipole
-
   return result;
 
 } // Octree::evaluateFarFieldMultipoleIntegrals

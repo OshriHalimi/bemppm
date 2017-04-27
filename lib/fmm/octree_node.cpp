@@ -324,8 +324,7 @@ const
   const unsigned int trialStart = node.trialDofStart();
   const unsigned int trialLen = node.trialDofCount();
 
-  Vector<ResultType> xLocal(trialLen);
-  xLocal.block(0,0,trialLen,1) = m_x_in.block(trialStart,0,trialLen,1);
+  const Vector<ResultType> xLocal = m_x_in.block(trialStart,0,trialLen,1);
 
   // m_trialFarFieldMat(multipole coefficients, dofTrial)
   node.setMultipoleCoefficients(node.getTrialFarFieldMat()*xLocal);

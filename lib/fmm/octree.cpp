@@ -341,32 +341,104 @@ void Octree<ResultType>::apply(
         *this, x_in_permuted, y_out_permuted);
     tbb::parallel_for<size_t>(0, nLeaves, evaluateNearFieldHelper);
 
+
+    // **** STEP ONE ****
+    //  Evaluate the moments on all cells in the level l=max
+    //  Store them in the nodes (node.[g|s]etMultipoleCoefficients())
+    //  This helper is defined in octree_node.cpp
+    // ******************
     EvaluateMultipoleCoefficientsHelper<ResultType>
         evaluateMultipoleCoefficientsHelper(*this, x_in_permuted);
     tbb::parallel_for<size_t>(0, nLeaves,
                               evaluateMultipoleCoefficientsHelper);
+    std::cout << "Moments after STEP ONE" << std::endl;
+    for(int i=0;i<nLeaves;++i){
+        auto mc = getNode(i,levels()).getMultipoleCoefficients();
+        if(mc.rows()>0)
+        std::cout << levels() << "," << i << ": "
+                  << mc << std::endl;
+      }
 
-    if(multilevel())
-      upwardsStep(m_fmmTransform);
+    // **** STEP TWO ****
+    //  Evaluate the moments on all cells in levels 2<=l<max
+    //    using the M2M translation
+    //  Store them in the nodes (node.[g|s]etMultipoleCoefficients())
+    //  This function and the helper it calls are defined in octree.cpp
+    // ******************
+    if(multilevel()) upwardsStep(m_fmmTransform);
+    std::cout << "Moments after STEP TWO" << std::endl;
+    for(int l=levels()-1;l>=2;--l){std::cout << l << " ";
+    for(int i=0;i<getNodesPerLevel(l);++i){
+        auto mc = getNode(i,l).getMultipoleCoefficients();
+        if(mc.rows()>0)
+        std::cout << l << "," << i << ": "
+                  << mc << std::endl;
+      }}
 
+
+    // **** STEP THREE ****
+    //  Evaluate the local coefficents on all cells in level l=2
+    //    using the M2L translation
+    //  Store them in the nodes (node.[g|s]etLocalCoefficients())
+    //  This function and the helper it calls are defined in octree.cpp
+    // ********************
     translationStep(m_fmmTransform);
+    std::cout << "Local coefficients after STEP THREE" << std::endl;
+    for(int i=0;i<getNodesPerLevel(2);++i){
+        auto mc = getNode(i,2).getLocalCoefficients();
+        if(mc.rows()>0)
+        std::cout << 2 << "," << i << ": "
+                  << mc << std::endl;
+      }
 
-    if(multilevel())
-      downwardsStep(m_fmmTransform);
 
+    // **** STEP FOUR ****
+    //  Evaluate the local coefficents on all cells in level 2>l>=max
+    //    using the M2L and L2L translations
+    //  Store them in the nodes (node.[g|s]etLocalCoefficients())
+    //  This function and the helper it calls are defined in octree.cpp
+    // *******************
+    if(multilevel()) downwardsStep(m_fmmTransform);
+    std::cout << "Local coefficients after STEP FOUR" << std::endl;
+    for(int l=3;l<=levels();++l)
+    for(int i=0;i<getNodesPerLevel(l);++i){
+        auto mc = getNode(i,l).getLocalCoefficients();
+        if(mc.rows()>0)
+        std::cout << l << "," << i << ": "
+                  << mc << std::endl;
+      }
+
+
+    // **** STEP FIVE ****
+    //  Adds the far field parts to the result matrix by calculating
+    //    testFarFieldMat * (local coefficients * weights)
+    //    for all nodes in max level
+    //    - testFarFieldMat: node.getTestFarFieldMat()
+    //    - local coefficients: node.[g|s]etLocalCoefficients()
+    //    - weights: m_fmmTransform.getWeights()
+    //  This helper is defined in octree_node.cpp
+    // *******************
+    std::cout << "Calculations in STEP FIVE" << std::endl;
+    for(int i=0;i<getNodesPerLevel(levels());++i){
+        auto ffm = getNode(i,levels()).getTestFarFieldMat();
+        auto lc = getNode(i,levels()).getLocalCoefficients();
+        if(lc.rows()>0)
+        std::cout << levels() << "," << i << ": "
+                  << ffm << " * " << lc << " * "
+                  << m_fmmTransform.getWeights() << std::endl;
+      }
     EvaluateFarFieldMatrixVectorProductHelper<ResultType>
-        evaluateFarFieldMatrixVectorProductHelper(
-            *this, m_fmmTransform.getWeights(), y_out_permuted);
-//    tbb::parallel_for<size_t>(0, nLeaves,
-  //                            evaluateFarFieldMatrixVectorProductHelper);
-    for(size_t i=0;i<nLeaves;++i)
-                              evaluateFarFieldMatrixVectorProductHelper(i);
-    if (transposed)
-        m_trial_perm->unpermute(Eigen::Ref<const Vector<ResultType>>(y_out_permuted),
-                               y_out);
-    else
-        m_test_perm->unpermute(Eigen::Ref<const Vector<ResultType>>(y_out_permuted),
-                              y_out);
+        evaluateFarFieldMatrixVectorProductHelper(*this,
+                                                  m_fmmTransform.getWeights(),
+                                                  y_out_permuted);
+    tbb::parallel_for<size_t>(0, nLeaves,
+                              evaluateFarFieldMatrixVectorProductHelper);
+
+
+    if(transposed) m_trial_perm->unpermute(
+          Eigen::Ref<const Vector<ResultType>>(y_out_permuted),y_out);
+    else m_test_perm->unpermute(
+          Eigen::Ref<const Vector<ResultType>>(y_out_permuted),y_out);
 }
 
 
@@ -387,11 +459,6 @@ public:
 
   void operator()(int node) const
   {
-    std::cout << "::::"
-              << node
-              << " " << m_octree.getNode(node,m_level).trialDofCount()
-              << " " << m_octree.getNode(node,m_level).testDofCount()
-              << std::endl;
     if (m_octree.getNode(node,m_level).trialDofCount()==0)
       return;
 
@@ -453,8 +520,7 @@ void Octree<ResultType>::upwardsStep(
 
     UpwardsStepHelper<ResultType> upwardsStepHelper(
         *this, fmmTransform, level);
-    //tbb::parallel_for<size_t>(0, nNodes, upwardsStepHelper);
-    for(size_t i=0;i<nNodes;++i) upwardsStepHelper(i);
+    tbb::parallel_for<size_t>(0, nNodes, upwardsStepHelper);
   } // for each level
 } // void Octree::upwardsStep(const FmmTransform &fmmTransform)
 
@@ -588,8 +654,7 @@ void Octree<ResultType>::translationStep(
       unsigned int nNodes = getNodesPerLevel(level);
       TranslationStepHelper<ResultType> translationStepHelper(
           *this, fmmTransform, level);
-      //tbb::parallel_for<size_t>(0, nNodes, translationStepHelper);
-      for(size_t i=0;i<nNodes;++i) translationStepHelper(i);
+      tbb::parallel_for<size_t>(0, nNodes, translationStepHelper);
     }
   } else {
     unsigned int level = m_levels;
@@ -631,9 +696,8 @@ public:
   {/**/}
 
   void operator()(int node) const {
-      if (m_octree.getNode(node,m_level).testDofCount()==0) {
+      if (m_octree.getNode(node,m_level).testDofCount()==0)
         return;
-      }
 
       Vector<CoordinateType> R; // center of the node
       m_octree.nodeCenter(node,m_level,R);
@@ -642,7 +706,7 @@ public:
           m_octree.getNode(node,m_level).getLocalCoefficients();
 
       for (unsigned long child = getFirstChild(node);
-           child <= getLastChild(node); child++) {
+           child <= getLastChild(node); ++child) {
 
         if (m_octree.getNode(child,m_level+1).trialDofCount()==0)
           continue;

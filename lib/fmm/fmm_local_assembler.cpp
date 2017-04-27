@@ -199,10 +199,9 @@ void FmmLocalAssembler<BasisFunctionType, ResultType>::evaluateLocalWeakForms(
 
     // Integrate!
     Matrix<ResultType> localResult;
-//    localResult.resize(3,3);
+    
     activeIntegrator.integrate(activeElementIndices, activeTestShapeset,
                                localResult);
-
     // Distribute the just calculated integrals into the result array
     // that will be returned to caller
     int i = 0;
@@ -211,6 +210,7 @@ void FmmLocalAssembler<BasisFunctionType, ResultType>::evaluateLocalWeakForms(
         result[e] = localResult.col(i++);
 
   } // for each quadrature variant
+
 }
 
 

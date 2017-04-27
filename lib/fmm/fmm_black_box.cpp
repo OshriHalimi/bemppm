@@ -165,7 +165,6 @@ FmmBlackBox<KernelType, ValueType>::M2L(
       } // for m3
     } // for m2
   } // for m1
-
   Fiber::CollectionOf4dArrays<KernelType> result;
   m_kernels->evaluateOnGrid(fieldData, sourceData, result);
 
@@ -220,7 +219,10 @@ void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointS(
   Vector<CoordinateType> pointScaled;
   pointScaled.resize(nodeCentre.rows());
   for(int i=0;i<pointScaled.rows();++i)
-    pointScaled(i) = 2.*(point(i) - nodeCentre(i)) / nodeSize(i);
+    if(nodeSize(i)!=0)
+      pointScaled(i) = 2.*(point(i) - nodeCentre(i)) / nodeSize(i);
+    else pointScaled(i)=0;
+  // TODO: What to do if nodeSize is 0 (eg screen)
 
   // Gauss points can lie outside a given node, since triangles can intesect the faces.
   // Should ideally enlarge the box so that all mulipoles fully enclose Gauss points.

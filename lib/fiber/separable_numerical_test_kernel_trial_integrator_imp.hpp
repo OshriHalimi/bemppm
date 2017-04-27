@@ -700,7 +700,6 @@ void SeparableNumericalTestKernelTrialIntegrator<BasisFunctionType, KernelType,
   const int testPointCount = m_localTestQuadPoints.cols();
   const int trialPointCount = m_localTrialQuadPoints.cols();
   const int geometryPairCount = elementIndexPairs.size();
-
   if (result.size() != elementIndexPairs.size())
     throw std::invalid_argument(
         "NonseparableNumericalTestKernelTrialIntegrator::integrate(): "

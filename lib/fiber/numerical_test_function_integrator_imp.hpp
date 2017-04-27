@@ -73,27 +73,26 @@ void NumericalTestFunctionIntegrator<
     GeometryFactory>::integrate(const std::vector<int> &elementIndices,
                                 const Shapeset<BasisFunctionType> &testShapeset,
                                 Matrix<ResultType> &result) const {
-  //std::cout <<"**here**";
   const size_t pointCount = m_localQuadPoints.cols();
   const size_t elementCount = elementIndices.size();
-  //std::cout <<"*1";
+  const int testDofCount = testShapeset.size();
 
   if (pointCount == 0 || elementCount == 0)
     return;
-  //std::cout <<"*2";
-  // TODO: in the (pathological) case that pointCount == 0 but
-  // elementCount != 0, set elements of result to 0.
+  if(pointCount == 0){
+    result.resize(testDofCount, elementCount);
+    result.fill(0);
+    return;
+  }
 
   // Evaluate constants
   const int componentCount = m_testTransformations.resultDimension(0);
-  const int testDofCount = testShapeset.size();
 
   if (m_function.codomainDimension() != componentCount)
     throw std::runtime_error("NumericalTestFunctionIntegrator::integrate(): "
                              "test functions and the \"arbitrary\" function "
                              "must have the same number of components");
 
-  //std::cout <<"*3";
   BasisData<BasisFunctionType> testBasisData;
   GeometricalData<CoordinateType> geomData;
 
@@ -103,7 +102,6 @@ void NumericalTestFunctionIntegrator<
   m_testTransformations.addDependencies(testBasisDeps, geomDeps);
   m_function.addGeometricalDependencies(geomDeps);
 
-  //std::cout <<"*4";
   typedef typename GeometryFactory::Geometry Geometry;
   std::unique_ptr<Geometry> geometry(m_geometryFactory.make());
 
@@ -112,11 +110,9 @@ void NumericalTestFunctionIntegrator<
 
   result.resize(testDofCount, elementCount);
 
-  //std::cout <<"*5";
   testShapeset.evaluate(testBasisDeps, m_localQuadPoints, ALL_DOFS,
                         testBasisData);
 
-  //std::cout <<"*6";
   // Iterate over the elements
   for (size_t e = 0; e < elementCount; ++e) {
     const int elementIndex = elementIndices[e];
@@ -124,15 +120,8 @@ void NumericalTestFunctionIntegrator<
     geometry->getData(geomDeps, m_localQuadPoints, geomData);
     if (geomDeps & DOMAIN_INDEX)
       geomData.domainIndex = m_rawGeometry.domainIndex(elementIndex);
-  //std::cout <<"*a";
     m_testTransformations.evaluate(testBasisData, geomData, testValues);
-  //std::cout <<"*b";
-  //std::cout << std::endl;
-  //std::cout << geomData.domainIndex << " :: ";
-  //std::cout << elementIndex;
-  //std::cout << std::endl;
     m_function.evaluate(geomData, functionValues);
-  //std::cout <<"*c";
 
     for (int testDof = 0; testDof < testDofCount; ++testDof) {
       ResultType sum = 0.;
@@ -143,8 +132,6 @@ void NumericalTestFunctionIntegrator<
                  functionValues(dim, point);
       result(testDof, e) = sum;
     }
-  //std::cout <<"*7";
-
   }
 }
 
