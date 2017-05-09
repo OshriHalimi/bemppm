@@ -3,8 +3,6 @@
 #include "octree_node.hpp"
 
 #include "fmm_transform.hpp"
-#include "fmm_farfield_function_multiplying_test.hpp"
-#include "fmm_farfield_function_multiplying_trial.hpp"
 #include "fmm_local_assembler.hpp"
 
 #include "../common/common.hpp"

@@ -3,8 +3,7 @@
 
 #include "fmm_transform.hpp"
 #include "fmm_far_field_helper.hpp"
-#include "fmm_farfield_function_multiplying_test.hpp"
-#include "fmm_farfield_function_multiplying_trial.hpp"
+#include "fmm_farfield_function_multiplying.hpp"
 #include "fmm_local_assembler.hpp"
 
 #include "../common/common.hpp"
@@ -53,19 +52,19 @@ FmmFarFieldHelper<BasisFunctionType, ResultType>::FmmFarFieldHelper(
 
 template <typename BasisFunctionType, typename ResultType>
 Matrix<ResultType>
-FmmFarFieldHelper<BasisFunctionType, ResultType>::evaluateFarFieldIntegrals(
+FmmFarFieldHelper<BasisFunctionType, ResultType>::makeFarFieldMat(
         FmmLocalAssembler<BasisFunctionType, ResultType>& fmmLocalAssembler,
         const FmmTransform<ResultType>& fmmTransform,
         const Vector<CoordinateType> &nodeCenter, 
         const Vector<CoordinateType> &nodeSize, 
         unsigned int dofStart, unsigned int dofCount, bool isTest) const
 {
-  return evaluateFarFieldIntegrals(fmmLocalAssembler, fmmTransform,
+  return makeFarFieldMat(fmmLocalAssembler, fmmTransform,
       nodeCenter, nodeSize, dofStart, dofCount, isTest, false);
 }
 template <typename BasisFunctionType, typename ResultType>
 Matrix<ResultType>
-FmmFarFieldHelper<BasisFunctionType, ResultType>::evaluateFarFieldIntegrals(
+FmmFarFieldHelper<BasisFunctionType, ResultType>::makeFarFieldMat(
         FmmLocalAssembler<BasisFunctionType, ResultType>& fmmLocalAssembler,
         const FmmTransform<ResultType>& fmmTransform,
         const Vector<CoordinateType> &nodeCenter, 
@@ -105,55 +104,30 @@ FmmFarFieldHelper<BasisFunctionType, ResultType>::evaluateFarFieldIntegrals(
   for (size_t multipole = 0; multipole < multipoleCount; ++multipole) {
     Vector<CoordinateType> khat = fmmTransform.getQuadraturePoint(multipole);
     typedef ResultType UserFunctionType;
-    if (isTest) {
-      // functor reference used in function, so must keep in memory
-      typedef FmmFarfieldFunctionMultiplyingTest<UserFunctionType> FunctorType;
-      FunctorType functor(khat, nodeCenter, nodeSize, fmmTransform);
-      Fiber::SurfaceNormalDependentFunction<FunctorType> function(functor);
 
-      // duplicated code due to scoping
-      fmmLocalAssembler.setFunction(&function);
+    typedef FmmFarfieldFunctionMultiplying<UserFunctionType> FunctorType;
+    FunctorType functor(khat, nodeCenter, nodeSize, fmmTransform, isTest);
+    Fiber::SurfaceNormalDependentFunction<FunctorType> function(functor);
 
-      std::vector<Vector<ResultType> > localResult;
-      fmmLocalAssembler.evaluateLocalWeakForms(
-          elementIndices, localResult);
+    fmmLocalAssembler.setFunction(&function);
 
-      for (size_t nElem = 0; nElem < elementIndices.size(); ++nElem)
-        for (size_t nDof = 0;nDof < localDofs[nElem].size();++nDof)
-          if(transposed)
-            result(blockCols[nElem][nDof],multipole) +=
-                Fiber::conjugate(localDofWeights[nElem][nDof])*
-                localResult[nElem](localDofs[nElem][nDof]);
-          else
-            result(multipole, blockCols[nElem][nDof]) +=
-                Fiber::conjugate(localDofWeights[nElem][nDof])*
-                localResult[nElem](localDofs[nElem][nDof]);
-    } else {
-      typedef FmmFarfieldFunctionMultiplyingTrial<UserFunctionType> FunctorType;
-      FunctorType functor(khat, nodeCenter, nodeSize, fmmTransform);
-      Fiber::SurfaceNormalDependentFunction<FunctorType> function(functor);
+    std::vector<Vector<ResultType> > localResult;
+    fmmLocalAssembler.evaluateLocalWeakForms(elementIndices, localResult);
 
-      // duplicated code due to scoping
-      fmmLocalAssembler.setFunction(&function);
-
-      std::vector<Vector<ResultType> > localResult;
-      fmmLocalAssembler.evaluateLocalWeakForms(elementIndices, localResult);
-
-      for (size_t nElem = 0; nElem < elementIndices.size(); ++nElem)
-        for (size_t nDof = 0;nDof < localDofs[nElem].size();++nDof)
-          if(transposed)
-            result(blockCols[nElem][nDof], multipole) +=
-                localDofWeights[nElem][nDof]
-              * localResult[nElem](localDofs[nElem][nDof]);
-          else
-            result(multipole, blockCols[nElem][nDof]) +=
-                localDofWeights[nElem][nDof]
-              * localResult[nElem](localDofs[nElem][nDof]);
-    } // if test
+    for (size_t nElem = 0; nElem < elementIndices.size(); ++nElem)
+      for (size_t nDof = 0;nDof < localDofs[nElem].size();++nDof)
+        if(transposed)
+          result(blockCols[nElem][nDof], multipole) +=
+              localDofWeights[nElem][nDof]
+            * localResult[nElem](localDofs[nElem][nDof]);
+        else
+          result(multipole, blockCols[nElem][nDof]) +=
+              localDofWeights[nElem][nDof]
+            * localResult[nElem](localDofs[nElem][nDof]);
   } // for each multipole
   return result;
 
-} // Octree::evaluateFarFieldMultipoleIntegrals
+} // Octree::makeFarFieldMat
 
 
 template <typename BasisFunctionType, typename ResultType>
@@ -176,7 +150,7 @@ void FmmFarFieldHelper<BasisFunctionType, ResultType>::operator()(
     if (node.testDofCount()) {
       const unsigned int testDofStart = node.testDofStart();
       const unsigned int testDofCount = node.testDofCount();
-      const Matrix<ResultType> testFarFieldMat = evaluateFarFieldIntegrals(
+      const Matrix<ResultType> testFarFieldMat = makeFarFieldMat(
           fmmTestLocalAssembler, m_fmmTransform, nodeCenter,
           nodeSize, testDofStart, testDofCount, true, true);
       node.setTestFarFieldMat(testFarFieldMat);
@@ -185,7 +159,7 @@ void FmmFarFieldHelper<BasisFunctionType, ResultType>::operator()(
     if (node.trialDofCount()) {
       const unsigned int trialDofStart = node.trialDofStart();
       const unsigned int trialDofCount = node.trialDofCount();
-      const Matrix<ResultType> trialFarFieldMat = evaluateFarFieldIntegrals(
+      const Matrix<ResultType> trialFarFieldMat = makeFarFieldMat(
           fmmTrialLocalAssembler, m_fmmTransform, nodeCenter,
           nodeSize, trialDofStart, trialDofCount, false);
       node.setTrialFarFieldMat(trialFarFieldMat);

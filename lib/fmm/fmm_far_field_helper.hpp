@@ -66,13 +66,13 @@ public:
     void operator()(const tbb::blocked_range<unsigned int>& range) const;
 
 private:
-    Matrix<ResultType> evaluateFarFieldIntegrals(
+    Matrix<ResultType> makeFarFieldMat(
         FmmLocalAssembler<BasisFunctionType, ResultType> &fmmLocalAssembler,
         const FmmTransform<ResultType> &fmmTransform,
         const Vector<CoordinateType> &nodeCenter, 
         const Vector<CoordinateType> &nodeSize, 
         unsigned int dofStartTrial, unsigned int dofCountTrial, bool isTest) const;
-    Matrix<ResultType> evaluateFarFieldIntegrals(
+    Matrix<ResultType> makeFarFieldMat(
         FmmLocalAssembler<BasisFunctionType, ResultType> &fmmLocalAssembler,
         const FmmTransform<ResultType> &fmmTransform,
         const Vector<CoordinateType> &nodeCenter, 

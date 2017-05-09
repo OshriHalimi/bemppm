@@ -244,9 +244,7 @@ void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointS(
       localS += 2*TkMultipole[j]*TkPoint[j];
     S *= localS/(this->getN());
   }
-
   result.resize(1);
-
   result(0) =  S;
 }
 
