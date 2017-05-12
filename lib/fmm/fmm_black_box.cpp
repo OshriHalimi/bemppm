@@ -57,22 +57,14 @@ void FmmBlackBox<KernelType, ValueType>::generateGaussPoints()
 template <typename KernelType, typename ValueType>
 Matrix<ValueType> FmmBlackBox<KernelType, ValueType>::M2M(
     const Vector<CoordinateType>& childPosition,
+    const Vector<CoordinateType>& childSize,
     const Vector<CoordinateType>& parentPosition,
+    const Vector<CoordinateType>& parentSize,
     unsigned int level) const
 {
   const size_t quadPoints = this->quadraturePointCount();
   Matrix<ValueType> result;
   result.resize(quadPoints,quadPoints);
-
-  Vector<CoordinateType> childNodeSize(3);
-  for(int dim=0;dim<3;++dim)
-    if(childPosition(dim)>parentPosition(dim))
-      childNodeSize(dim) = (childPosition(dim)-parentPosition(dim))*2;
-    else
-      childNodeSize(dim) = (parentPosition(dim)-childPosition(dim))*2;
-  Vector<CoordinateType> parentNodeSize(3);
-  for(int dim=0;dim<3;++dim)
-    parentNodeSize(dim) = childNodeSize(dim)*2;
 
   for(int i=0;i<quadPoints;++i){
     Vector<CoordinateType> childMultipole(3);
@@ -91,10 +83,10 @@ Matrix<ValueType> FmmBlackBox<KernelType, ValueType>::M2M(
       Vector<CoordinateType> point(3);
       for(int dim=0;dim<3;++dim)
         point(dim) = childPosition(dim)
-                   + childMultipole(dim)*childNodeSize(dim)/2;
+                   + childMultipole(dim)*childSize(dim)/2;
       evaluateAtGaussPointS(point, normal, parentMultipole, parentPosition,
-                            parentNodeSize, entry);
-      result(i,j)=entry(0);
+                            parentSize, entry);
+      result(j,i)=entry(0);
     }
   }
 
@@ -104,11 +96,14 @@ Matrix<ValueType> FmmBlackBox<KernelType, ValueType>::M2M(
 template <typename KernelType, typename ValueType>
 Matrix<ValueType> FmmBlackBox<KernelType, ValueType>::L2L(
     const Vector<CoordinateType>& parentPosition,
+    const Vector<CoordinateType>& parentSize,
     const Vector<CoordinateType>& childPosition,
+    const Vector<CoordinateType>& childSize,
     unsigned int level) const
 {
   // argument order swapped, L2L = M2M' exactly
-  return M2M(childPosition, parentPosition, level).transpose();
+  return M2M(childPosition, childSize, parentPosition,
+             parentSize, level).transpose();
 }
 
 template <typename KernelType, typename ValueType>

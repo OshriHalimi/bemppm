@@ -473,7 +473,9 @@ public:
       return;
 
     Vector<CoordinateType> R; // center of the node
+    Vector<CoordinateType> parentSize; // size of the node
     m_octree.nodeCenter(node, m_level, R);
+    m_octree.nodeSize(m_level, parentSize);
 
     Vector<ResultType> mcoefs;
 
@@ -482,14 +484,16 @@ public:
       if (m_octree.getNode(child,m_level+1).trialDofCount()==0)
         continue;
       Vector<CoordinateType> Rchild; // center of the node
+      Vector<CoordinateType> childSize; // size of the node
       m_octree.nodeCenter(child,m_level+1,Rchild);
+      m_octree.nodeSize(m_level+1,childSize);
 
       // calculate multipole to multipole (M2M) translation matrix
       Matrix<ResultType> m2m;
-      if(m_octree.cache())
-        m2m = m_octree.fmmCache().M2M(m_level, child - getFirstChild(node));
-      else
-        m2m = m_fmmTransform.M2M(Rchild, R, m_level);
+      //if(m_octree.cache())
+        //m2m = m_octree.fmmCache().M2M(m_level, child - getFirstChild(node));
+      //else
+        m2m = m_fmmTransform.M2M(Rchild, childSize, R, parentSize, m_level);
       // add contribution of child to the parent
       const Vector<ResultType>& mcoefsChild =
           m_octree.getNode(child,m_level+1).getMultipoleCoefficients();
@@ -561,9 +565,6 @@ public:
     Vector<CoordinateType> boxSize;
     m_octree.nodeSize(m_level, boxSize);
 
-    const std::vector<unsigned long>& neighbourList
-        = m_octree.getNode(node,m_level).neighbourList();
-
     if(m_octree.multilevel()){
       for (unsigned int ind=0;
            ind<m_octree.getNode(node,m_level).interactionListSize();
@@ -576,12 +577,12 @@ public:
         // calculate multipole to local (M2L) translation matrix
         Matrix<ResultType> m2l;
         if(m_octree.cache())
-          m2l = m_octree.fmmCache().M2L(m_level, 
+          m2l = m_octree.fmmCache().M2L(m_level,
               m_octree.getNode(node,m_level).interactionItemList(ind));
         else
           m2l = m_fmmTransform.M2L(Rinter, R, boxSize, m_level);
       // add contribution of interation list node to current node
-        const Vector<ResultType>& mcoefs = 
+        const Vector<ResultType>& mcoefs =
             m_octree.getNode(inter,m_level).getMultipoleCoefficients();
 
         if (lcoef.rows()==0) {
@@ -596,6 +597,8 @@ public:
 
       } // for each node on the interaction list
     } else {
+      const std::vector<unsigned long>& neighbourList
+          = m_octree.getNode(node,m_level).neighbourList();
       unsigned int nNodes = getNodesPerLevel(m_level);
       for (unsigned int inter=0; inter<nNodes; inter++) {
         // skip if inter and current node are neighbouring or identical
@@ -709,7 +712,9 @@ public:
         return;
 
       Vector<CoordinateType> R; // center of the node
+      Vector<CoordinateType> parentSize; // size of the node
       m_octree.nodeCenter(node,m_level,R);
+      m_octree.nodeSize(m_level,parentSize);
 
       const Vector<ResultType>& lcoefs =
           m_octree.getNode(node,m_level).getLocalCoefficients();
@@ -720,14 +725,16 @@ public:
         if (m_octree.getNode(child,m_level+1).trialDofCount()==0)
           continue;
         Vector<CoordinateType> Rchild; // center of the node
+        Vector<CoordinateType> childSize; // center of the node
         m_octree.nodeCenter(child,m_level+1,Rchild);
+        m_octree.nodeSize(m_level+1,childSize);
 
         // calculate local to local (L2L) translation matrix
         Matrix<ResultType> l2l;
-        if(m_octree.cache())
-          l2l = m_octree.fmmCache().L2L(m_level, child - getFirstChild(node));
-        else
-          l2l = m_fmmTransform.L2L(R, Rchild, m_level);
+        //if(m_octree.cache())
+          //l2l = m_octree.fmmCache().L2L(m_level, child - getFirstChild(node));
+        //else
+          l2l = m_fmmTransform.L2L(R, parentSize, Rchild, childSize, m_level);
         // add the local coefficients to the current child
         Vector<ResultType> lcoefsChildContrib(lcoefs.rows());
         lcoefsChildContrib.fill(0.0);

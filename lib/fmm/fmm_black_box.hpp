@@ -36,21 +36,25 @@ public:
 
   // multipole to multipole (M2M) translation matrix
   virtual Matrix<ValueType> M2M(
-      const Vector<CoordinateType>& childPosition, 
+      const Vector<CoordinateType>& childPosition,
+      const Vector<CoordinateType>& childSize,
       const Vector<CoordinateType>& parentPosition,
+      const Vector<CoordinateType>& parentSize,
       unsigned int level) const;
 
   // multipole to local (M2L) translation matrix
   virtual Matrix<ValueType> M2L(
-      const Vector<CoordinateType>& sourceCentre, 
+      const Vector<CoordinateType>& sourceCentre,
       const Vector<CoordinateType>& fieldCentre,
       const Vector<CoordinateType>& boxSize,
       unsigned int level) const;
 
   // local to local (L2L) translation matrix
   virtual Matrix<ValueType> L2L(
-      const Vector<CoordinateType>& parentPosition, 
+      const Vector<CoordinateType>& parentPosition,
+      const Vector<CoordinateType>& parentSize,
       const Vector<CoordinateType>& childPosition,
+      const Vector<CoordinateType>& childSize,
       unsigned int level) const;
 
   virtual void generateGaussPoints();

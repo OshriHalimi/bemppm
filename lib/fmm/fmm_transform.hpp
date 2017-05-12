@@ -42,21 +42,25 @@ public:
   }
   // multipole to multipole (M2M) translation matrix
   virtual Matrix<ValueType> M2M(
-      const Vector<CoordinateType>& x1, 
+      const Vector<CoordinateType>& x1,
+      const Vector<CoordinateType>& size1,
       const Vector<CoordinateType>& x2,
+      const Vector<CoordinateType>& size2,
       unsigned int level) const = 0;
 
   // multipole to local (M2L) translation matrix
   virtual Matrix<ValueType> M2L(
-      const Vector<CoordinateType>& x1, 
+      const Vector<CoordinateType>& x1,
       const Vector<CoordinateType>& x2,
       const Vector<CoordinateType>& boxSize,
       unsigned int level) const = 0;
 
   // local to local (L2L) translation matrix
   virtual Matrix<ValueType> L2L(
-      const Vector<CoordinateType>& x1, 
+      const Vector<CoordinateType>& x1,
+      const Vector<CoordinateType>& size1,
       const Vector<CoordinateType>& x2,
+      const Vector<CoordinateType>& size2,
       unsigned int level) const = 0;
 
   // interpolate multipole and local coefficients between levels
