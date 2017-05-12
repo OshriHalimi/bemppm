@@ -1,3 +1,5 @@
+#include "common.hpp"
+
 #include "fmm_black_box.hpp"
 #include "fmm_transform.hpp"
 #include "../fiber/explicit_instantiation.hpp"
@@ -58,57 +60,45 @@ Matrix<ValueType> FmmBlackBox<KernelType, ValueType>::M2M(
     const Vector<CoordinateType>& parentPosition,
     unsigned int level) const
 {
-  // change to use interpolation at this stage in future
-  Matrix<ValueType> T;
-  T.resize(this->quadraturePointCount(),this->quadraturePointCount());
+  const size_t quadPoints = this->quadraturePointCount();
+  Matrix<ValueType> result;
+  result.resize(quadPoints,quadPoints);
 
-  Vector<CoordinateType> xvec = childPosition - parentPosition;
+  Vector<CoordinateType> childNodeSize(3);
+  for(int dim=0;dim<3;++dim)
+    if(childPosition(dim)>parentPosition(dim))
+      childNodeSize(dim) = (childPosition(dim)-parentPosition(dim))*2;
+    else
+      childNodeSize(dim) = (parentPosition(dim)-childPosition(dim))*2;
+  Vector<CoordinateType> parentNodeSize(3);
+  for(int dim=0;dim<3;++dim)
+    parentNodeSize(dim) = childNodeSize(dim)*2;
 
-  // source point positions along x, y and z relative to parent in [-1,1]
-  Matrix<CoordinateType> sourcePos;
-  sourcePos.resize(getN(), 3);
-  const CoordinateType prec = std::numeric_limits<CoordinateType>::denorm_min();
-  for (unsigned int dim = 0; dim < xvec.rows(); dim++) {
-    int childOffset = (xvec(dim) > prec) - (xvec(dim) < -prec); // sign
-    for(int i=0;i<sourcePos.rows();++i)
-      sourcePos(i,dim) = (m_Tk(i,1) + childOffset)/2;
+  for(int i=0;i<quadPoints;++i){
+    Vector<CoordinateType> childMultipole(3);
+    for(int dim=0;dim<3;++dim)
+      childMultipole(dim) = this->m_quadraturePoints(dim, i);
+    /*std::cout << "(" << i << ":" << childMultipole(0) << ","
+                                 << childMultipole(1) << ","
+                                 << childMultipole(2) << ")" << std::endl;*/
+    for(int j=0;j<quadPoints;++j){
+      Vector<CoordinateType> parentMultipole(3);
+      for(int dim=0;dim<3;++dim)
+        parentMultipole(dim) = this->m_quadraturePoints(dim, j);
+      Vector<ValueType> entry;
+      Vector<CoordinateType> normal;
+
+      Vector<CoordinateType> point(3);
+      for(int dim=0;dim<3;++dim)
+        point(dim) = childPosition(dim)
+                   + childMultipole(dim)*childNodeSize(dim)/2;
+      evaluateAtGaussPointS(point, normal, parentMultipole, parentPosition,
+                            parentNodeSize, entry);
+      result(i,j)=entry(0);
+    }
   }
 
-  // calculate S(m,n) = \sum T_k(x_m) T_k(x_n), independently for 
-  // each dimension using Clenshaw algorithm to avoid forming T_k(x_s) explicitly
-  CoordinateType S[getN()][sourcePos.rows()][3];
-
-  CoordinateType b[getN() + 2]; // reverse coefficients
-  b[getN()] = b[getN() + 1] = 0;
-
-  for (unsigned int dim = 0; dim < xvec.rows(); dim++)
-    for (unsigned int m = 0; m < getN(); m++)
-      for (unsigned int n = 0; n < sourcePos.rows(); n++) {
-        CoordinateType x = sourcePos(n, dim);
-        for (unsigned int k = getN()-1; k > 0; k--) // sum over order k
-          b[k] = m_Tk(m, k) + 2*x*b[k+1] - b[k+2];
-        S[m][n][dim] = (0.5*m_Tk(m, 0) + x*b[1] - b[2])*2/getN();
-      }
-
-  // take tensor product along each dimension
-  CoordinateType n3 = getN()*getN()*getN();
-  Matrix<ValueType> S3;
-  S3.resize(n3, n3);
-  unsigned int m = 0;
-  for (unsigned int m1 = 0; m1 < getN(); m1++)
-    for (unsigned int m2 = 0; m2 < getN(); m2++)
-      for (unsigned int m3 = 0; m3 < getN(); m3++) {
-        unsigned int n = 0;
-        for (unsigned int n1 = 0; n1 < getN(); n1++)
-          for (unsigned int n2 = 0; n2 < getN(); n2++)
-            for (unsigned int n3 = 0; n3 < getN(); n3++) {
-              S3(m, n) = S[m1][n1][0]*S[m2][n2][1]*S[m3][n3][2];
-              ++n;
-            } // for n3
-        ++m;
-      } // for m3
-
-  return S3;
+  return result;
 }
 
 template <typename KernelType, typename ValueType>
@@ -122,10 +112,9 @@ Matrix<ValueType> FmmBlackBox<KernelType, ValueType>::L2L(
 }
 
 template <typename KernelType, typename ValueType>
-Matrix<ValueType> 
-FmmBlackBox<KernelType, ValueType>::M2L(
-    const Vector<CoordinateType>& sourceCentre, // loops over interaction list
-    const Vector<CoordinateType>& fieldCentre,  // origin
+Matrix<ValueType> FmmBlackBox<KernelType, ValueType>::M2L(
+    const Vector<CoordinateType>& sourceCenter, // loops over interaction list
+    const Vector<CoordinateType>& fieldCenter,  // origin
     const Vector<CoordinateType>& boxSize,
     unsigned int level) const
 {
@@ -142,13 +131,13 @@ FmmBlackBox<KernelType, ValueType>::M2L(
   sourceNodes.resize(getN(), 3);
   for (unsigned int dim = 0; dim < boxSize.rows(); dim++) {
     for(int i=0;i<fieldNodes.rows();++i){
-      fieldNodes(i,dim)  = (m_Tk(i,1)*boxSize(dim)/2 + fieldCentre (dim));
-      sourceNodes(i,dim) = (m_Tk(i,1)*boxSize(dim)/2 + sourceCentre(dim));
+      fieldNodes(i,dim)  = (m_Tk(i,1)*boxSize(dim)/2 + fieldCenter (dim));
+      sourceNodes(i,dim) = (m_Tk(i,1)*boxSize(dim)/2 + sourceCenter(dim));
     }
   }
 
-  Vector<CoordinateType> fieldPos (fieldCentre.rows());
-  Vector<CoordinateType> sourcePos(sourceCentre.rows());
+  Vector<CoordinateType> fieldPos (fieldCenter.rows());
+  Vector<CoordinateType> sourcePos(sourceCenter.rows());
   unsigned int m = 0;
   for (unsigned int m1 = 0; m1 < getN(); m1++) {
     fieldPos(0) = fieldNodes(m1, 0);
@@ -180,8 +169,7 @@ FmmBlackBox<KernelType, ValueType>::M2L(
 // return the weight used to premultiply the Kernel prior to performing the 
 // low rank approximation via SVD.
 template <typename KernelType, typename ValueType>
-void 
-FmmBlackBox<KernelType, ValueType>::getKernelWeight(
+void FmmBlackBox<KernelType, ValueType>::getKernelWeight(
     Matrix<ValueType>& kernelWeightMat,
     Vector<ValueType>& kernelWeightVec) const
 {
@@ -212,38 +200,36 @@ void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointS(
     const Vector<CoordinateType>& point,
     const Vector<CoordinateType>& normal,
     const Vector<CoordinateType>& multipole, // [-1,1]
-    const Vector<CoordinateType>& nodeCentre,
+    const Vector<CoordinateType>& nodeCenter,
     const Vector<CoordinateType>& nodeSize,
     Vector<ValueType>& result) const
 {
-  Vector<CoordinateType> pointScaled;
-  pointScaled.resize(nodeCentre.rows());
-  for(int i=0;i<pointScaled.rows();++i)
-    if(nodeSize(i)!=0)
-      pointScaled(i) = 2.*(point(i) - nodeCentre(i)) / nodeSize(i);
-    else pointScaled(i)=0;
-  // TODO: What to do if nodeSize is 0 (eg screen)
+  Vector<CoordinateType> multipoleScaled;
+  multipoleScaled.resize(nodeCenter.rows());
+  for(int i=0;i<multipoleScaled.rows();++i)
+    multipoleScaled(i) = nodeCenter(i) + nodeSize(i)*multipole(i)/2;
+  /*std::cout << "-----" << std::endl;
+  std::cout << "point: ";nice_print(point);std::cout << std::endl;
+  std::cout << "normal: ";nice_print(normal);std::cout << std::endl;
+  std::cout << "MultipoleScaled: ";nice_print(multipoleScaled);std::cout << std::endl;
+  std::cout << "nodeCenter: ";nice_print(nodeCenter);std::cout << std::endl;
+  std::cout << "nodeSize: ";nice_print(nodeSize);std::cout << std::endl;*/
 
-  // Gauss points can lie outside a given node, since triangles can intesect the faces.
-  // Should ideally enlarge the box so that all mulipoles fully enclose Gauss points.
-  // If this is not done, then end up with extrapolation, which increases the error.
-  // Enlarge all boxes identically
 
-  // should optimise by only calculating matrix S along a single dimension of 
-  // the mulipole coefficients and reusing the information, but where to calculate
-  // (be careful since parallelised)
   CoordinateType S = 1.0;
   CoordinateType TkMultipole[this->getN()];
   CoordinateType TkPoint[this->getN()];
   for (unsigned int dim=0; dim<point.rows(); dim++) {
-    chebyshev(TkMultipole, this->getN(), multipole[dim], 1);
-    chebyshev(TkPoint, this->getN(), pointScaled[dim], 1);
+    chebyshev(TkMultipole, this->getN(), multipoleScaled[dim], 1);
+    chebyshev(TkPoint, this->getN(), point[dim], 1);
 
     CoordinateType localS = TkMultipole[0]*TkPoint[0];
     for (unsigned int j = 1; j < this->getN(); j++)
       localS += 2*TkMultipole[j]*TkPoint[j];
     S *= localS/(this->getN());
+    //std::cout << S << " ";
   }
+  //std::cout << std::endl;
   result.resize(1);
   result(0) =  S;
 }
@@ -253,15 +239,15 @@ void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointDiffS(
     const Vector<CoordinateType>& point,
     const Vector<CoordinateType>& normal,
     const Vector<CoordinateType>& multipole, // [-1,1]
-    const Vector<CoordinateType>& nodeCentre,
+    const Vector<CoordinateType>& nodeCenter,
     const Vector<CoordinateType>& nodeSize,
     Vector<ValueType>& result) const
 {
   Vector<CoordinateType> pointScaled;
-  pointScaled.resize(nodeCentre.rows());
+  pointScaled.resize(nodeCenter.rows());
 
   for(int i=0;i<pointScaled.rows();++i)
-    pointScaled(i) = 2.*(point(i) - nodeCentre(i)) / nodeSize(i);
+    pointScaled(i) = 2.*(point(i) - nodeCenter(i)) / nodeSize(i);
 
   // to speed up the integral will need to cache a npt*3 array, which can be dotted
   // with normal later

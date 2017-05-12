@@ -16,6 +16,7 @@
 #include "../fiber/local_assembler_for_integral_operators.hpp"
 #include "../fiber/conjugate.hpp"
 
+#include "../grid/grid_view.hpp"
 #include "../space/space.hpp"
 #include "../assembly/local_dof_lists_cache.hpp"
 #include "../fiber/surface_normal_independent_function.hpp"
@@ -48,6 +49,20 @@ FmmFarFieldHelper<BasisFunctionType, ResultType>::FmmFarFieldHelper(
         (m_testSpace, test_p2o, indexWithGlobalDofs);
     m_trialDofListsCache = boost::make_shared<Bempp::LocalDofListsCache<BasisFunctionType> >
         (m_trialSpace, trial_p2o, indexWithGlobalDofs);
+
+    const Bempp::GridView &view = testSpace.gridView();
+    const Bempp::IndexSet &index = view.indexSet();
+
+    m_trialElementDofMap.resize(view.entityCount(0));
+    m_testElementDofMap.resize(view.entityCount(0));
+
+    for (std::unique_ptr<Bempp::EntityIterator<0>> it = view.entityIterator<0>(); !it->finished(); it->next()) {
+      const Bempp::Entity<0> &entity = it->entity();
+      const int ent0Number = index.subEntityIndex(entity, 0, 0);
+      std::vector<BasisFunctionType> w;
+      testSpace.getGlobalDofs(entity,m_testElementDofMap[ent0Number],w);
+      trialSpace.getGlobalDofs(entity,m_trialElementDofMap[ent0Number],w);
+    }
 }
 
 template <typename BasisFunctionType, typename ResultType>
@@ -82,7 +97,7 @@ FmmFarFieldHelper<BasisFunctionType, ResultType>::makeFarFieldMat(
   if (isTest)
     dofLists = m_testDofListsCache->get(dofStart, dofCount);
   else
-   dofLists = m_trialDofListsCache->get(dofStart, dofCount);
+    dofLists = m_trialDofListsCache->get(dofStart, dofCount);
   // Necessary elements
   const std::vector<int>& elementIndices = dofLists->elementIndices;
   // Necessary local dof indices in each element
@@ -95,35 +110,50 @@ FmmFarFieldHelper<BasisFunctionType, ResultType>::makeFarFieldMat(
   const std::vector<std::vector<int> >& blockCols =
       dofLists->arrayIndices;
 
-  // First, evaluate the contributions of the dense terms
-  // The whole block or its submatrix needed. This means that we are
-  // likely to need all or almost all local DOFs from most elements.
-  // Evaluate the full local weak form for each pair of test and trial
-  // elements and then select the entries that we need.
+  std::vector<Point3D<CoordinateType>> globalDofPositions;
+  std::vector<Point3D<CoordinateType>> globalDofNormals;
+  if (isTest){
+    m_testSpace.getGlobalDofPositions(globalDofPositions);
+    m_testSpace.getGlobalDofNormals(globalDofNormals);
+  } else {
+    m_trialSpace.getGlobalDofPositions(globalDofPositions);
+    m_trialSpace.getGlobalDofNormals(globalDofNormals);
+  }
+
+
+
 
   for (size_t multipole = 0; multipole < multipoleCount; ++multipole) {
     Vector<CoordinateType> khat = fmmTransform.getQuadraturePoint(multipole);
-    typedef ResultType UserFunctionType;
 
-    typedef FmmFarfieldFunctionMultiplying<UserFunctionType> FunctorType;
-    FunctorType functor(khat, nodeCenter, nodeSize, fmmTransform, isTest);
-    Fiber::SurfaceNormalDependentFunction<FunctorType> function(functor);
-
-    fmmLocalAssembler.setFunction(&function);
-
-    std::vector<Vector<ResultType> > localResult;
-    fmmLocalAssembler.evaluateLocalWeakForms(elementIndices, localResult);
-
-    for (size_t nElem = 0; nElem < elementIndices.size(); ++nElem)
-      for (size_t nDof = 0;nDof < localDofs[nElem].size();++nDof)
-        if(transposed)
+    for (size_t nElem = 0; nElem < elementIndices.size(); ++nElem){
+      for (size_t nDof = 0;nDof < localDofs[nElem].size();++nDof){
+        size_t dofNumber;
+        if (isTest)
+          dofNumber = m_testElementDofMap[elementIndices[nElem]][localDofs[nElem][nDof]];
+        else
+          dofNumber = m_trialElementDofMap[elementIndices[nElem]][localDofs[nElem][nDof]];
+        const Vector<CoordinateType> dofPosition
+            = Point2Vector(globalDofPositions[dofNumber]);
+        const Vector<CoordinateType> dofNormal
+            = Point2Vector(globalDofNormals[dofNumber]);
+        Vector<ResultType> fmmTLocalResult;
+        if (isTest)
+          fmmTransform.evaluateTest(dofPosition, dofNormal, khat, nodeCenter,
+                                    nodeSize, fmmTLocalResult);
+        else
+          fmmTransform.evaluateTrial(dofPosition, dofNormal, khat, nodeCenter,
+                                     nodeSize, fmmTLocalResult);
+        if (transposed)
           result(blockCols[nElem][nDof], multipole) +=
               localDofWeights[nElem][nDof]
-            * localResult[nElem](localDofs[nElem][nDof]);
+            * fmmTLocalResult[0];
         else
           result(multipole, blockCols[nElem][nDof]) +=
               localDofWeights[nElem][nDof]
-            * localResult[nElem](localDofs[nElem][nDof]);
+            * fmmTLocalResult[0];
+        }
+      }
   } // for each multipole
   return result;
 
@@ -165,6 +195,41 @@ void FmmFarFieldHelper<BasisFunctionType, ResultType>::operator()(
       node.setTrialFarFieldMat(trialFarFieldMat);
     }
   } // for each node
+}
+
+template <typename BasisFunctionType, typename ResultType>
+void FmmFarFieldHelper<BasisFunctionType, ResultType>::operator()(
+    unsigned int n) const
+{
+  // will need one FmmLocalAssembler per process, since each leaf modifies
+  // function, which is a member function
+  FmmLocalAssembler<BasisFunctionType, ResultType>
+      fmmTestLocalAssembler(m_testSpace, m_options, true);
+  FmmLocalAssembler<BasisFunctionType, ResultType>
+      fmmTrialLocalAssembler(m_trialSpace, m_options, false);
+    OctreeNode<ResultType> &node = m_octree->getNode(n, m_octree->levels());
+    Vector<CoordinateType> nodeCenter, nodeSize;
+    m_octree->nodeCenter(n, m_octree->levels(), nodeCenter);
+    m_octree->nodeSize(m_octree->levels(), nodeSize);
+
+    // evaulate and store test far-field
+    if (node.testDofCount()) {
+      const unsigned int testDofStart = node.testDofStart();
+      const unsigned int testDofCount = node.testDofCount();
+      const Matrix<ResultType> testFarFieldMat = makeFarFieldMat(
+          fmmTestLocalAssembler, m_fmmTransform, nodeCenter,
+          nodeSize, testDofStart, testDofCount, true, true);
+      node.setTestFarFieldMat(testFarFieldMat);
+    }
+    // evaluate and store trial far-field
+    if (node.trialDofCount()) {
+      const unsigned int trialDofStart = node.trialDofStart();
+      const unsigned int trialDofCount = node.trialDofCount();
+      const Matrix<ResultType> trialFarFieldMat = makeFarFieldMat(
+          fmmTrialLocalAssembler, m_fmmTransform, nodeCenter,
+          nodeSize, trialDofStart, trialDofCount, false);
+      node.setTrialFarFieldMat(trialFarFieldMat);
+    }
 }
 
 FIBER_INSTANTIATE_CLASS_TEMPLATED_ON_BASIS_AND_RESULT(FmmFarFieldHelper);

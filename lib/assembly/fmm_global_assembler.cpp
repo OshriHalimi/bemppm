@@ -213,7 +213,6 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
         options, test_p2o, trial_p2o, indexWithGlobalDofs);
   unsigned int nLeaves = fmm::getNodesPerLevel(octree->levels());
   tbb::parallel_for<unsigned int>(0, nLeaves, fmmNearFieldHelper);
-//  for(int i=0;i<nLeaves;++i) fmmNearFieldHelper.evaluateNearField(octree,i);
 
   fmm::FmmFarFieldHelper<BasisFunctionType, ResultType> fmmFarFieldHelper(
         octree, testSpace, trialSpace, options, test_p2o, trial_p2o, 
@@ -221,7 +220,6 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
 
   tbb::parallel_for(tbb::blocked_range<unsigned int>(0, nLeaves, 100), 
       fmmFarFieldHelper);
-  //for(int i=0;i<nLeaves;++i) fmmFarFieldHelper(i);
 
   unsigned int symm = NO_SYMMETRY;
   if (symmetry) {

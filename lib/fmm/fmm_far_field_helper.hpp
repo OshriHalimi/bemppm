@@ -64,6 +64,7 @@ public:
             const FmmTransform<ResultType> &fmmTransform);
 
     void operator()(const tbb::blocked_range<unsigned int>& range) const;
+    void operator()(const unsigned int n) const;
 
 private:
     Matrix<ResultType> makeFarFieldMat(
@@ -88,6 +89,9 @@ private:
 
     shared_ptr<Octree<ResultType> > m_octree;
     const FmmTransform<ResultType> &m_fmmTransform;
+
+    std::vector<std::vector<int>> m_trialElementDofMap;
+    std::vector<std::vector<int>> m_testElementDofMap;
 };
 
 } // namespace Bempp

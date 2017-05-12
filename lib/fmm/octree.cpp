@@ -26,22 +26,6 @@ namespace fmm
 
 // N.B. that USE_FMM_CACHE should NOT be used for single level FMM
 
-template <typename T>
-void nice_print(Vector<T> v){
-  for(size_t i=0;i<v.rows();++i)
-    std::cout << v(i) << " ";
-}
-template <typename T>
-void nice_print(Matrix<T> v){
-  for(size_t i=0;i<v.rows();++i){
-    for(size_t j=0;j<v.cols();++j)
-      std::cout << v(i,j) << " ";
-    if(i<v.rows()-1) std::cout << ", ";
-  }
-}
-
-
-
 template <typename CoordinateType>
 CoordinateType getPoint3DCoord(Point3D<CoordinateType> p,int n){
     if(n==0) return p.x;
@@ -365,9 +349,8 @@ void Octree<ResultType>::apply(
     // ******************
     EvaluateMultipoleCoefficientsHelper<ResultType>
         evaluateMultipoleCoefficientsHelper(*this, x_in_permuted);
-    //tbb::parallel_for<size_t>(0, nLeaves,
-    //                          evaluateMultipoleCoefficientsHelper);
-    for(size_t i=0;i<nLeaves;++i) evaluateMultipoleCoefficientsHelper(i);
+    tbb::parallel_for<size_t>(0, nLeaves,
+                              evaluateMultipoleCoefficientsHelper);
     std::cout << "Moments after STEP ONE" << std::endl;
     for(int i=0;i<nLeaves;++i){
         auto mc = getNode(i,levels()).getMultipoleCoefficients();
@@ -510,7 +493,6 @@ public:
       // add contribution of child to the parent
       const Vector<ResultType>& mcoefsChild =
           m_octree.getNode(child,m_level+1).getMultipoleCoefficients();
-            // this returns a 0 dim vector
       // interpolate all multipoles from child layer to higher order, then apply M2M
       Vector<ResultType> mcoefsChildInterpolated;
       m_fmmTransform.interpolate(m_level+1, m_level, mcoefsChild,
@@ -541,7 +523,7 @@ void Octree<ResultType>::upwardsStep(
     const FmmTransform<ResultType> &fmmTransform)
 {
   // make more efficient, by ignoring empty boxes 
-  for (unsigned int level = m_levels-1; level>=m_topLevel; level--) {
+  for (unsigned int level = m_levels-1; level>=m_topLevel; --level) {
     //L-1 -> 2
     unsigned int nNodes = getNodesPerLevel(level);
 
