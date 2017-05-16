@@ -48,20 +48,6 @@ FmmFarFieldHelper<BasisFunctionType, ResultType>::FmmFarFieldHelper(
         (m_testSpace, test_p2o, indexWithGlobalDofs);
     m_trialDofListsCache = boost::make_shared<Bempp::LocalDofListsCache<BasisFunctionType> >
         (m_trialSpace, trial_p2o, indexWithGlobalDofs);
-
-    const Bempp::GridView &view = testSpace.gridView();
-    const Bempp::IndexSet &index = view.indexSet();
-
-    m_trialElementDofMap.resize(view.entityCount(0));
-    m_testElementDofMap.resize(view.entityCount(0));
-
-    for (std::unique_ptr<Bempp::EntityIterator<0>> it = view.entityIterator<0>(); !it->finished(); it->next()) {
-      const Bempp::Entity<0> &entity = it->entity();
-      const int ent0Number = index.subEntityIndex(entity, 0, 0);
-      std::vector<BasisFunctionType> w;
-      testSpace.getGlobalDofs(entity,m_testElementDofMap[ent0Number],w);
-      trialSpace.getGlobalDofs(entity,m_trialElementDofMap[ent0Number],w);
-    }
 }
 
 template <typename BasisFunctionType, typename ResultType>
@@ -147,6 +133,9 @@ void FmmFarFieldHelper<BasisFunctionType, ResultType>::operator()(
       fmmTestLocalAssembler(m_testSpace, m_options, true);
   FmmLocalAssembler<BasisFunctionType, ResultType>
       fmmTrialLocalAssembler(m_trialSpace, m_options, false);
+  // TODO: what should quadrature orders be??
+  //fmmTestLocalAssembler.setQuadratureOrders(m_octree->levels(),m_octree->levels());
+  //fmmTrialLocalAssembler.setQuadratureOrders(m_octree->levels(),m_octree->levels());
   for( unsigned int n=range.begin(); n!=range.end(); ++n ) {
     OctreeNode<ResultType> &node = m_octree->getNode(n, m_octree->levels());
     Vector<CoordinateType> nodeCenter, nodeSize;
