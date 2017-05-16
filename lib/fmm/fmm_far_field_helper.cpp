@@ -44,7 +44,6 @@ FmmFarFieldHelper<BasisFunctionType, ResultType>::FmmFarFieldHelper(
     :    m_octree(octree), m_testSpace(testSpace), m_trialSpace(trialSpace),
         m_options(options), m_fmmTransform(fmmTransform)
 {
-    // requires p2o the vector, not an IndexPermutation object. Provide access functions to cache for nodes
     m_testDofListsCache = boost::make_shared<Bempp::LocalDofListsCache<BasisFunctionType> >
         (m_testSpace, test_p2o, indexWithGlobalDofs);
     m_trialDofListsCache = boost::make_shared<Bempp::LocalDofListsCache<BasisFunctionType> >
@@ -87,7 +86,7 @@ FmmFarFieldHelper<BasisFunctionType, ResultType>::makeFarFieldMat(
         unsigned int dofStart, unsigned int dofCount, bool isTest,
         bool transposed) const
 {
-  unsigned int multipoleCount = fmmTransform.quadraturePointCount();
+unsigned int multipoleCount = fmmTransform.quadraturePointCount();
   Matrix<ResultType> result(multipoleCount, dofCount);
   if(transposed) result.resize(dofCount, multipoleCount);
   result.fill(0.);
@@ -97,7 +96,7 @@ FmmFarFieldHelper<BasisFunctionType, ResultType>::makeFarFieldMat(
   if (isTest)
     dofLists = m_testDofListsCache->get(dofStart, dofCount);
   else
-    dofLists = m_trialDofListsCache->get(dofStart, dofCount);
+   dofLists = m_trialDofListsCache->get(dofStart, dofCount);
   // Necessary elements
   const std::vector<int>& elementIndices = dofLists->elementIndices;
   // Necessary local dof indices in each element
@@ -110,53 +109,31 @@ FmmFarFieldHelper<BasisFunctionType, ResultType>::makeFarFieldMat(
   const std::vector<std::vector<int> >& blockCols =
       dofLists->arrayIndices;
 
-  std::vector<Point3D<CoordinateType>> globalDofPositions;
-  std::vector<Point3D<CoordinateType>> globalDofNormals;
-  if (isTest){
-    m_testSpace.getGlobalDofPositions(globalDofPositions);
-    m_testSpace.getGlobalDofNormals(globalDofNormals);
-  } else {
-    m_trialSpace.getGlobalDofPositions(globalDofPositions);
-    m_trialSpace.getGlobalDofNormals(globalDofNormals);
-  }
-
-
-
-
   for (size_t multipole = 0; multipole < multipoleCount; ++multipole) {
     Vector<CoordinateType> khat = fmmTransform.getQuadraturePoint(multipole);
+    typedef ResultType UserFunctionType;
 
-    for (size_t nElem = 0; nElem < elementIndices.size(); ++nElem){
-      for (size_t nDof = 0;nDof < localDofs[nElem].size();++nDof){
-        size_t dofNumber;
-        if (isTest)
-          dofNumber = m_testElementDofMap[elementIndices[nElem]][localDofs[nElem][nDof]];
-        else
-          dofNumber = m_trialElementDofMap[elementIndices[nElem]][localDofs[nElem][nDof]];
-        const Vector<CoordinateType> dofPosition
-            = Point2Vector(globalDofPositions[dofNumber]);
-        const Vector<CoordinateType> dofNormal
-            = Point2Vector(globalDofNormals[dofNumber]);
-        Vector<ResultType> fmmTLocalResult;
-        if (isTest)
-          fmmTransform.evaluateTest(dofPosition, dofNormal, khat, nodeCenter,
-                                    nodeSize, fmmTLocalResult);
-        else
-          fmmTransform.evaluateTrial(dofPosition, dofNormal, khat, nodeCenter,
-                                     nodeSize, fmmTLocalResult);
-        if (transposed)
+    typedef FmmFarfieldFunctionMultiplying<UserFunctionType> FunctorType;
+    FunctorType functor(khat, nodeCenter, nodeSize, fmmTransform, isTest);
+    Fiber::SurfaceNormalDependentFunction<FunctorType> function(functor);
+
+    fmmLocalAssembler.setFunction(&function);
+
+    std::vector<Vector<ResultType> > localResult;
+    fmmLocalAssembler.evaluateLocalWeakForms(elementIndices, localResult);
+
+    for (size_t nElem = 0; nElem < elementIndices.size(); ++nElem)
+      for (size_t nDof = 0;nDof < localDofs[nElem].size();++nDof)
+        if(transposed)
           result(blockCols[nElem][nDof], multipole) +=
               localDofWeights[nElem][nDof]
-            * fmmTLocalResult[0];
+            * localResult[nElem](localDofs[nElem][nDof]);
         else
           result(multipole, blockCols[nElem][nDof]) +=
               localDofWeights[nElem][nDof]
-            * fmmTLocalResult[0];
-        }
-      }
+            * localResult[nElem](localDofs[nElem][nDof]);
   } // for each multipole
   return result;
-
 } // Octree::makeFarFieldMat
 
 

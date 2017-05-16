@@ -34,6 +34,11 @@ void nice_print(Vector<T> v){
     std::cout << v(i) << " ";
 }
 template <typename T>
+void nice_print(std::vector<T> v){
+  for(size_t i=0;i<v.size();++i)
+    std::cout << v[i] << " ";
+}
+template <typename T>
 void nice_print(Matrix<T> v){
   for(size_t i=0;i<v.rows();++i){
     for(size_t j=0;j<v.cols();++j)

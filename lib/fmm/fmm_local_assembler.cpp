@@ -89,12 +89,11 @@ FmmLocalAssembler<BasisFunctionType,
   // Get number of corners of the specified element
   desc.vertexCount = m_rawGeometry->elementCornerCount(elementIndex);
 
-  const int defaultOrder = 2 * (*m_shapesets)[elementIndex]->order() + 1;
   Fiber::QuadratureOptions quadratureOptions;
         // use default quadrature (where is user var?)
-  quadratureOptions.setRelativeQuadratureOrder(2);
+  quadratureOptions.setRelativeQuadratureOrder(m_relativeOrder);// was 2
         // uncomment to increase accuracy
-  desc.order = quadratureOptions.quadratureOrder(defaultOrder);
+  desc.order = quadratureOptions.quadratureOrder(m_quadratureOrder);
 
   return getIntegrator(desc);
 }
@@ -199,7 +198,7 @@ void FmmLocalAssembler<BasisFunctionType, ResultType>::evaluateLocalWeakForms(
 
     // Integrate!
     Matrix<ResultType> localResult;
-    
+
     activeIntegrator.integrate(activeElementIndices, activeTestShapeset,
                                localResult);
     // Distribute the just calculated integrals into the result array

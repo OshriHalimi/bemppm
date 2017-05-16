@@ -46,6 +46,11 @@ public:
 
   void setFunction(Fiber::Function<ResultType> *function);
 
+  void setQuadratureOrders(int quad, int relative){
+    m_quadratureOrder=quad;
+    m_relativeOrder=relative;
+    }
+
   void evaluateLocalWeakForms(
       const std::vector<int>& elementIndices,
       std::vector<Vector<ResultType> > & result);
@@ -75,6 +80,8 @@ private:
 
   IntegratorMap m_testFunctionIntegrators;
   bool m_conjugateBasis;
+  int m_quadratureOrder = 1;
+  int m_relativeOrder = 2;
 };
 
 } // namespace Bempp
