@@ -70,9 +70,6 @@ Matrix<ValueType> FmmBlackBox<KernelType, ValueType>::M2M(
     Vector<CoordinateType> childMultipole(3);
     for(int dim=0;dim<3;++dim)
       childMultipole(dim) = this->m_quadraturePoints(dim, i);
-    /*std::cout << "(" << i << ":" << childMultipole(0) << ","
-                                 << childMultipole(1) << ","
-                                 << childMultipole(2) << ")" << std::endl;*/
     for(int j=0;j<quadPoints;++j){
       Vector<CoordinateType> parentMultipole(3);
       for(int dim=0;dim<3;++dim)
@@ -194,37 +191,29 @@ template <typename KernelType, typename ValueType>
 void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointS(
     const Vector<CoordinateType>& point,
     const Vector<CoordinateType>& normal,
-    const Vector<CoordinateType>& multipole, // [-1,1]
+    const Vector<CoordinateType>& multipoleScaled, // [-1,1]
     const Vector<CoordinateType>& nodeCenter,
     const Vector<CoordinateType>& nodeSize,
     Vector<ValueType>& result) const
 {
-  Vector<CoordinateType> multipoleScaled;
-  multipoleScaled.resize(nodeCenter.rows());
+  Vector<CoordinateType> pointScaled(nodeCenter.rows());
+  pointScaled.fill(0.);
   for(int i=0;i<multipoleScaled.rows();++i)
-    multipoleScaled(i) = nodeCenter(i) + nodeSize(i)*multipole(i)/2;
-  /*std::cout << "-----" << std::endl;
-  std::cout << "point: ";nice_print(point);std::cout << std::endl;
-  std::cout << "normal: ";nice_print(normal);std::cout << std::endl;
-  std::cout << "MultipoleScaled: ";nice_print(multipoleScaled);std::cout << std::endl;
-  std::cout << "nodeCenter: ";nice_print(nodeCenter);std::cout << std::endl;
-  std::cout << "nodeSize: ";nice_print(nodeSize);std::cout << std::endl;*/
-
+    if(nodeSize(i)>0)
+      pointScaled(i) = 2*(point(i)-nodeCenter(i))/nodeSize(i);
 
   CoordinateType S = 1.0;
   CoordinateType TkMultipole[this->getN()];
   CoordinateType TkPoint[this->getN()];
   for (unsigned int dim=0; dim<point.rows(); dim++) {
     chebyshev(TkMultipole, this->getN(), multipoleScaled[dim], 1);
-    chebyshev(TkPoint, this->getN(), point[dim], 1);
+    chebyshev(TkPoint, this->getN(), pointScaled[dim], 1);
 
     CoordinateType localS = TkMultipole[0]*TkPoint[0];
     for (unsigned int j = 1; j < this->getN(); j++)
       localS += 2*TkMultipole[j]*TkPoint[j];
     S *= localS/(this->getN());
-    //std::cout << S << " ";
   }
-  //std::cout << std::endl;
   result.resize(1);
   result(0) =  S;
 }

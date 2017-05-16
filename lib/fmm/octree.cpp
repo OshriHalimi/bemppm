@@ -351,14 +351,14 @@ void Octree<ResultType>::apply(
         evaluateMultipoleCoefficientsHelper(*this, x_in_permuted);
     tbb::parallel_for<size_t>(0, nLeaves,
                               evaluateMultipoleCoefficientsHelper);
-    std::cout << "Moments after STEP ONE" << std::endl;
+    /*std::cout << "Moments after STEP ONE" << std::endl;
     for(int i=0;i<nLeaves;++i){
         auto mc = getNode(i,levels()).getMultipoleCoefficients();
         if(mc.rows()>0){
         std::cout << levels() << "," << i << ": ";
         nice_print(mc);
         std::cout << std::endl;
-      }}
+      }}*/
 
     // **** STEP TWO ****
     //  Evaluate the moments on all cells in levels 2<=l<max
@@ -367,7 +367,7 @@ void Octree<ResultType>::apply(
     //  This function and the helper it calls are defined in octree.cpp
     // ******************
     if(multilevel()) upwardsStep(m_fmmTransform);
-    std::cout << "Moments after STEP TWO" << std::endl;
+    /*std::cout << "Moments after STEP TWO" << std::endl;
     for(int l=levels()-1;l>=2;--l){std::cout << l << " ";
     for(int i=0;i<getNodesPerLevel(l);++i){
         auto mc = getNode(i,l).getMultipoleCoefficients();
@@ -375,7 +375,7 @@ void Octree<ResultType>::apply(
         std::cout << l << "," << i << ": ";
         nice_print(mc);
         std::cout << std::endl;
-      }}}
+      }}}*/
 
 
     // **** STEP THREE ****
@@ -385,7 +385,7 @@ void Octree<ResultType>::apply(
     //  This function and the helper it calls are defined in octree.cpp
     // ********************
     translationStep(m_fmmTransform);
-    std::cout << "Local coefficients after STEP THREE" << std::endl;
+    /*std::cout << "Local coefficients after STEP THREE" << std::endl;
     for(int l=2;l<=levels();++l)
     for(int i=0;i<getNodesPerLevel(l);++i){
         auto mc = getNode(i,l).getLocalCoefficients();
@@ -393,7 +393,7 @@ void Octree<ResultType>::apply(
         std::cout << l << "," << i << ": ";
         nice_print(mc);
         std::cout << std::endl;
-      }}
+      }}*/
 
 
     // **** STEP FOUR ****
@@ -403,7 +403,7 @@ void Octree<ResultType>::apply(
     //  This function and the helper it calls are defined in octree.cpp
     // *******************
     if(multilevel()) downwardsStep(m_fmmTransform);
-    std::cout << "Local coefficients after STEP FOUR" << std::endl;
+    /*std::cout << "Local coefficients after STEP FOUR" << std::endl;
     for(int l=3;l<=levels();++l)
     for(int i=0;i<getNodesPerLevel(l);++i){
         auto mc = getNode(i,l).getLocalCoefficients();
@@ -411,7 +411,7 @@ void Octree<ResultType>::apply(
         std::cout << l << "," << i << ": ";
         nice_print(mc);
         std::cout << std::endl;
-      }}
+      }}*/
 
 
     // **** STEP FIVE ****
@@ -429,7 +429,7 @@ void Octree<ResultType>::apply(
                                                   y_out_permuted);
     tbb::parallel_for<size_t>(0, nLeaves,
                               evaluateFarFieldMatrixVectorProductHelper);
-    std::cout << "Calculations in STEP FIVE" << std::endl;
+    /*std::cout << "Calculations in STEP FIVE" << std::endl;
     for(int i=0;i<getNodesPerLevel(levels());++i){
         auto ffm = getNode(i,levels()).getTestFarFieldMat();
         auto lc = getNode(i,levels()).getLocalCoefficients();
@@ -442,7 +442,7 @@ void Octree<ResultType>::apply(
           nice_print(m_fmmTransform.getWeights());
           std::cout << std::endl;
         }
-      }
+      }*/
 
 
     if(transposed) m_trial_perm->unpermute(
@@ -666,7 +666,8 @@ void Octree<ResultType>::translationStep(
       unsigned int nNodes = getNodesPerLevel(level);
       TranslationStepHelper<ResultType> translationStepHelper(
           *this, fmmTransform, level);
-      tbb::parallel_for<size_t>(0, nNodes, translationStepHelper);
+      //tbb::parallel_for<size_t>(0, nNodes, translationStepHelper);
+      for(size_t i=0;i<nNodes;++i) translationStepHelper(i);
     }
   } else {
     unsigned int level = m_levels;
