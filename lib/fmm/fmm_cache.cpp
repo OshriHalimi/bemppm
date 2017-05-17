@@ -78,11 +78,11 @@ FmmCache<ValueType>::initCache(
 
       for(int i=0;i<3;++i) Rchild(i) = (ind[i]-0.5) * boxSize[i]/2;
 
-      Matrix<ValueType> m2m = m_fmmTransform.M2M(Rchild, origin, level);
+      Matrix<ValueType> m2m = m_fmmTransform.M2M(Rchild, Rchild, origin, origin, level);
 
       m_cacheM2M[level-m_topLevel][child] = m2m;
 
-      Matrix<ValueType> l2l = m_fmmTransform.L2L(origin, Rchild, level);
+      Matrix<ValueType> l2l = m_fmmTransform.L2L(origin, origin, Rchild, Rchild, level);
 
       m_cacheL2L[level-m_topLevel][child] = l2l;
     }

@@ -22,6 +22,9 @@ void chebyshev(ValueType *Tk, unsigned int N, ValueType x, int kind=1)
   Tk[1] = kind*x;
   for (unsigned int j = 2; j < N; j++)
     Tk[j] = 2*x*Tk[j-1] - Tk[j-2];
+  if(x>1||x<-1)
+    std::cout << "WARNING: Gauss point is outside the box (" << 
+        x<<")" << std::endl;
 }
 
 template <typename KernelType, typename ValueType>
@@ -116,6 +119,8 @@ Matrix<ValueType> FmmBlackBox<KernelType, ValueType>::M2L(
   CoordinateType n3 = getN()*getN()*getN();
   fieldData.globals.resize(3, n3);
   sourceData.globals.resize(3, n3);
+  fieldData.normals.resize(3, n3);
+  sourceData.normals.resize(3, n3);
 
   Matrix<CoordinateType> fieldNodes;
   fieldNodes.resize(getN(), 3);
@@ -142,10 +147,16 @@ Matrix<ValueType> FmmBlackBox<KernelType, ValueType>::M2L(
         sourcePos(2) = sourceNodes(m3, 2);
         fieldData.globals.col(m) = fieldPos;
         sourceData.globals.col(m) = sourcePos;
+        // TODO: Fix these normals
+        Vector<CoordinateType> norm(3);
+        norm(0)=0;norm(1)=0;norm(2)=1;
+        fieldData.normals.col(m) = norm;
+        sourceData.normals.col(m) = norm;
         ++m;
       } // for m3
     } // for m2
   } // for m1
+
   Fiber::CollectionOf4dArrays<KernelType> result;
   m_kernels->evaluateOnGrid(fieldData, sourceData, result);
 
@@ -205,12 +216,12 @@ void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointS(
   CoordinateType S = 1.0;
   CoordinateType TkMultipole[this->getN()];
   CoordinateType TkPoint[this->getN()];
-  for (unsigned int dim=0; dim<point.rows(); dim++) {
+  for (unsigned int dim=0; dim<point.rows(); ++dim) {
     chebyshev(TkMultipole, this->getN(), multipoleScaled[dim], 1);
     chebyshev(TkPoint, this->getN(), pointScaled[dim], 1);
 
     CoordinateType localS = TkMultipole[0]*TkPoint[0];
-    for (unsigned int j = 1; j < this->getN(); j++)
+    for (unsigned int j = 1; j < this->getN(); ++j)
       localS += 2*TkMultipole[j]*TkPoint[j];
     S *= localS/(this->getN());
   }
@@ -222,31 +233,29 @@ template <typename KernelType, typename ValueType>
 void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointDiffS(
     const Vector<CoordinateType>& point,
     const Vector<CoordinateType>& normal,
-    const Vector<CoordinateType>& multipole, // [-1,1]
+    const Vector<CoordinateType>& multipoleScaled, // [-1,1]
     const Vector<CoordinateType>& nodeCenter,
     const Vector<CoordinateType>& nodeSize,
     Vector<ValueType>& result) const
 {
-  Vector<CoordinateType> pointScaled;
-  pointScaled.resize(nodeCenter.rows());
+  Vector<CoordinateType> pointScaled(nodeCenter.rows());
+  pointScaled.fill(0.);
+  for(int i=0;i<multipoleScaled.rows();++i)
+    if(nodeSize(i)>0)
+      pointScaled(i) = 2*(point(i)-nodeCenter(i))/nodeSize(i);
 
-  for(int i=0;i<pointScaled.rows();++i)
-    pointScaled(i) = 2.*(point(i) - nodeCenter(i)) / nodeSize(i);
-
-  // to speed up the integral will need to cache a npt*3 array, which can be dotted
-  // with normal later
   CoordinateType S[3], diffS[3];
   CoordinateType TkMultipole[this->getN()];
   CoordinateType TkPoint[this->getN()];
   CoordinateType UkPoint[this->getN()]; // Chebyshev polynomials of the second kind
-  for (unsigned int dim=0; dim<point.rows(); dim++) {
-    chebyshev(TkMultipole, this->getN(), multipole[dim], 1);
+  for (unsigned int dim=0; dim<point.rows(); ++dim) {
+    chebyshev(TkMultipole, this->getN(), multipoleScaled[dim], 1);
     chebyshev(TkPoint, this->getN(), pointScaled[dim], 1);
     chebyshev(UkPoint, this->getN(), pointScaled[dim], 2);
 
     S[dim] = TkMultipole[0]*TkPoint[0];
-    diffS[dim] = 0; //TkMultipole[0]*diff(TkPoint[0]=1);
-    for (unsigned int j = 1; j < this->getN(); j++) {
+    diffS[dim] = 0;
+    for (unsigned int j = 1; j < this->getN(); ++j){
       S[dim] += 2*TkMultipole[j]*TkPoint[j];
       CoordinateType diffTkPoint = j*UkPoint[j-1];
       diffS[dim] += 2*TkMultipole[j]*diffTkPoint;
@@ -255,9 +264,15 @@ void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointDiffS(
     diffS[dim] /= this->getN();
   }
   result.resize(1);
-  result(0) = normal(0)*diffS[0]*S[1]*S[2]*(2./nodeSize(0))
-            + normal(1)*S[0]*diffS[1]*S[2]*(2./nodeSize(1))
-            + normal(2)*S[0]*S[1]*diffS[2]*(2./nodeSize(2));
+  result(0) = 0;
+  for(int dim=0;dim<3;++dim)
+    if(nodeSize(0)>0){
+      ValueType bit = normal(dim)*diffS[dim]*2./nodeSize(dim);
+      for(int i=0;i<3;++i)
+        if(dim!=i)
+          bit *= S[i];
+      result(0) += bit;
+    }
 }
 
 // should be templated on KernelType and ResultType, but not added to explicit 
