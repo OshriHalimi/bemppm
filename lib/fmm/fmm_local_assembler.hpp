@@ -1,7 +1,7 @@
 #ifndef bempp_fmm_integrator_hpp
 #define bempp_fmm_integrator_hpp
 
-#include "common.hpp"
+#include "fmm_common.hpp"
 
 #include "../common/scalar_traits.hpp"
 #include "../common/shared_ptr.hpp"

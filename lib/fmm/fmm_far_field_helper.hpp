@@ -5,7 +5,7 @@
 #include <complex>
 
 #include "../common/armadillo_fwd.hpp"
-#include "common.hpp"
+#include "fmm_common.hpp"
 #include "../common/types.hpp"
 
 #include "../common/shared_ptr.hpp"

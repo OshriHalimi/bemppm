@@ -2,7 +2,7 @@
 #include "octree.hpp"
 
 #include "../common/common.hpp"
-#include "common.hpp"
+#include "fmm_common.hpp"
 #include "../fiber/explicit_instantiation.hpp"
 
 #include "../common/shared_ptr.hpp"

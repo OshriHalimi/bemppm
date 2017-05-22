@@ -3,7 +3,7 @@
 
 #include "fmm_transform.hpp"
 
-#include "common.hpp"
+#include "fmm_common.hpp"
 #include <vector>
 
 #include "../fiber/scalar_traits.hpp"

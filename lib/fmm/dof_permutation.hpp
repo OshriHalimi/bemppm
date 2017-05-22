@@ -1,7 +1,7 @@
 #ifndef FMM_DOF_PERMUTATION_HPP
 #define FMM_DOF_PERMUTATION_HPP
 
-#include "common.hpp"
+#include "fmm_common.hpp"
 #include <vector>
 
 namespace fmm {

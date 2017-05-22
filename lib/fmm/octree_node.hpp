@@ -4,7 +4,7 @@
 #include <vector>
 #include <complex>
 
-#include "common.hpp"
+#include "fmm_common.hpp"
 
 #include "../common/shared_ptr.hpp"
 #include "../fiber/scalar_traits.hpp"

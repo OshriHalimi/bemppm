@@ -54,6 +54,7 @@
 
 namespace Bempp {
 
+
 template <typename BasisFunctionType, typename KernelType, typename ResultType>
 shared_ptr<
     const ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>>
@@ -70,6 +71,8 @@ laplaceSingleLayerBoundaryOperator(
 
   typedef Fiber::Laplace3dSingleLayerPotentialKernelFunctor<KernelType>
       KernelFunctor;
+  typedef Fiber::Laplace3dSingleLayerPotentialKernelFunctor<KernelType>
+      SingleKernelFunctor;
   typedef Fiber::ScalarFunctionValueFunctor<CoordinateType>
       TransformationFunctor;
   typedef Fiber::SimpleTestScalarKernelTrialIntegrandFunctorExt<
@@ -92,7 +95,7 @@ laplaceSingleLayerBoundaryOperator(
         parameterList.template get<int>("options.fmm.expansion_order");
     int levels = parameterList.template get<int>("options.fmm.levels");
     fmmTransform = boost::make_shared<fmm::FmmBlackBoxSingleLayer<KernelType,
-                                      ResultType>>(KernelFunctor(),
+                                      ResultType>>(SingleKernelFunctor(),
                                                    expansionOrder,levels);
     shared_ptr<
         ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>>
@@ -127,6 +130,8 @@ laplaceDoubleLayerBoundaryOperator(
 
   typedef Fiber::Laplace3dDoubleLayerPotentialKernelFunctor<KernelType>
       KernelFunctor;
+  typedef Fiber::Laplace3dSingleLayerPotentialKernelFunctor<KernelType>
+      SingleKernelFunctor;
   typedef Fiber::ScalarFunctionValueFunctor<CoordinateType>
       TransformationFunctor;
   typedef Fiber::SimpleTestScalarKernelTrialIntegrandFunctorExt<
@@ -149,7 +154,7 @@ laplaceDoubleLayerBoundaryOperator(
         parameterList.template get<int>("options.fmm.expansion_order");
     int levels = parameterList.template get<int>("options.fmm.levels");
     fmmTransform = boost::make_shared<fmm::FmmBlackBoxDoubleLayer<KernelType,
-                                      ResultType>>(KernelFunctor(),
+                                      ResultType>>(SingleKernelFunctor(),
                                                    expansionOrder,levels);
     shared_ptr<
         ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>>
@@ -183,6 +188,8 @@ laplaceAdjointDoubleLayerBoundaryOperator(
 
   typedef Fiber::Laplace3dAdjointDoubleLayerPotentialKernelFunctor<KernelType>
       KernelFunctor;
+  typedef Fiber::Laplace3dSingleLayerPotentialKernelFunctor<KernelType>
+      SingleKernelFunctor;
   typedef Fiber::ScalarFunctionValueFunctor<CoordinateType>
       TransformationFunctor;
   typedef Fiber::SimpleTestScalarKernelTrialIntegrandFunctorExt<
@@ -205,7 +212,7 @@ laplaceAdjointDoubleLayerBoundaryOperator(
         parameterList.template get<int>("options.fmm.expansion_order");
     int levels = parameterList.template get<int>("options.fmm.levels");
     fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,
-                                      ResultType>>(KernelFunctor(),
+                                      ResultType>>(SingleKernelFunctor(),
                                                    expansionOrder,levels);
     shared_ptr<
         ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>>
@@ -238,6 +245,8 @@ laplaceHypersingularBoundaryOperator(
 
   typedef Fiber::Laplace3dSingleLayerPotentialKernelFunctor<KernelType>
       KernelFunctor;
+  typedef Fiber::Laplace3dSingleLayerPotentialKernelFunctor<KernelType>
+      SingleKernelFunctor;
   typedef Fiber::SurfaceCurl3dFunctor<CoordinateType> TransformationFunctor;
   typedef Fiber::SimpleTestScalarKernelTrialIntegrandFunctorExt<
       BasisFunctionType, KernelType, ResultType, 3> IntegrandFunctor;
@@ -262,7 +271,7 @@ laplaceHypersingularBoundaryOperator(
         parameterList.template get<int>("options.fmm.expansion_order");
     int levels = parameterList.template get<int>("options.fmm.levels");
     fmmTransform = boost::make_shared<fmm::FmmBlackBoxHypersingular<KernelType,
-                                      ResultType>>(KernelFunctor(),
+                                      ResultType>>(SingleKernelFunctor(),
                                                    expansionOrder,levels);
     shared_ptr<
         ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>>

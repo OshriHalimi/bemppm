@@ -1,7 +1,7 @@
 #ifndef bempp_fmm_black_box_adjoint_double_layer_hpp
 #define bempp_fmm_black_box_adjoint_double_layer_hpp
 
-#include "common.hpp"
+#include "fmm_common.hpp"
 #include "fmm_black_box.hpp"
 
 #include "../fiber/scalar_traits.hpp"

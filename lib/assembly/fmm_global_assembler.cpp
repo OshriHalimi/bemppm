@@ -215,10 +215,10 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   tbb::parallel_for<unsigned int>(0, nLeaves, fmmNearFieldHelper);
 
   fmm::FmmFarFieldHelper<BasisFunctionType, ResultType> fmmFarFieldHelper(
-        octree, testSpace, trialSpace, options, test_p2o, trial_p2o, 
+        octree, testSpace, trialSpace, options, test_p2o, trial_p2o,
         indexWithGlobalDofs, fmmTransform);
 
-  tbb::parallel_for(tbb::blocked_range<unsigned int>(0, nLeaves, 100), 
+  tbb::parallel_for(tbb::blocked_range<unsigned int>(0, nLeaves, 100),
       fmmFarFieldHelper);
 
   unsigned int symm = NO_SYMMETRY;
@@ -227,7 +227,7 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
       if (boost::is_complex<ResultType>())
           symm |= SYMMETRIC;
   }
-  
+
   // this is a problem, need to hide BasisFunctionType argument somehow
   /*typedef DiscreteFmmBoundaryOperator<ResultType> DiscreteFmmLinOp;
   std::auto_ptr<DiscreteFmmLinOp> fmmOp(

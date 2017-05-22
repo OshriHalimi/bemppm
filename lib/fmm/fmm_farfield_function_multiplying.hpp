@@ -1,7 +1,7 @@
 #ifndef bempp_fmm_farfield_function_multiplying_hpp
 #define bempp_fmm_farfield_function_multiplying_hpp
 
-#include "common.hpp"
+#include "fmm_common.hpp"
 #include "../common/scalar_traits.hpp"
 
 namespace fmm

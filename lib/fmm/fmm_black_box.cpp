@@ -1,5 +1,3 @@
-#include "common.hpp"
-
 #include "fmm_black_box.hpp"
 #include "fmm_transform.hpp"
 #include "../fiber/explicit_instantiation.hpp"
@@ -22,9 +20,8 @@ void chebyshev(ValueType *Tk, unsigned int N, ValueType x, int kind=1)
   Tk[1] = kind*x;
   for (unsigned int j = 2; j < N; j++)
     Tk[j] = 2*x*Tk[j-1] - Tk[j-2];
-  if(x>1||x<-1)
-    std::cout << "WARNING: Gauss point is outside the box (" << 
-        x<<")" << std::endl;
+  //if(x>1||x<-1)
+    //std::cout << "Gauss point is outside the box (" << x << ")" << std::endl;
 }
 
 template <typename KernelType, typename ValueType>
@@ -147,11 +144,6 @@ Matrix<ValueType> FmmBlackBox<KernelType, ValueType>::M2L(
         sourcePos(2) = sourceNodes(m3, 2);
         fieldData.globals.col(m) = fieldPos;
         sourceData.globals.col(m) = sourcePos;
-        // TODO: Fix these normals
-        Vector<CoordinateType> norm(3);
-        norm(0)=0;norm(1)=0;norm(2)=1;
-        fieldData.normals.col(m) = norm;
-        sourceData.normals.col(m) = norm;
         ++m;
       } // for m3
     } // for m2
@@ -266,12 +258,13 @@ void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointDiffS(
   result.resize(1);
   result(0) = 0;
   for(int dim=0;dim<3;++dim)
-    if(nodeSize(0)>0){
+    if(nodeSize(dim)>0){
       ValueType bit = normal(dim)*diffS[dim]*2./nodeSize(dim);
       for(int i=0;i<3;++i)
         if(dim!=i)
           bit *= S[i];
       result(0) += bit;
+      // TODO: what to do here if nodeSize is 0
     }
 }
 

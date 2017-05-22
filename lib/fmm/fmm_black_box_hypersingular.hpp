@@ -1,7 +1,7 @@
 #ifndef bempp_fmm_black_box_hypersingular_hpp
 #define bempp_fmm_black_box_hypersingular_hpp
 
-#include "common.hpp"
+#include "fmm_common.hpp"
 #include "fmm_black_box.hpp"
 
 #include "../fiber/scalar_traits.hpp"
