@@ -46,10 +46,8 @@ public:
 
   void setFunction(Fiber::Function<ResultType> *function);
 
-  void setQuadratureOrders(int quad, int relative){
-    m_quadratureOrder=quad;
-    m_relativeOrder=relative;
-    }
+  void setRelativeQuadratureOrder(int quad){m_relativeOrder=quad;}
+  void setQuadratureOrder(int quad){m_quadratureOrder=quad;}
 
   void evaluateLocalWeakForms(
       const std::vector<int>& elementIndices,

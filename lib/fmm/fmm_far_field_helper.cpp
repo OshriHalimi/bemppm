@@ -72,7 +72,7 @@ FmmFarFieldHelper<BasisFunctionType, ResultType>::makeFarFieldMat(
         unsigned int dofStart, unsigned int dofCount, bool isTest,
         bool transposed) const
 {
-unsigned int multipoleCount = fmmTransform.quadraturePointCount();
+unsigned int multipoleCount = fmmTransform.chebyshevPointCount();
   Matrix<ResultType> result(multipoleCount, dofCount);
   if(transposed) result.resize(dofCount, multipoleCount);
   result.fill(0.);
@@ -96,7 +96,7 @@ unsigned int multipoleCount = fmmTransform.quadraturePointCount();
       dofLists->arrayIndices;
 
   for (size_t multipole = 0; multipole < multipoleCount; ++multipole) {
-    Vector<CoordinateType> khat = fmmTransform.getQuadraturePoint(multipole);
+    Vector<CoordinateType> khat = fmmTransform.getChebyshevPoint(multipole);
     typedef ResultType UserFunctionType;
 
     typedef FmmFarfieldFunctionMultiplying<UserFunctionType> FunctorType;
@@ -134,8 +134,8 @@ void FmmFarFieldHelper<BasisFunctionType, ResultType>::operator()(
   FmmLocalAssembler<BasisFunctionType, ResultType>
       fmmTrialLocalAssembler(m_trialSpace, m_options, false);
   // TODO: what should quadrature orders be??
-  //fmmTestLocalAssembler.setQuadratureOrders(m_octree->levels(),m_octree->levels());
-  //fmmTrialLocalAssembler.setQuadratureOrders(m_octree->levels(),m_octree->levels());
+  //fmmTestLocalAssembler.setQuadratureOrder();
+  //fmmTrialLocalAssembler.setRelativeQuadratureOrders(2);
   for( unsigned int n=range.begin(); n!=range.end(); ++n ) {
     OctreeNode<ResultType> &node = m_octree->getNode(n, m_octree->levels());
     Vector<CoordinateType> nodeCenter, nodeSize;

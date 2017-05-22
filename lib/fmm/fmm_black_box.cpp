@@ -20,8 +20,8 @@ void chebyshev(ValueType *Tk, unsigned int N, ValueType x, int kind=1)
   Tk[1] = kind*x;
   for (unsigned int j = 2; j < N; j++)
     Tk[j] = 2*x*Tk[j-1] - Tk[j-2];
-  //if(x>1||x<-1)
-    //std::cout << "Gauss point is outside the box (" << x << ")" << std::endl;
+  if(x>1.1 || x<-1.1)
+    std::cout << "Gauss point is outside the box (" << x << ")" << std::endl;
 }
 
 template <typename KernelType, typename ValueType>
@@ -37,10 +37,10 @@ void FmmBlackBox<KernelType, ValueType>::generateGaussPoints()
   for (unsigned int i1 = 0; i1 < m_n; i1++)
     for (unsigned int i2 = 0; i2 < m_n; i2++)
       for (unsigned int i3 = 0; i3 < m_n; i3++) {
-        this->m_quadraturePoints(0, ind) = nodes[i1]; // x
-        this->m_quadraturePoints(1, ind) = nodes[i2]; // y
-        this->m_quadraturePoints(2, ind) = nodes[i3]; // z
-        this->m_quadratureWeights(ind) = 1.;
+        this->m_chebyshevPoints(0, ind) = nodes[i1]; // x
+        this->m_chebyshevPoints(1, ind) = nodes[i2]; // y
+        this->m_chebyshevPoints(2, ind) = nodes[i3]; // z
+        this->m_chebyshevWeights(ind) = 1.;
         ++ind;
       }
 
@@ -62,18 +62,18 @@ Matrix<ValueType> FmmBlackBox<KernelType, ValueType>::M2M(
     const Vector<CoordinateType>& parentSize,
     unsigned int level) const
 {
-  const size_t quadPoints = this->quadraturePointCount();
+  const size_t quadPoints = this->chebyshevPointCount();
   Matrix<ValueType> result;
   result.resize(quadPoints,quadPoints);
 
   for(int i=0;i<quadPoints;++i){
     Vector<CoordinateType> childMultipole(3);
     for(int dim=0;dim<3;++dim)
-      childMultipole(dim) = this->m_quadraturePoints(dim, i);
+      childMultipole(dim) = this->m_chebyshevPoints(dim, i);
     for(int j=0;j<quadPoints;++j){
       Vector<CoordinateType> parentMultipole(3);
       for(int dim=0;dim<3;++dim)
-        parentMultipole(dim) = this->m_quadraturePoints(dim, j);
+        parentMultipole(dim) = this->m_chebyshevPoints(dim, j);
       Vector<ValueType> entry;
       Vector<CoordinateType> normal;
 
@@ -239,7 +239,7 @@ void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointDiffS(
   CoordinateType S[3], diffS[3];
   CoordinateType TkMultipole[this->getN()];
   CoordinateType TkPoint[this->getN()];
-  CoordinateType UkPoint[this->getN()]; // Chebyshev polynomials of the second kind
+  CoordinateType UkPoint[this->getN()];
   for (unsigned int dim=0; dim<point.rows(); ++dim) {
     chebyshev(TkMultipole, this->getN(), multipoleScaled[dim], 1);
     chebyshev(TkPoint, this->getN(), pointScaled[dim], 1);
@@ -258,7 +258,7 @@ void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointDiffS(
   result.resize(1);
   result(0) = 0;
   for(int dim=0;dim<3;++dim)
-    if(nodeSize(dim)>0){
+    if(nodeSize(dim)!=0 && normal(dim)!=0){
       ValueType bit = normal(dim)*diffS[dim]*2./nodeSize(dim);
       for(int i=0;i<3;++i)
         if(dim!=i)

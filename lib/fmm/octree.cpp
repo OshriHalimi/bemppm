@@ -560,7 +560,7 @@ public:
 
     Vector<CoordinateType> R; // center of the node
     m_octree.nodeCenter(node,m_level, R);
-    Vector<ResultType> lcoef(m_fmmTransform.quadraturePointCount());
+    Vector<ResultType> lcoef(m_fmmTransform.chebyshevPointCount());
     lcoef.fill(0.0);
 
     Vector<CoordinateType> boxSize;

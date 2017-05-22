@@ -94,7 +94,6 @@ FmmLocalAssembler<BasisFunctionType,
   quadratureOptions.setRelativeQuadratureOrder(m_relativeOrder);// was 2
         // uncomment to increase accuracy
   desc.order = quadratureOptions.quadratureOrder(m_quadratureOrder);
-
   return getIntegrator(desc);
 }
 
