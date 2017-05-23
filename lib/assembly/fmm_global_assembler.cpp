@@ -93,6 +93,26 @@ void FMMGlobalAssembler<BasisFunctionType, ResultType>::getDofPositionsAndCorner
     }
   } else
       space.getGlobalDofPositions(locations);
+
+  corners.resize(dofCount);
+  for(std::unique_ptr<EntityIterator<0>> it = view.entityIterator<0>();
+      !it->finished();it->next()){
+    const Entity<0>& entity = it->entity();
+    Matrix<CoordinateType> elementCorners;
+    entity.geometry().getCorners(elementCorners); // columns are points
+
+    std::vector<GlobalDofIndex> dofs;
+    std::vector<BasisFunctionType> weights;
+    space.getGlobalDofs(entity, dofs, weights);
+    for(int i=0;i<dofs.size();++i)
+      for(int j=0;j<elementCorners.cols();++j){
+        Point3D<CoordinateType> p;
+        p.x = elementCorners(0,j);
+        p.y = elementCorners(1,j);
+        p.z = elementCorners(2,j);
+        corners[dofs[i]].push_back(p)
+      }
+  }
 }
 
 template <typename BasisFunctionType, typename ResultType>
