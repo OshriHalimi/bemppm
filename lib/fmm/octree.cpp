@@ -153,14 +153,26 @@ Octree<ResultType>::Octree(
 template <typename ResultType>
 void Octree<ResultType>::initialize()
 {
+  m_nodeSizes.resize(m_levels+1);
   m_OctreeNodes.resize(m_levels-m_topLevel+1);
   // initialise octree stucture (don't bother storing the lowest two levels)
   for (unsigned int level = m_topLevel; level<=m_levels; ++level) {
+    unsigned int nNodesOnSide = getNodesPerSide(level);
+    m_nodeSizes[level] = (m_upperBound - m_lowerBound)/nNodesOnSide;
     unsigned int nNodes = getNodesPerLevel(level);
     m_OctreeNodes[level-m_topLevel].resize(nNodes);
     for (unsigned int node=0; node<nNodes; ++node)
       getNode(node,level).setIndex(node, level);
   }
+}
+
+template <typename ResultType>
+void Octree<ResultType>::enlargeBoxes(
+    const std::vector<Point3D<CoordinateType>> &testDofCenters,
+    const std::vector<Point3D<CoordinateType>> &trialDofCenters,
+    const std::vector<std::vector<Point3D<CoordinateType>>> &testDofCorners,
+    const std::vector<std::vector<Point3D<CoordinateType>>> &trialDofCorners)
+{
 }
 
 // fill octree and return p2o permutation vector (shared vector)
@@ -299,7 +311,7 @@ void Octree<ResultType>::nodeCenter(unsigned long number, unsigned int level,
     Vector<CoordinateType> &center) const
 {
   Vector<CoordinateType> boxSize;
-  nodeSize(level, boxSize);
+  unscaledNodeSize(level, boxSize);
 
   center.resize(3);
 
@@ -311,6 +323,13 @@ void Octree<ResultType>::nodeCenter(unsigned long number, unsigned int level,
 
 template <typename ResultType>
 void Octree<ResultType>::nodeSize(unsigned int level,
+    Vector<CoordinateType> &boxSize) const
+{
+  boxSize = m_nodeSizes[level];
+}
+
+template <typename ResultType>
+void Octree<ResultType>::unscaledNodeSize(unsigned int level,
     Vector<CoordinateType> &boxSize) const
 {
   unsigned int boxesPerSide = getNodesPerSide(level);
