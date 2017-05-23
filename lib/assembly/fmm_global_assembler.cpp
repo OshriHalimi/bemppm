@@ -110,7 +110,7 @@ void FMMGlobalAssembler<BasisFunctionType, ResultType>::getDofPositionsAndCorner
         p.x = elementCorners(0,j);
         p.y = elementCorners(1,j);
         p.z = elementCorners(2,j);
-        corners[dofs[i]].push_back(p)
+        corners[dofs[i]].push_back(p);
       }
   }
 }
