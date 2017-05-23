@@ -90,6 +90,15 @@ public:
         const fmm::FmmTransform<ResultType>& fmmTransform,
         int symmetry);
 
+  static void getDofPositionsAndCorners(
+    const Space<BasisFunctionType>& space,
+    const size_t dofCount,
+    std::vector<Point3D<CoordinateType>> &locations,
+    std::vector<std::vector<Point3D<CoordinateType>>> &corners);
+
+
+
+
   static std::unique_ptr<DiscreteBndOp> assemblePotentialOperator(
       const Matrix<CoordinateType> &points,
       const Space<BasisFunctionType> &trialSpace,

@@ -63,6 +63,37 @@
 
 namespace Bempp {
 
+template <typename BasisFunctionType, typename ResultType>
+void FMMGlobalAssembler<BasisFunctionType, ResultType>::getDofPositionsAndCorners(
+    const Space<BasisFunctionType>& space,
+    const size_t dofCount,
+    std::vector<Point3D<CoordinateType>> &locations,
+    std::vector<std::vector<Point3D<CoordinateType>>> &corners)
+{
+  const GridView &view = space.gridView();
+  const IndexSet& indexSet = view.indexSet();
+
+  if (space.isDiscontinuous()) {
+    locations.resize(dofCount);
+    std::vector<Point3D<CoordinateType>> barycentres(view.entityCount(0));
+    for(std::unique_ptr<EntityIterator<0>> it = view.entityIterator<0>();
+        !it->finished();it->next()){
+      const Entity<0>& entity = it->entity();
+      unsigned int element = indexSet.entityIndex(entity);
+      entity.geometry().getCenter(barycentres[element]);
+    }
+    typedef int DofIndex;
+    std::vector<DofIndex> indices(dofCount);
+    std::iota(indices.begin(), indices.end(), 0);
+    std::vector<LocalDof> localDofs;
+    space.flatLocal2localDofs(indices, localDofs);
+    for (unsigned int dof = 0; dof < dofCount; ++dof) {
+      unsigned int element = localDofs[dof].entityIndex;
+      locations[dof] = barycentres[element];
+    }
+  } else
+      space.getGlobalDofPositions(locations);
+}
 
 template <typename BasisFunctionType, typename ResultType>
 std::unique_ptr<DiscreteBoundaryOperator<ResultType>>
@@ -139,66 +170,14 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   // assign each dof a location which is used to determine its leaf in the octree
   // using the barycentre of the triangle for discontinuous spaces
   std::vector<Point3D<CoordinateType> > testDofLocations, trialDofLocations;
+  std::vector<std::vector<Point3D<CoordinateType>>> testDofCorners,
+                                                    trialDofCorners;
 
 
-  // trial spaces
-  if (trialSpace.isDiscontinuous()) { // default triangle indexed octree
-    trialDofLocations.resize(trialDofCount);
-    // Form a vector containing barycentres of all triangles in the trial grid,
-    // following the approach of grid_segment.cpp
-
-    // must use a const reference to the view to call entityIterator
-    const GridView &view = trialSpace.gridView();
-    std::vector<Point3D<CoordinateType> > barycentres( view.entityCount(0) );
-    const IndexSet& indexSet = view.indexSet();
-    for(std::unique_ptr<EntityIterator<0> > it = view.entityIterator<0>();
-        !it->finished();it->next()){
-      const Entity<0>& entity = it->entity();
-      unsigned int element = indexSet.entityIndex(entity);
-      entity.geometry().getCenter(barycentres[element]);
-    }
-        // Following local_dof_lists_cache.hpp, find owning triangle of a dof
-    typedef int DofIndex;
-    std::vector<DofIndex> indices(trialDofCount);
-    std::iota(indices.begin(), indices.end(), 0); // fill 0..trialDofCount-1
-    std::vector<LocalDof> localDofs;
-    trialSpace.flatLocal2localDofs(indices, localDofs);
-    for (unsigned int dof = 0; dof < trialDofCount; ++dof) {
-      unsigned int element = localDofs[dof].entityIndex;
-      trialDofLocations[dof] = barycentres[element];
-    }
-  } else {
-      trialSpace.getGlobalDofPositions(trialDofLocations);
-  }
-
-  // the same for test spaces
-  if (testSpace.isDiscontinuous()) { // default triangle indexed octree
-    testDofLocations.resize(testDofCount);
-    // Form a vector containing barycentres of all triangles in the test grid,
-    // following the approach of grid_segment.cpp
-
-    // must use a const reference to the view to call entityIterator
-    const GridView &view = testSpace.gridView();
-    std::vector<Point3D<CoordinateType> > barycentres( view.entityCount(0) );
-    const IndexSet& indexSet = view.indexSet();
-    for(std::unique_ptr<EntityIterator<0> > it = view.entityIterator<0>();
-        !it->finished();it->next()){
-      const Entity<0>& entity = it->entity();
-      unsigned int element = indexSet.entityIndex(entity);
-      entity.geometry().getCenter(barycentres[element]);
-    }
-        // Following local_dof_lists_cache.hpp, find owning triangle of a dof
-    typedef int DofIndex;
-    std::vector<DofIndex> indices(testDofCount);
-    std::iota(indices.begin(), indices.end(), 0); // fill 0..testDofCount-1
-    std::vector<LocalDof> localDofs;
-    testSpace.flatLocal2localDofs(indices, localDofs);
-    for (unsigned int dof = 0; dof < testDofCount; ++dof) {
-      unsigned int element = localDofs[dof].entityIndex;
-      testDofLocations[dof] = barycentres[element];
-    }
-  } else
-    testSpace.getGlobalDofPositions(testDofLocations);
+  getDofPositionsAndCorners(trialSpace, trialDofCount,
+                            trialDofLocations, trialDofCorners);
+  getDofPositionsAndCorners(testSpace, testDofCount,
+                            testDofLocations, testDofCorners);
 
   const bool indexWithGlobalDofs=true;
 
@@ -207,17 +186,19 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
 
   octree->assignPoints(symmetry, testDofLocations, trialDofLocations,
                        test_p2o, trial_p2o);
-  // WORKS UP TO HERE
+  octree->enlargeBoxes(testDofLocations, trialDofLocations,
+                       testDofCorners, trialDofCorners);
+
+  unsigned int nLeaves = fmm::getNodesPerLevel(octree->levels());
+
   fmm::FmmNearFieldHelper<BasisFunctionType, ResultType> fmmNearFieldHelper(
         octree, testSpace, trialSpace, localAssemblers, denseTermsMultipliers, 
         options, test_p2o, trial_p2o, indexWithGlobalDofs);
-  unsigned int nLeaves = fmm::getNodesPerLevel(octree->levels());
   tbb::parallel_for<unsigned int>(0, nLeaves, fmmNearFieldHelper);
 
   fmm::FmmFarFieldHelper<BasisFunctionType, ResultType> fmmFarFieldHelper(
         octree, testSpace, trialSpace, options, test_p2o, trial_p2o,
         indexWithGlobalDofs, fmmTransform);
-
   tbb::parallel_for(tbb::blocked_range<unsigned int>(0, nLeaves, 100),
       fmmFarFieldHelper);
 
@@ -227,15 +208,6 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
       if (boost::is_complex<ResultType>())
           symm |= SYMMETRIC;
   }
-
-  // this is a problem, need to hide BasisFunctionType argument somehow
-  /*typedef DiscreteFmmBoundaryOperator<ResultType> DiscreteFmmLinOp;
-  std::auto_ptr<DiscreteFmmLinOp> fmmOp(
-              new DiscreteFmmLinOp(
-
-  std::auto_ptr<DiscreteBndOp> result;
-  result = fmmOp;
-  return result;// */
 
   return std::unique_ptr<DiscreteBoundaryOperator<ResultType>> (
       static_cast<DiscreteBoundaryOperator<ResultType> *>(
