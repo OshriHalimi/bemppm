@@ -183,21 +183,13 @@ void Octree<ResultType>::enlargeBoxes(
     unsigned long number = getLeafContainingPoint(dofCenters[dof]);
     Vector<CoordinateType> center;
     nodeCenter(number, m_levels, center);
-    std::cout << "center: ";nice_print(center);std::cout << std::endl;
 
     for(unsigned int c=0;c<dofCorners[dof].size();++c){
       Vector<CoordinateType> corner = Point2Vector(dofCorners[dof][c]);
-      std::cout << "corner: ";nice_print(corner);std::cout << std::endl;
-      for(int dim=0;dim<3;++dim){
-        std::cout << std::max(center(dim)-corner(dim)-nodeSize(dim)/2,
-                              corner(dim)-center(dim)-nodeSize(dim)/2);
-        std::cout << " ";
-
+      for(int dim=0;dim<3;++dim)
         add(dim) = std::max(add(dim),
                      std::max(center(dim)-corner(dim)-nodeSize(dim)/2,
                               corner(dim)-center(dim)-nodeSize(dim)/2));
-      }
-      std::cout << std::endl;
     }
 
   }
@@ -208,7 +200,6 @@ void Octree<ResultType>::enlargeBoxes(
     Vector<CoordinateType> unNodeSize;
     unscaledNodeSize(level,unNodeSize);
     m_nodeSizes[level] = unNodeSize + 2*add;
-    nice_print(m_nodeSizes[level]);std::cout << std::endl;
   }
 }
 
