@@ -113,6 +113,15 @@ void FMMGlobalAssembler<BasisFunctionType, ResultType>::getDofPositionsAndCorner
         corners[dofs[i]].push_back(p);
       }
   }
+  /*std::cout << "~~~" << std::endl;
+  for(int i=0;i<corners.size();++i){
+    for(int j=0;j<corners[i].size();++j)
+      std::cout << corners[i][j].x << ","
+                << corners[i][j].y << ","
+                << corners[i][j].z << " ";
+    std::cout << std::endl;
+  }
+  std::cout << "~~~" << std::endl;*/
 }
 
 template <typename BasisFunctionType, typename ResultType>
@@ -206,8 +215,8 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
 
   octree->assignPoints(symmetry, testDofLocations, trialDofLocations,
                        test_p2o, trial_p2o);
-  octree->enlargeBoxes(testDofLocations, trialDofLocations,
-                       testDofCorners, trialDofCorners);
+  octree->enlargeBoxes(testDofLocations, testDofCorners);
+  octree->enlargeBoxes(trialDofLocations, trialDofCorners);
 
   unsigned int nLeaves = fmm::getNodesPerLevel(octree->levels());
 

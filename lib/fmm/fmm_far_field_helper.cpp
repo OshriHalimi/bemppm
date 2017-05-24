@@ -134,7 +134,7 @@ void FmmFarFieldHelper<BasisFunctionType, ResultType>::operator()(
   FmmLocalAssembler<BasisFunctionType, ResultType>
       fmmTrialLocalAssembler(m_trialSpace, m_options, false);
   // TODO: what should quadrature orders be??
-  //fmmTestLocalAssembler.setQuadratureOrder();
+  //fmmTestLocalAssembler.setQuadratureOrder(7);
   //fmmTrialLocalAssembler.setRelativeQuadratureOrders(2);
   for( unsigned int n=range.begin(); n!=range.end(); ++n ) {
     OctreeNode<ResultType> &node = m_octree->getNode(n, m_octree->levels());

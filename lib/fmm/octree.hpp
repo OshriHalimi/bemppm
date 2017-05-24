@@ -74,10 +74,8 @@ public:
         const std::vector<Point3D<CoordinateType> > &trialDofCenters,
         std::vector<long unsigned int> &test_p2o, std::vector<long unsigned int> &trial_p2o);
     void enlargeBoxes(
-        const std::vector<Point3D<CoordinateType> > &testDofCenters,
-        const std::vector<Point3D<CoordinateType> > &trialDofCenters,
-        const std::vector<std::vector<Point3D<CoordinateType>>> &testDofCorners,
-        const std::vector<std::vector<Point3D<CoordinateType>>> &trialDofCorners);
+        const std::vector<Point3D<CoordinateType> > &dofCenters,
+        const std::vector<std::vector<Point3D<CoordinateType>>> &dofCorners);
 
     void upwardsStep(const FmmTransform<ResultType> &fmmTransform);
     void translationStep(const FmmTransform<ResultType> &fmmTransform);
@@ -117,6 +115,8 @@ private:
     Vector<CoordinateType> m_lowerBound, m_upperBound;
     shared_ptr<FmmCache<ResultType> > m_fmmCache;
     std::vector<Vector<CoordinateType>> m_nodeSizes;
+    std::vector<Vector<CoordinateType>> m_nodeMax;
+    std::vector<Vector<CoordinateType>> m_nodeMin;
 };
 
 } // namespace fmm

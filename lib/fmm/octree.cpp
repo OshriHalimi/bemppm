@@ -168,11 +168,48 @@ void Octree<ResultType>::initialize()
 
 template <typename ResultType>
 void Octree<ResultType>::enlargeBoxes(
-    const std::vector<Point3D<CoordinateType>> &testDofCenters,
-    const std::vector<Point3D<CoordinateType>> &trialDofCenters,
-    const std::vector<std::vector<Point3D<CoordinateType>>> &testDofCorners,
-    const std::vector<std::vector<Point3D<CoordinateType>>> &trialDofCorners)
+    const std::vector<Point3D<CoordinateType>> &dofCenters,
+    const std::vector<std::vector<Point3D<CoordinateType>>> &dofCorners)
 {
+  // TODO: make this extent the boxes by different amounts in each + and - directions
+  Vector<CoordinateType> nodeSize;
+  unscaledNodeSize(m_levels,nodeSize);
+  Vector<CoordinateType> add(3);
+  add.fill(0.);
+//  Vector<CoordinateType> nodeMax = nodeSize/2;
+//  Vector<CoordinateType> nodeMin = nodeSize/2;
+  const size_t nDofs = dofCenters.size();
+  for (unsigned int dof=0; dof<nDofs; dof++) {
+    unsigned long number = getLeafContainingPoint(dofCenters[dof]);
+    Vector<CoordinateType> center;
+    nodeCenter(number, m_levels, center);
+    std::cout << "center: ";nice_print(center);std::cout << std::endl;
+
+    for(unsigned int c=0;c<dofCorners[dof].size();++c){
+      Vector<CoordinateType> corner = Point2Vector(dofCorners[dof][c]);
+      std::cout << "corner: ";nice_print(corner);std::cout << std::endl;
+      for(int dim=0;dim<3;++dim){
+        std::cout << std::max(center(dim)-corner(dim)-nodeSize(dim)/2,
+                              corner(dim)-center(dim)-nodeSize(dim)/2);
+        std::cout << " ";
+
+        add(dim) = std::max(add(dim),
+                     std::max(center(dim)-corner(dim)-nodeSize(dim)/2,
+                              corner(dim)-center(dim)-nodeSize(dim)/2));
+      }
+      std::cout << std::endl;
+    }
+
+  }
+  if(add(0)>nodeSize(0)/2 || add(1)>nodeSize(1)/2 || add(2)>nodeSize(2)/2)
+    std::cout << "Boxes are being extended by more than half their size, "
+              << "consider lowering number of FMM levels." << std::endl;
+  for (unsigned int level = m_topLevel; level<=m_levels; ++level){
+    Vector<CoordinateType> unNodeSize;
+    unscaledNodeSize(level,unNodeSize);
+    m_nodeSizes[level] = unNodeSize + 2*add;
+    nice_print(m_nodeSizes[level]);std::cout << std::endl;
+  }
 }
 
 // fill octree and return p2o permutation vector (shared vector)

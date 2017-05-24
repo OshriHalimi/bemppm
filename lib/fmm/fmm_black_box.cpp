@@ -21,7 +21,8 @@ void chebyshev(ValueType *Tk, unsigned int N, ValueType x, int kind=1)
   for (unsigned int j = 2; j < N; j++)
     Tk[j] = 2*x*Tk[j-1] - Tk[j-2];
   if(x>1.1 || x<-1.1)
-    std::cout << "Gauss point is outside the box (" << x << ")" << std::endl;
+    std::cout << "Gauss point is outside the box (" << x << "). "
+              << "This should never happen anymore..." << std::endl;
 }
 
 template <typename KernelType, typename ValueType>
