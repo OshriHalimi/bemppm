@@ -174,10 +174,8 @@ void Octree<ResultType>::enlargeBoxes(
   // TODO: make this extent the boxes by different amounts in each + and - directions
   Vector<CoordinateType> nodeSize;
   unscaledNodeSize(m_levels,nodeSize);
-  Vector<CoordinateType> add(3);
-  add.fill(0.);
-//  Vector<CoordinateType> nodeMax = nodeSize/2;
-//  Vector<CoordinateType> nodeMin = nodeSize/2;
+  Vector<CoordinateType> nodeMaxAdd(3,0.);
+  Vector<CoordinateType> nodeMinAdd(3,0.);
   const size_t nDofs = dofCenters.size();
   for (unsigned int dof=0; dof<nDofs; dof++) {
     unsigned long number = getLeafContainingPoint(dofCenters[dof]);
@@ -187,19 +185,24 @@ void Octree<ResultType>::enlargeBoxes(
     for(unsigned int c=0;c<dofCorners[dof].size();++c){
       Vector<CoordinateType> corner = Point2Vector(dofCorners[dof][c]);
       for(int dim=0;dim<3;++dim)
-        add(dim) = std::max(add(dim),
-                     std::max(center(dim)-corner(dim)-nodeSize(dim)/2,
-                              corner(dim)-center(dim)-nodeSize(dim)/2));
+        if(center(dim)>corner(dim))
+          nodeMinAdd(dim) = std::max(nodeMinAdd(dim),
+                                     center(dim)-corner(dim)-nodeSize(dim)/2);
+        else
+          nodeMaxAdd(dim) = std::max(nodeMaxAdd(dim),
+                                     corner(dim)-center(dim)-nodeSize(dim)/2);
     }
 
   }
-  if(add(0)>nodeSize(0)/2 || add(1)>nodeSize(1)/2 || add(2)>nodeSize(2)/2)
-    std::cout << "Boxes are being extended by more than half their size, "
-              << "consider lowering number of FMM levels." << std::endl;
+  for(dim=0;dim<3;++dim)
+    if(nodeMinAdd(dim)>nodeSize(dim)/2 || nodeMaxAdd(dim)>nodeSize(dim)/2)
+      std::cout << "Boxes are being extended by more than half their size, "
+                << "consider lowering number of FMM levels." << std::endl;
   for (unsigned int level = m_topLevel; level<=m_levels; ++level){
     Vector<CoordinateType> unNodeSize;
     unscaledNodeSize(level,unNodeSize);
-    m_nodeSizes[level] = unNodeSize + 2*add;
+    m_nodeMax[level] = unNodeSize/2 + nodeMax;
+    m_nodeMin[level] = unNodeSize/2 + nodeMin;
   }
 }
 
@@ -350,10 +353,19 @@ void Octree<ResultType>::nodeCenter(unsigned long number, unsigned int level,
 }
 
 template <typename ResultType>
-void Octree<ResultType>::nodeSize(unsigned int level,
+void Octree<ResultType>::scaledNodeSize(unsigned int level,
     Vector<CoordinateType> &boxSize) const
 {
-  boxSize = m_nodeSizes[level];
+  boxSize = m_nodeMax[level]+m_nodeMin[level];
+}
+
+template <typename ResultType>
+void Octree<ResultType>::scaledNodeSize(unsigned int level,
+    Vector<CoordinateType> &max,
+    Vector<CoordinateType> &min) const
+{
+  max = m_nodeMax[level];
+  min = m_nodeMin[level];
 }
 
 template <typename ResultType>
@@ -521,9 +533,10 @@ public:
       return;
 
     Vector<CoordinateType> R; // center of the node
-    Vector<CoordinateType> parentSize; // size of the node
+    Vector<CoordinateType> parentMax; // size of the node
+    Vector<CoordinateType> parentMin; // size of the node
     m_octree.nodeCenter(node, m_level, R);
-    m_octree.nodeSize(m_level, parentSize);
+    m_octree.nodeBounds(m_level, parentMax, parentMin);
 
     Vector<ResultType> mcoefs;
 

@@ -98,8 +98,11 @@ public:
     OctreeNode<ResultType> &getNode(unsigned long number, unsigned int level);
     void nodeCenter(unsigned long number, unsigned int level,
         Vector<CoordinateType> &center) const;
-    void nodeSize(unsigned int level,
+    void scaledNodeSize(unsigned int level,
         Vector<CoordinateType> &size) const;
+    void nodeBounds(unsigned int level,
+        Vector<CoordinateType> &min,
+        Vector<CoordinateType> &max) const;
     void unscaledNodeSize(unsigned int level,
         Vector<CoordinateType> &size) const;
     const FmmCache<ResultType>& fmmCache() {return *m_fmmCache;}
@@ -114,7 +117,6 @@ private:
     const FmmTransform<ResultType>& m_fmmTransform;
     Vector<CoordinateType> m_lowerBound, m_upperBound;
     shared_ptr<FmmCache<ResultType> > m_fmmCache;
-    std::vector<Vector<CoordinateType>> m_nodeSizes;
     std::vector<Vector<CoordinateType>> m_nodeMax;
     std::vector<Vector<CoordinateType>> m_nodeMin;
 };
