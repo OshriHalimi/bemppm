@@ -96,7 +96,9 @@ public:
 
     unsigned int levels() const {return m_levels;}
     OctreeNode<ResultType> &getNode(unsigned long number, unsigned int level);
-    void nodeCenter(unsigned long number, unsigned int level,
+    void unscaledNodeCenter(unsigned long number, unsigned int level,
+        Vector<CoordinateType> &center) const;
+    void scaledNodeCenter(unsigned long number, unsigned int level,
         Vector<CoordinateType> &center) const;
     void scaledNodeSize(unsigned int level,
         Vector<CoordinateType> &size) const;

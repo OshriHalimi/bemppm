@@ -153,12 +153,10 @@ Octree<ResultType>::Octree(
 template <typename ResultType>
 void Octree<ResultType>::initialize()
 {
-  m_nodeSizes.resize(m_levels+1);
   m_OctreeNodes.resize(m_levels-m_topLevel+1);
   // initialise octree stucture (don't bother storing the lowest two levels)
   for (unsigned int level = m_topLevel; level<=m_levels; ++level) {
     unsigned int nNodesOnSide = getNodesPerSide(level);
-    m_nodeSizes[level] = (m_upperBound - m_lowerBound)/nNodesOnSide;
     unsigned int nNodes = getNodesPerLevel(level);
     m_OctreeNodes[level-m_topLevel].resize(nNodes);
     for (unsigned int node=0; node<nNodes; ++node)
@@ -180,7 +178,7 @@ void Octree<ResultType>::enlargeBoxes(
   for (unsigned int dof=0; dof<nDofs; dof++) {
     unsigned long number = getLeafContainingPoint(dofCenters[dof]);
     Vector<CoordinateType> center;
-    nodeCenter(number, m_levels, center);
+    unscaledNodeCenter(number, m_levels, center);
 
     for(unsigned int c=0;c<dofCorners[dof].size();++c){
       Vector<CoordinateType> corner = Point2Vector(dofCorners[dof][c]);
@@ -194,15 +192,15 @@ void Octree<ResultType>::enlargeBoxes(
     }
 
   }
-  for(dim=0;dim<3;++dim)
+  for(int dim=0;dim<3;++dim)
     if(nodeMinAdd(dim)>nodeSize(dim)/2 || nodeMaxAdd(dim)>nodeSize(dim)/2)
       std::cout << "Boxes are being extended by more than half their size, "
                 << "consider lowering number of FMM levels." << std::endl;
   for (unsigned int level = m_topLevel; level<=m_levels; ++level){
     Vector<CoordinateType> unNodeSize;
     unscaledNodeSize(level,unNodeSize);
-    m_nodeMax[level] = unNodeSize/2 + nodeMax;
-    m_nodeMin[level] = unNodeSize/2 + nodeMin;
+    m_nodeMax[level] = unNodeSize/2 + nodeMaxAdd;
+    m_nodeMin[level] = unNodeSize/2 + nodeMinAdd;
   }
 }
 
@@ -338,7 +336,7 @@ unsigned long Octree<ResultType>::getLeafContainingPoint(
 // might want to cache position in OctreeNode
 
 template <typename ResultType>
-void Octree<ResultType>::nodeCenter(unsigned long number, unsigned int level,
+void Octree<ResultType>::unscaledNodeCenter(unsigned long number, unsigned int level,
     Vector<CoordinateType> &center) const
 {
   Vector<CoordinateType> boxSize;
@@ -353,19 +351,33 @@ void Octree<ResultType>::nodeCenter(unsigned long number, unsigned int level,
 }
 
 template <typename ResultType>
-void Octree<ResultType>::scaledNodeSize(unsigned int level,
-    Vector<CoordinateType> &boxSize) const
+void Octree<ResultType>::scaledNodeCenter(unsigned long number, unsigned int level,
+    Vector<CoordinateType> &center) const
 {
-  boxSize = m_nodeMax[level]+m_nodeMin[level];
+  Vector<CoordinateType> uncenter;
+  unscaledNodeCenter(level, number, uncenter);
+
+  Vector<CoordinateType> max;
+  Vector<CoordinateType> min;
+  nodeBounds(level,max,min);
+
+  center = uncenter + (max-min)/2;
+}
+
+template <typename ResultType>
+void Octree<ResultType>::nodeBounds(unsigned int level,
+    Vector<CoordinateType> &min,
+    Vector<CoordinateType> &max) const
+{
+  max = m_nodeMax[level];
+  min = m_nodeMin[level];
 }
 
 template <typename ResultType>
 void Octree<ResultType>::scaledNodeSize(unsigned int level,
-    Vector<CoordinateType> &max,
-    Vector<CoordinateType> &min) const
+    Vector<CoordinateType> &boxSize) const
 {
-  max = m_nodeMax[level];
-  min = m_nodeMin[level];
+  boxSize = m_nodeMax[level] + m_nodeMin[level];
 }
 
 template <typename ResultType>
@@ -533,10 +545,9 @@ public:
       return;
 
     Vector<CoordinateType> R; // center of the node
-    Vector<CoordinateType> parentMax; // size of the node
-    Vector<CoordinateType> parentMin; // size of the node
-    m_octree.nodeCenter(node, m_level, R);
-    m_octree.nodeBounds(m_level, parentMax, parentMin);
+    Vector<CoordinateType> parentSize; // size of the node
+    m_octree.scaledNodeCenter(node, m_level, R);
+    m_octree.scaledNodeSize(m_level, parentMax, parentMin);
 
     Vector<ResultType> mcoefs;
 
@@ -546,8 +557,8 @@ public:
         continue;
       Vector<CoordinateType> Rchild; // center of the node
       Vector<CoordinateType> childSize; // size of the node
-      m_octree.nodeCenter(child,m_level+1,Rchild);
-      m_octree.nodeSize(m_level+1,childSize);
+      m_octree.scaledNodeCenter(child,m_level+1,Rchild);
+      m_octree.scaledNodeSize(m_level+1,childSize);
 
       // calculate multipole to multipole (M2M) translation matrix
       Matrix<ResultType> m2m;
@@ -619,12 +630,12 @@ public:
       return; //continue;
 
     Vector<CoordinateType> R; // center of the node
-    m_octree.nodeCenter(node,m_level, R);
+    m_octree.sclaedNodeCenter(node,m_level, R);
     Vector<ResultType> lcoef(m_fmmTransform.chebyshevPointCount());
     lcoef.fill(0.0);
 
     Vector<CoordinateType> boxSize;
-    m_octree.nodeSize(m_level, boxSize);
+    m_octree.scaledNodeSize(m_level, boxSize);
 
     if(m_octree.multilevel()){
       for (unsigned int ind=0;
@@ -633,7 +644,7 @@ public:
         unsigned int inter=m_octree.getNode(node,
                                             m_level).interactionList(ind);
         Vector<CoordinateType> Rinter; // center of the node
-        m_octree.nodeCenter(inter,m_level,Rinter);
+        m_octree.scaledNodeCenter(inter,m_level,Rinter);
 
         // calculate multipole to local (M2L) translation matrix
         Matrix<ResultType> m2l;
@@ -668,7 +679,7 @@ public:
             || m_octree.getNode(inter,m_level).trialDofCount()==0)
           continue;
         Vector<CoordinateType> Rinter; // center of the node
-        m_octree.nodeCenter(inter,m_level,Rinter);
+        m_octree.scaledNodeCenter(inter,m_level,Rinter);
 
         // calculate multipole to local (M2L) translation matrix
         Matrix<ResultType> m2l;
@@ -775,8 +786,8 @@ public:
 
       Vector<CoordinateType> R; // center of the node
       Vector<CoordinateType> parentSize; // size of the node
-      m_octree.nodeCenter(node,m_level,R);
-      m_octree.nodeSize(m_level,parentSize);
+      m_octree.scaledNodeCenter(node,m_level,R);
+      m_octree.scaledNodeSize(m_level,parentSize);
 
       const Vector<ResultType>& lcoefs =
           m_octree.getNode(node,m_level).getLocalCoefficients();
@@ -788,8 +799,8 @@ public:
           continue;
         Vector<CoordinateType> Rchild; // center of the node
         Vector<CoordinateType> childSize; // center of the node
-        m_octree.nodeCenter(child,m_level+1,Rchild);
-        m_octree.nodeSize(m_level+1,childSize);
+        m_octree.scaledNodeCenter(child,m_level+1,Rchild);
+        m_octree.scaledNodeSize(m_level+1,childSize);
 
         // calculate local to local (L2L) translation matrix
         Matrix<ResultType> l2l;
