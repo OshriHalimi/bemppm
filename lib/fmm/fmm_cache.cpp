@@ -114,7 +114,7 @@ FmmCache<ValueType>::compressM2L(bool isSymmetric)
   Matrix<ValueType> kernelWeightMat;
   m_fmmTransform.getKernelWeight(kernelWeightMat, m_kernelWeightVec);
 
-  int npt = m_fmmTransform.quadraturePointCount();
+  int npt = m_fmmTransform.chebyshevPointCount();
 
   m_Ufat.resize(m_levels-m_topLevel+1);
   m_Vthin.resize(m_levels-m_topLevel+1);

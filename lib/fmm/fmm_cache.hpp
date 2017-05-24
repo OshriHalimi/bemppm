@@ -2,7 +2,7 @@
 #define bempp_fmm_cache_hpp
 
 #include <vector>
-#include "common.hpp"
+#include "fmm_common.hpp"
 #include "../fiber/scalar_traits.hpp"
 
 namespace Fiber
