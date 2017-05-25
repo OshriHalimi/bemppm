@@ -139,8 +139,8 @@ void FmmFarFieldHelper<BasisFunctionType, ResultType>::operator()(
   for( unsigned int n=range.begin(); n!=range.end(); ++n ) {
     OctreeNode<ResultType> &node = m_octree->getNode(n, m_octree->levels());
     Vector<CoordinateType> nodeCenter, nodeSize;
-    m_octree->nodeCenter(n, m_octree->levels(), nodeCenter);
-    m_octree->nodeSize(m_octree->levels(), nodeSize);
+    m_octree->scaledNodeCenter(n, m_octree->levels(), nodeCenter);
+    m_octree->scaledNodeSize(m_octree->levels(), nodeSize);
 
     // evaulate and store test far-field
     if (node.testDofCount()) {
@@ -175,8 +175,8 @@ void FmmFarFieldHelper<BasisFunctionType, ResultType>::operator()(
       fmmTrialLocalAssembler(m_trialSpace, m_options, false);
     OctreeNode<ResultType> &node = m_octree->getNode(n, m_octree->levels());
     Vector<CoordinateType> nodeCenter, nodeSize;
-    m_octree->nodeCenter(n, m_octree->levels(), nodeCenter);
-    m_octree->nodeSize(m_octree->levels(), nodeSize);
+    m_octree->scaledNodeCenter(n, m_octree->levels(), nodeCenter);
+    m_octree->scaledNodeSize(m_octree->levels(), nodeSize);
 
     // evaulate and store test far-field
     if (node.testDofCount()) {
