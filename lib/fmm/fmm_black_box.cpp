@@ -153,6 +153,7 @@ Matrix<ValueType> FmmBlackBox<KernelType, ValueType>::M2L(
   Fiber::CollectionOf4dArrays<KernelType> result;
   m_kernels->evaluateOnGrid(fieldData, sourceData, result);
 
+
   Matrix<ValueType> T3;
   T3.resize(n3, n3);
   for (unsigned int m = 0; m < n3; m++)

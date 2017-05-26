@@ -164,6 +164,10 @@ void Octree<ResultType>::initialize()
     m_OctreeNodes[level-m_topLevel].resize(nNodes);
     for (unsigned int node=0; node<nNodes; ++node)
       getNode(node,level).setIndex(node, level);
+    Vector<CoordinateType> unNodeSize;
+    unscaledNodeSize(level,unNodeSize);
+    m_nodeMax[level] = .5 * unNodeSize;
+    m_nodeMin[level] = .5 * unNodeSize;
   }
 }
 
@@ -172,7 +176,6 @@ void Octree<ResultType>::enlargeBoxes(
     const std::vector<Point3D<CoordinateType>> &dofCenters,
     const std::vector<std::vector<Point3D<CoordinateType>>> &dofCorners)
 {
-  // TODO: make this extent the boxes by different amounts in each + and - directions
   Vector<CoordinateType> nodeSize;
   unscaledNodeSize(m_levels,nodeSize);
   Vector<CoordinateType> nodeMaxAdd(3);
@@ -198,9 +201,11 @@ void Octree<ResultType>::enlargeBoxes(
 
   }
   for(int dim=0;dim<3;++dim)
-    if(nodeMinAdd(dim)>nodeSize(dim)/2 || nodeMaxAdd(dim)>nodeSize(dim)/2)
+    if(nodeMinAdd(dim)>nodeSize(dim)/2 || nodeMaxAdd(dim)>nodeSize(dim)/2){
       std::cout << "Boxes are being extended by more than half their size, "
                 << "consider lowering number of FMM levels." << std::endl;
+      break;
+    }
   for (unsigned int level = m_topLevel; level<=m_levels; ++level){
     Vector<CoordinateType> unNodeSize;
     unscaledNodeSize(level,unNodeSize);
@@ -414,10 +419,19 @@ void Octree<ResultType>::apply(
     Vector<ResultType> y_out_permuted(y_out.rows());
     y_out_permuted.fill(0.0);
 
+    // **** STEP ZERO ****
+    //  Add the near interactions
+    //  This helper is defined in octree_node.cpp
+    // ******************
     EvaluateNearFieldHelper<ResultType> evaluateNearFieldHelper(
         *this, x_in_permuted, y_out_permuted);
     tbb::parallel_for<size_t>(0, nLeaves, evaluateNearFieldHelper);
 
+    if(showDebug){
+    std::cout << "Near field contributions" << std::endl;
+    nice_print(y_out_permuted);
+    std::cout << std::endl;
+    }
 
     // **** STEP ONE ****
     //  Evaluate the moments on all cells in the level l=max

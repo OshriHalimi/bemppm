@@ -73,26 +73,7 @@ void FMMGlobalAssembler<BasisFunctionType, ResultType>::getDofPositionsAndCorner
   const GridView &view = space.gridView();
   const IndexSet& indexSet = view.indexSet();
 
-  if (space.isDiscontinuous()) {
-    locations.resize(dofCount);
-    std::vector<Point3D<CoordinateType>> barycentres(view.entityCount(0));
-    for(std::unique_ptr<EntityIterator<0>> it = view.entityIterator<0>();
-        !it->finished();it->next()){
-      const Entity<0>& entity = it->entity();
-      unsigned int element = indexSet.entityIndex(entity);
-      entity.geometry().getCenter(barycentres[element]);
-    }
-    typedef int DofIndex;
-    std::vector<DofIndex> indices(dofCount);
-    std::iota(indices.begin(), indices.end(), 0);
-    std::vector<LocalDof> localDofs;
-    space.flatLocal2localDofs(indices, localDofs);
-    for (unsigned int dof = 0; dof < dofCount; ++dof) {
-      unsigned int element = localDofs[dof].entityIndex;
-      locations[dof] = barycentres[element];
-    }
-  } else
-      space.getGlobalDofPositions(locations);
+  space.getGlobalDofPositions(locations);
 
   corners.resize(dofCount);
   for(std::unique_ptr<EntityIterator<0>> it = view.entityIterator<0>();
@@ -105,23 +86,15 @@ void FMMGlobalAssembler<BasisFunctionType, ResultType>::getDofPositionsAndCorner
     std::vector<BasisFunctionType> weights;
     space.getGlobalDofs(entity, dofs, weights);
     for(int i=0;i<dofs.size();++i)
-      for(int j=0;j<elementCorners.cols();++j){
-        Point3D<CoordinateType> p;
-        p.x = elementCorners(0,j);
-        p.y = elementCorners(1,j);
-        p.z = elementCorners(2,j);
-        corners[dofs[i]].push_back(p);
-      }
+      if(dofs[i]!=-1)
+        for(int j=0;j<elementCorners.cols();++j){
+          Point3D<CoordinateType> p;
+          p.x = elementCorners(0,j);
+          p.y = elementCorners(1,j);
+          p.z = elementCorners(2,j);
+          corners[dofs[i]].push_back(p);
+        }
   }
-  /*std::cout << "~~~" << std::endl;
-  for(int i=0;i<corners.size();++i){
-    for(int j=0;j<corners[i].size();++j)
-      std::cout << corners[i][j].x << ","
-                << corners[i][j].y << ","
-                << corners[i][j].z << " ";
-    std::cout << std::endl;
-  }
-  std::cout << "~~~" << std::endl;*/
 }
 
 template <typename BasisFunctionType, typename ResultType>
@@ -156,6 +129,8 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   auto cacheIO = parameterList.template get<bool>("options.fmm.cache");
   bool multiIO=true;
   if(levels==1) multiIO=false;
+
+  auto qO = parameterList.template get<int>("options.quadrature.far.doubleOrder");
 
   // get bounding boxes of spaces
   Vector<double> lowerBoundTest, upperBoundTest;
@@ -194,6 +169,7 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
         upperBound);
 
 
+
   const size_t testDofCount = testSpace.globalDofCount();
   const size_t trialDofCount = trialSpace.globalDofCount();
   // assign each dof a location which is used to determine its leaf in the octree
@@ -213,6 +189,7 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   std::vector<long unsigned int> trial_p2o;
   std::vector<long unsigned int> test_p2o;
 
+
   octree->assignPoints(symmetry, testDofLocations, trialDofLocations,
                        test_p2o, trial_p2o);
   octree->enlargeBoxes(testDofLocations, testDofCorners);
@@ -227,7 +204,7 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
 
   fmm::FmmFarFieldHelper<BasisFunctionType, ResultType> fmmFarFieldHelper(
         octree, testSpace, trialSpace, options, test_p2o, trial_p2o,
-        indexWithGlobalDofs, fmmTransform);
+        indexWithGlobalDofs, fmmTransform, qO);
   tbb::parallel_for(tbb::blocked_range<unsigned int>(0, nLeaves, 100),
       fmmFarFieldHelper);
 

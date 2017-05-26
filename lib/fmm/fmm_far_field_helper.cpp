@@ -40,9 +40,10 @@ FmmFarFieldHelper<BasisFunctionType, ResultType>::FmmFarFieldHelper(
             const std::vector<long unsigned int> &test_p2o,
             const std::vector<long unsigned int> &trial_p2o,
             bool indexWithGlobalDofs,
-            const FmmTransform<ResultType> &fmmTransform)
+            const FmmTransform<ResultType> &fmmTransform,
+            const int q)
     :    m_octree(octree), m_testSpace(testSpace), m_trialSpace(trialSpace),
-        m_options(options), m_fmmTransform(fmmTransform)
+        m_options(options), m_fmmTransform(fmmTransform), m_qO(q)
 {
     m_testDofListsCache = boost::make_shared<Bempp::LocalDofListsCache<BasisFunctionType> >
         (m_testSpace, test_p2o, indexWithGlobalDofs);
@@ -133,9 +134,9 @@ void FmmFarFieldHelper<BasisFunctionType, ResultType>::operator()(
       fmmTestLocalAssembler(m_testSpace, m_options, true);
   FmmLocalAssembler<BasisFunctionType, ResultType>
       fmmTrialLocalAssembler(m_trialSpace, m_options, false);
-  // TODO: what should quadrature orders be??
-  //fmmTestLocalAssembler.setQuadratureOrder(7);
-  //fmmTrialLocalAssembler.setRelativeQuadratureOrders(2);
+
+  fmmTestLocalAssembler.setQuadratureOrder(m_qO);
+
   for( unsigned int n=range.begin(); n!=range.end(); ++n ) {
     OctreeNode<ResultType> &node = m_octree->getNode(n, m_octree->levels());
     Vector<CoordinateType> nodeCenter, nodeSize;

@@ -61,7 +61,8 @@ public:
             const std::vector<long unsigned int> &test_p2o,
             const std::vector<long unsigned int> &trial_p2o,
             bool indexWithGlobalDofs,
-            const FmmTransform<ResultType> &fmmTransform);
+            const FmmTransform<ResultType> &fmmTransform,
+            const int q);
 
     void operator()(const tbb::blocked_range<unsigned int>& range) const;
     void operator()(const unsigned int n) const;
@@ -89,6 +90,7 @@ private:
 
     shared_ptr<Octree<ResultType> > m_octree;
     const FmmTransform<ResultType> &m_fmmTransform;
+    int m_qO;
 };
 
 } // namespace Bempp
