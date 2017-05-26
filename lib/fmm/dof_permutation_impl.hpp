@@ -14,7 +14,7 @@ namespace fmm {
     return m_map.size();
   }
 
-  template <typename ValueType> inline void DofPermutation::permute(
+  template <typename ValueType> inline void DofPermutation::unpermute(
       const Eigen::Ref<const Vector<ValueType>>& vIn,
       Eigen::Ref<Vector<ValueType>> vOut)
   {
@@ -22,7 +22,7 @@ namespace fmm {
       vOut(m_map[i])=vIn(i);
   }
 
-  template <typename ValueType> inline void DofPermutation::unpermute(
+  template <typename ValueType> inline void DofPermutation::permute(
       const Eigen::Ref<const Vector<ValueType>>& vIn,
       Eigen::Ref<Vector<ValueType>> vOut)
   {

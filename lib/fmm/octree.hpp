@@ -69,10 +69,12 @@ public:
     const OctreeNode<ResultType> &getNodeConst(
         unsigned long number, unsigned int level) const;
 
+    void generateNeighbours();
     void assignPoints(
-        bool hermitian, const std::vector<Point3D<CoordinateType> > &testDofCenters,
-        const std::vector<Point3D<CoordinateType> > &trialDofCenters,
-        std::vector<long unsigned int> &test_p2o, std::vector<long unsigned int> &trial_p2o);
+        bool hermitian,
+        const std::vector<Point3D<CoordinateType>> &dofCenters,
+        std::vector<long unsigned int> &p2o,
+        bool isTest);
     void enlargeBoxes(
         const std::vector<Point3D<CoordinateType> > &dofCenters,
         const std::vector<std::vector<Point3D<CoordinateType>>> &dofCorners);

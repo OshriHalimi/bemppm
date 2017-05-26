@@ -220,94 +220,79 @@ void Octree<ResultType>::enlargeBoxes(
 template <typename ResultType>
 void Octree<ResultType>::assignPoints(
     bool hermitian,
-    const std::vector<Point3D<CoordinateType> > &testDofCenters,
-    const std::vector<Point3D<CoordinateType> > &trialDofCenters,
-    std::vector<long unsigned int> &test_p2o,
-    std::vector<long unsigned int> &trial_p2o)
+    const std::vector<Point3D<CoordinateType> > &dofCenters,
+    std::vector<long unsigned int> &p2o,
+    bool isTest)
 {
   const unsigned int nLeaves = getNodesPerLevel(m_levels);
 
   // get permutation for test space
-  const unsigned int nTestDofs = testDofCenters.size();
+  const unsigned int nDofs = dofCenters.size();
 
   // count the number of Dofs in each leaf, store temporarily
   // currently getLeafContainingPoint is called twice per dof, optimise for single call?
   //std::vector<int> dofsPerLeaf(nLeaves, 0);
-  for (unsigned int dof=0; dof<nTestDofs; dof++) {
-    unsigned long number = getLeafContainingPoint(testDofCenters[dof]);
-    getNode(number,m_levels).setTestDofStart(
-        getNode(number,m_levels).testDofStart()+1);
+  for (unsigned int dof=0; dof<nDofs; dof++) {
+    unsigned long number = getLeafContainingPoint(dofCenters[dof]);
+    if(isTest)
+      getNode(number,m_levels).setTestDofStart(
+          getNode(number,m_levels).testDofStart()+1);
+    else
+      getNode(number,m_levels).setTrialDofStart(
+          getNode(number,m_levels).trialDofStart()+1);
   }
 
   // make the count cumulative (prepending a zero and throwing away final value)
   // modify to work with empty leaves later
-  unsigned int valcurrent = getNode(0, m_levels).testDofStart();
-  getNode(0, m_levels).setTestDofStart(0);
+  unsigned int valcurrent;
+  if(isTest) {
+    valcurrent = getNode(0, m_levels).testDofStart();
+    getNode(0, m_levels).setTestDofStart(0);
+  } else {
+    valcurrent = getNode(0, m_levels).trialDofStart();
+    getNode(0, m_levels).setTrialDofStart(0);
+  }
   for (unsigned int n=1; n<nLeaves; n++) {
     unsigned int valold = valcurrent;
-    valcurrent = getNode(n, m_levels).testDofStart();
-    getNode(n, m_levels).setTestDofStart(
-        getNode(n-1, m_levels).testDofStart() + valold );
+    if(isTest) {
+      valcurrent = getNode(n, m_levels).testDofStart();
+      getNode(n, m_levels).setTestDofStart(
+          getNode(n-1, m_levels).testDofStart() + valold );
+    } else {
+      valcurrent = getNode(n, m_levels).trialDofStart();
+      getNode(n, m_levels).setTrialDofStart(
+          getNode(n-1, m_levels).trialDofStart() + valold );
+    }
   }
 
-  test_p2o.resize(nTestDofs);
+  p2o.resize(nDofs);
 
   // for the permutation vector and intialise the leaves
-  for (unsigned int dof=0; dof<nTestDofs; ++dof) {
-    unsigned long number = getLeafContainingPoint(testDofCenters[dof]);
+  for (unsigned int dof=0; dof<nDofs; ++dof) {
+    unsigned long number = getLeafContainingPoint(dofCenters[dof]);
     OctreeNode<ResultType> &node = getNode(number, m_levels);
-    test_p2o[node.postIncTestDofCount()+node.testDofStart()]=dof;
+    if(isTest) p2o[node.postIncTestDofCount()+node.testDofStart()]=dof;
+    else p2o[node.postIncTrialDofCount()+node.trialDofStart()]=dof;
 
     unsigned long parent = getParent(number);
 
     for (unsigned int level = m_levels-1; level>=m_topLevel; --level) {
-      getNode(parent,level).postIncTestDofCount();
+      if(isTest) getNode(parent,level).postIncTestDofCount();
+      else getNode(parent,level).postIncTrialDofCount();
       parent = getParent(parent);
     }
   }
     // check p2o persists
-  m_test_perm = boost::make_shared<DofPermutation>(test_p2o);
+  if(isTest)
+    m_test_perm = boost::make_shared<DofPermutation>(p2o);
+  else
+    m_trial_perm = boost::make_shared<DofPermutation>(p2o);
 
-  // get permutation for trial space (COPY PASTE - FACTOR OUT LATER)
-  const unsigned int nTrialDofs = trialDofCenters.size();
+}
 
-  // count the number of Dofs in each leaf, store temporarily
-  // currently getLeafContainingPoint is called twice per dof, optimise for single call?
-  //std::vector<int> dofsPerLeaf(nLeaves, 0);
-  for (unsigned int dof=0; dof<nTrialDofs; dof++) {
-    unsigned long number = getLeafContainingPoint(trialDofCenters[dof]);
-    getNode(number,m_levels).setTrialDofStart(
-        getNode(number,m_levels).trialDofStart()+1);
-  }
-
-  // make the count cumulative (prepending a zero and throwing away final value)
-  // modify to work with empty leaves later
-  valcurrent = getNode(0, m_levels).trialDofStart();
-  getNode(0, m_levels).setTrialDofStart(0);
-  for (unsigned int n=1; n<nLeaves; n++) {
-    unsigned int valold = valcurrent;
-    valcurrent = getNode(n, m_levels).trialDofStart();
-    getNode(n, m_levels).setTrialDofStart(
-        getNode(n-1, m_levels).trialDofStart() + valold );
-  }
-
-  // for the permutation vector and intialise the leaves
-  trial_p2o.resize(nTrialDofs);
-  for (unsigned int dof=0; dof<nTrialDofs; dof++) {
-    unsigned long number = getLeafContainingPoint(trialDofCenters[dof]);
-    OctreeNode<ResultType> &node = getNode(number, m_levels);
-    trial_p2o[node.postIncTrialDofCount()+node.trialDofStart()]=dof;
-    unsigned long parent = getParent(number);
-    // propagate filled flag up tree, might assume dofCount==1 is full for non-leaves
-    for (unsigned int level = m_levels-1; level!=1; level--) {
-      getNode(parent,level).postIncTrialDofCount();
-      parent = getParent(parent);
-    }
-  }
-  //m_trial_perm->set_p2o(trial_p2o);
-  m_trial_perm = boost::make_shared<DofPermutation>(trial_p2o);
-    // check p2o persists
-
+template <typename ResultType>
+void Octree<ResultType>::generateNeighbours()
+{
   // generate neighbour information and interaction lists, taking into account empty leaves
   for (unsigned int level = m_topLevel; level<=m_levels; ++level) {
     unsigned int nNodes = getNodesPerLevel(level);
@@ -514,6 +499,7 @@ void Octree<ResultType>::apply(
     //    - weights: m_fmmTransform.getWeights()
     //  This helper is defined in octree_node.cpp
     // *******************
+
     EvaluateFarFieldMatrixVectorProductHelper<ResultType>
         evaluateFarFieldMatrixVectorProductHelper(*this,
                                                   m_fmmTransform.getWeights(),

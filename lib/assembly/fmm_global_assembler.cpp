@@ -190,8 +190,9 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   std::vector<long unsigned int> test_p2o;
 
 
-  octree->assignPoints(symmetry, testDofLocations, trialDofLocations,
-                       test_p2o, trial_p2o);
+  octree->assignPoints(symmetry, testDofLocations, test_p2o, true);
+  octree->assignPoints(symmetry, trialDofLocations, trial_p2o, false);
+  octree->generateNeighbours();
   octree->enlargeBoxes(testDofLocations, testDofCorners);
   octree->enlargeBoxes(trialDofLocations, trialDofCorners);
 
