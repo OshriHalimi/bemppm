@@ -20,7 +20,6 @@
 #include <math.h>
 #include <complex>
 
-
 namespace fmm
 {
 
@@ -108,30 +107,13 @@ template <typename ResultType>
 Octree<ResultType>::Octree(
     unsigned int levels,
     const FmmTransform<ResultType>& fmmTransform,
-    const shared_ptr<FmmCache<ResultType> > &fmmCache,
     const Vector<CoordinateType> &lowerBound,
     const Vector<CoordinateType> &upperBound,
     const bool cacheIO)
   : m_topLevel(2), m_levels(levels),
-    m_fmmTransform(fmmTransform), m_fmmCache(fmmCache),
+    m_fmmTransform(fmmTransform),
     m_lowerBound(lowerBound), m_upperBound(upperBound),
     m_cache(cacheIO)
-{
-  initialize();
-}
-
-/** overload **/
-template <typename ResultType>
-Octree<ResultType>::Octree(
-    unsigned int levels,
-    const FmmTransform<ResultType>& fmmTransform,
-    const shared_ptr<FmmCache<ResultType> > &fmmCache,
-    const Vector<CoordinateType> &lowerBound,
-    const Vector<CoordinateType> &upperBound)
-  : m_topLevel(2), m_levels(levels),
-    m_fmmTransform(fmmTransform), m_fmmCache(fmmCache),
-    m_lowerBound(lowerBound), m_upperBound(upperBound),
-    m_cache(true)
 {
   initialize();
 }
@@ -154,8 +136,8 @@ template <typename ResultType>
 void Octree<ResultType>::initialize()
 {
   m_OctreeNodes.resize(m_levels-m_topLevel+1);
-  m_nodeMax.resize(m_levels+1);
-  m_nodeMin.resize(m_levels+1);
+  m_nodeMax.resize(m_levels-m_topLevel+1);
+  m_nodeMin.resize(m_levels-m_topLevel+1);
 
   // initialise octree stucture (don't bother storing the lowest two levels)
   for (unsigned int level = m_topLevel; level<=m_levels; ++level) {
@@ -166,8 +148,8 @@ void Octree<ResultType>::initialize()
       getNode(node,level).setIndex(node, level);
     Vector<CoordinateType> unNodeSize;
     unscaledNodeSize(level,unNodeSize);
-    m_nodeMax[level] = .5 * unNodeSize;
-    m_nodeMin[level] = .5 * unNodeSize;
+    m_nodeMax[level-m_topLevel] = .5 * unNodeSize;
+    m_nodeMin[level-m_topLevel] = .5 * unNodeSize;
   }
 }
 
@@ -209,8 +191,8 @@ void Octree<ResultType>::enlargeBoxes(
   for (unsigned int level = m_topLevel; level<=m_levels; ++level){
     Vector<CoordinateType> unNodeSize;
     unscaledNodeSize(level,unNodeSize);
-    m_nodeMax[level] = .5 * unNodeSize + nodeMaxAdd;
-    m_nodeMin[level] = .5 * unNodeSize + nodeMinAdd;
+    m_nodeMax[level-m_topLevel] = .5 * unNodeSize + nodeMaxAdd;
+    m_nodeMin[level-m_topLevel] = .5 * unNodeSize + nodeMinAdd;
   }
 }
 
@@ -364,15 +346,15 @@ void Octree<ResultType>::nodeBounds(unsigned int level,
     Vector<CoordinateType> &min,
     Vector<CoordinateType> &max) const
 {
-  max = m_nodeMax[level];
-  min = m_nodeMin[level];
+  max = m_nodeMax[level-m_topLevel];
+  min = m_nodeMin[level-m_topLevel];
 }
 
 template <typename ResultType>
 void Octree<ResultType>::scaledNodeSize(unsigned int level,
     Vector<CoordinateType> &boxSize) const
 {
-  boxSize = m_nodeMax[level] + m_nodeMin[level];
+  boxSize = m_nodeMax[level-m_topLevel] + m_nodeMin[level-m_topLevel];
 }
 
 template <typename ResultType>
@@ -567,14 +549,13 @@ public:
 
       // calculate multipole to multipole (M2M) translation matrix
       Matrix<ResultType> m2m;
-      //if(m_octree.cache())
-        //m2m = m_octree.fmmCache().M2M(m_level, child - getFirstChild(node));
-      //else
+      if(m_octree.cache())
+        m2m = m_octree.fmmCache().M2M(m_level, child - getFirstChild(node));
+      else
         m2m = m_fmmTransform.M2M(Rchild, childSize, R, parentSize, m_level);
-      // add contribution of child to the parent
+
       const Vector<ResultType>& mcoefsChild =
           m_octree.getNode(child,m_level+1).getMultipoleCoefficients();
-      // interpolate all multipoles from child layer to higher order, then apply M2M
       Vector<ResultType> mcoefsChildInterpolated;
       m_fmmTransform.interpolate(m_level+1, m_level, mcoefsChild,
           mcoefsChildInterpolated);
@@ -658,6 +639,7 @@ public:
               m_octree.getNode(node,m_level).interactionItemList(ind));
         else
           m2l = m_fmmTransform.M2L(Rinter, R, boxSize, m_level);
+
       // add contribution of interation list node to current node
         const Vector<ResultType>& mcoefs =
             m_octree.getNode(inter,m_level).getMultipoleCoefficients();
@@ -689,9 +671,8 @@ public:
         // calculate multipole to local (M2L) translation matrix
         Matrix<ResultType> m2l;
         if(m_octree.cache())
-          throw std::invalid_argument("Error in cached M2L: ind not defined here");
-          //m2l = m_octree.fmmCache().M2L(m_level, 
-              //m_octree.getNode(node,m_level).interactionItemList(ind));
+          m2l = m_octree.fmmCache().M2L(m_level, 
+              m_octree.getNode(node,m_level).interactionItemList(inter));
         else
           m2l = m_fmmTransform.M2L(Rinter, R, boxSize, m_level);
         // add contribution of interation list node to current node
@@ -809,9 +790,9 @@ public:
 
         // calculate local to local (L2L) translation matrix
         Matrix<ResultType> l2l;
-        //if(m_octree.cache())
-          //l2l = m_octree.fmmCache().L2L(m_level, child - getFirstChild(node));
-        //else
+        if(m_octree.cache())
+          l2l = m_octree.fmmCache().L2L(m_level, child - getFirstChild(node));
+        else
           l2l = m_fmmTransform.L2L(R, parentSize, Rchild, childSize, m_level);
         // add the local coefficients to the current child
         Vector<ResultType> lcoefsChildContrib(lcoefs.rows());

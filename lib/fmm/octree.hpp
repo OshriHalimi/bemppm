@@ -45,17 +45,9 @@ public:
 
     Octree(unsigned int levels, 
         const FmmTransform<ResultType> &fmmTransform,
-        const shared_ptr<FmmCache<ResultType> > &fmmCache,
         const Vector<CoordinateType> &lowerBound,
         const Vector<CoordinateType> &upperBound,
         const bool cacheIO);
-
-    Octree(
-        unsigned int levels,
-        const FmmTransform<ResultType>& fmmTransform,
-        const shared_ptr<FmmCache<ResultType> > &fmmCache,
-        const Vector<CoordinateType> &lowerBound,
-        const Vector<CoordinateType> &upperBound);
 
     Octree(
         unsigned int levels,
@@ -104,11 +96,20 @@ public:
         Vector<CoordinateType> &center) const;
     void scaledNodeSize(unsigned int level,
         Vector<CoordinateType> &size) const;
+    void scaledNodeSize(unsigned long number, unsigned int level,
+        Vector<CoordinateType> &size){scaledNodeSize(level,size);}
     void nodeBounds(unsigned int level,
         Vector<CoordinateType> &min,
         Vector<CoordinateType> &max) const;
     void unscaledNodeSize(unsigned int level,
         Vector<CoordinateType> &size) const;
+    void unscaledNodeSize(unsigned long number, unsigned int level,
+        Vector<CoordinateType> &size){unscaledNodeSize(level,size);}
+    void setCache(shared_ptr<FmmCache<ResultType>> &cache){
+        if(!m_cache)
+          throw std::invalid_argument("Cannot set cache for an octree with caching disabled");
+        m_fmmCache=cache;
+    }
     const FmmCache<ResultType>& fmmCache() {return *m_fmmCache;}
 private:
     unsigned long getLeafContainingPoint(const Point3D<CoordinateType> &point) const;

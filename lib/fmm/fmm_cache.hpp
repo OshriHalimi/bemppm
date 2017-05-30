@@ -19,6 +19,7 @@ namespace fmm
 
 /** \cond FORWARD_DECL */
 template <typename ResultType> class FmmTransform;
+template <typename ResultType> class Octree;
 /** \endcond */
 
 template <typename ValueType>
@@ -33,7 +34,8 @@ public:
 
   void initCache(
     const Vector<CoordinateType> &lowerBound,
-    const Vector<CoordinateType> &upperBound);
+    const Vector<CoordinateType> &upperBound,
+    const shared_ptr<Octree<ValueType>> &octree);
 
   void compressM2L(bool isSymmetric);
 

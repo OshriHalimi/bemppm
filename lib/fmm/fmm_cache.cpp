@@ -22,7 +22,8 @@ template <typename ValueType>
 void
 FmmCache<ValueType>::initCache(
     const Vector<CoordinateType> &lowerBound,
-    const Vector<CoordinateType> &upperBound)
+    const Vector<CoordinateType> &upperBound,
+    const shared_ptr<Octree<ValueType>> &octree)
 {
   Vector<CoordinateType> origin(3);
   origin.fill(0);
@@ -35,22 +36,24 @@ FmmCache<ValueType>::initCache(
     // invariant operators
     m_cacheM2L[level-m_topLevel].resize(316);
 
-    unsigned int boxesPerSide = getNodesPerSide(level);
-    Vector<CoordinateType> boxSize;
-    boxSize = (upperBound - lowerBound)/boxesPerSide;
+    Vector<CoordinateType> scaledBoxSize;
+    octree->scaledNodeSize(level,scaledBoxSize);
+
+    Vector<CoordinateType> unscaledBoxSize;
+    octree->unscaledNodeSize(level,unscaledBoxSize);
 
     Vector<CoordinateType> center(3);
 
     unsigned int index = 0;
     for (int indx=-3; indx<=3; indx++) {
-      center[0] = indx*boxSize[0];
+      center[0] = indx*unscaledBoxSize[0];
       for (int indy=-3; indy<=3; indy++) {
-        center[1] = indy*boxSize[1];
+        center[1] = indy*unscaledBoxSize[1];
         for (int indz=-3; indz<=3; indz++) {
-          center[2] = indz*boxSize[2];
+          center[2] = indz*unscaledBoxSize[2];
           if (abs(indx) > 1 || abs(indy) > 1 || abs(indz) > 1) {
             Matrix<ValueType> m2l = m_fmmTransform.M2L(center, origin,
-                                                       boxSize, level);
+                                                       scaledBoxSize, level);
             m_cacheM2L[level-m_topLevel][index++] = m2l;
           }
         }
@@ -66,9 +69,14 @@ FmmCache<ValueType>::initCache(
     m_cacheM2M[level-m_topLevel].resize(8);
     m_cacheL2L[level-m_topLevel].resize(8);
 
-    unsigned int boxesPerSide = getNodesPerSide(level);
-    Vector<CoordinateType> boxSize;
-    boxSize = (upperBound - lowerBound)/boxesPerSide;
+    Vector<CoordinateType> unscaledParentSize;
+    octree->unscaledNodeSize(level,unscaledParentSize);
+
+    Vector<CoordinateType> scaledParentSize;
+    octree->scaledNodeSize(level,scaledParentSize);
+
+    Vector<CoordinateType> scaledChildSize;
+    octree->scaledNodeSize(level+1,scaledChildSize);
 
     Vector<CoordinateType> Rchild(3); // child pos
 
@@ -76,19 +84,21 @@ FmmCache<ValueType>::initCache(
       unsigned long ind[3];
       deMorton(&ind[0], &ind[1], &ind[2], child);
 
-      for(int i=0;i<3;++i) Rchild(i) = (ind[i]-0.5) * boxSize[i]/2;
-
-      Matrix<ValueType> m2m = m_fmmTransform.M2M(Rchild, Rchild, origin, origin, level);
-
+      for(int i=0;i<3;++i) Rchild(i) = (ind[i]-0.5) * unscaledParentSize[i]/2;
+      Matrix<ValueType> m2m = m_fmmTransform.M2M(Rchild, scaledChildSize,
+                                                 origin, scaledParentSize,
+                                                 level);
       m_cacheM2M[level-m_topLevel][child] = m2m;
 
-      Matrix<ValueType> l2l = m_fmmTransform.L2L(origin, origin, Rchild, Rchild, level);
+      Matrix<ValueType> l2l = m_fmmTransform.L2L(origin, scaledParentSize,
+                                                 Rchild, scaledChildSize,
+                                                 level);
 
       m_cacheL2L[level-m_topLevel][child] = l2l;
     }
   }
 
-  compressM2L(true);
+//  compressM2L(true);//true
 } // initCache
 
 
@@ -108,7 +118,7 @@ FmmCache<ValueType>::initCache(
 template <typename ValueType>
 void
 FmmCache<ValueType>::compressM2L(bool isSymmetric)
-{
+{/*
   if (!m_fmmTransform.isCompressedM2L()) return;
 
   Matrix<ValueType> kernelWeightMat;
@@ -170,7 +180,7 @@ FmmCache<ValueType>::compressM2L(bool isSymmetric)
           * m_cacheM2L[level-m_topLevel][item]
           * m_Vthin[level-m_topLevel];
   }
-}
+*/}
 
 // call before M2L operation on all nodes on all levels
 template <typename ValueType>
@@ -178,14 +188,14 @@ void
 FmmCache<ValueType>::compressMultipoleCoefficients(
     Vector<ValueType>& mcoefs,
     int level) const
-{
+{/*
   if (m_fmmTransform.isCompressedM2L()){
     Vector<ValueType> multiplied(mcoefs.rows());
     for(int i=0;i<m_kernelWeightVec.rows();++i)
         multiplied(i) = m_kernelWeightVec(i) * mcoefs(i);
     mcoefs = m_Vthin[level-m_topLevel].transpose() * multiplied;
   }
-}
+*/}
 
 // call after M2L operation on all nodes on all levels
 template <typename ValueType>
@@ -193,13 +203,13 @@ void
 FmmCache<ValueType>::explodeLocalCoefficients(
     Vector<ValueType>& lcoefs,
     int level) const
-{
+{/*
   if (m_fmmTransform.isCompressedM2L()){
     Vector<ValueType> mult = m_Ufat[level-m_topLevel]*lcoefs;
     for(int i=0;i<m_kernelWeightVec.rows();++i)
       lcoefs(i) = m_kernelWeightVec(i) * mult(i);
   }
-}
+*/}
 
 template <typename ValueType>
 Matrix<ValueType>

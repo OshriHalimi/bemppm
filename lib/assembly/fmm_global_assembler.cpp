@@ -150,23 +150,12 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
 
   // Make octree
   shared_ptr<fmm::Octree<ResultType>> octree;
-  if(cacheIO){
-    shared_ptr<fmm::FmmCache<ResultType>>
-      cache = boost::make_shared<fmm::FmmCache<ResultType>>(fmmTransform,
-                                                            levels);
-    cache->initCache(lowerBound,upperBound);
-    octree = boost::make_shared<fmm::Octree<ResultType>>(
-        levels,
-        fmmTransform,
-        cache,
-        lowerBound,
-        upperBound);
-  } else
-    octree = boost::make_shared<fmm::Octree<ResultType>>(
-        levels,
-        fmmTransform,
-        lowerBound,
-        upperBound);
+  octree = boost::make_shared<fmm::Octree<ResultType>>(
+      levels,
+      fmmTransform,
+      lowerBound,
+      upperBound,
+      cacheIO);
 
 
 
@@ -195,6 +184,15 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   octree->generateNeighbours();
   octree->enlargeBoxes(testDofLocations, testDofCorners);
   octree->enlargeBoxes(trialDofLocations, trialDofCorners);
+
+  if(cacheIO){
+    shared_ptr<fmm::FmmCache<ResultType>>
+      cache = boost::make_shared<fmm::FmmCache<ResultType>>(fmmTransform,
+                                                            levels);
+    cache->initCache(lowerBound,upperBound,octree);
+    octree->setCache(cache);
+  }
+
 
   unsigned int nLeaves = fmm::getNodesPerLevel(octree->levels());
 
