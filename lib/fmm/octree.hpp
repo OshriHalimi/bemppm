@@ -107,7 +107,7 @@ public:
         Vector<CoordinateType> &size){unscaledNodeSize(level,size);}
     void setCache(shared_ptr<FmmCache<ResultType>> &cache){
         if(!m_cache)
-          throw std::invalid_argument("Cannot set cache for an octree with caching disabled");
+          throw std::exception("Cannot set cache for an octree with caching disabled");
         m_fmmCache=cache;
     }
     const FmmCache<ResultType>& fmmCache() {return *m_fmmCache;}

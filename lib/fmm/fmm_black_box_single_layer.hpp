@@ -18,8 +18,8 @@ public:
 
     template <typename KernelFunctor>
     FmmBlackBoxSingleLayer(const KernelFunctor& kernelFunctor, unsigned int n,
-                           unsigned int levels)
-        : FmmBlackBox<KernelType, ValueType>(kernelFunctor, n, levels) {}
+                           unsigned int levels, bool compressed)
+        : FmmBlackBox<KernelType, ValueType>(kernelFunctor, n, levels, compressed) {}
 
     virtual void evaluateTrial(
             const Vector<CoordinateType>& point,

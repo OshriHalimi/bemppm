@@ -98,7 +98,7 @@ FmmCache<ValueType>::initCache(
     }
   }
 
-//  compressM2L(true);//true
+  compressM2L(true);
 } // initCache
 
 
@@ -118,10 +118,11 @@ FmmCache<ValueType>::initCache(
 template <typename ValueType>
 void
 FmmCache<ValueType>::compressM2L(bool isSymmetric)
-{/*
+{
   if (!m_fmmTransform.isCompressedM2L()) return;
+  throw std::exception("Compressed cache not yet implemented")
 
-  Matrix<ValueType> kernelWeightMat;
+/*  Matrix<ValueType> kernelWeightMat;
   m_fmmTransform.getKernelWeight(kernelWeightMat, m_kernelWeightVec);
 
   int npt = m_fmmTransform.chebyshevPointCount();

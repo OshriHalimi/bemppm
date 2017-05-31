@@ -324,6 +324,14 @@ cdef class _FMMParameterList:
             cdef char* s = b"options.fmm.cache"
             deref(self.impl_).put_bool(s,value)
 
+    property compress_cache:
+        def __get__(self):
+            cdef char* s = b"options.fmm.compress_cache"
+            return deref(self.impl_).get_bool(s)
+        def __set__(self,int value):
+            cdef char* s = b"options.fmm.compress_cache"
+            deref(self.impl_).put_bool(s,value)
+
 cdef class ParameterList:
 
     def __cinit__(self):

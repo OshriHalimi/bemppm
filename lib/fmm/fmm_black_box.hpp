@@ -32,7 +32,7 @@ public:
 
   template <typename KernelFunctor>
   FmmBlackBox(const KernelFunctor& kernelFunctor, unsigned int n,
-              unsigned int levels);
+              unsigned int levels, bool compressed);
 
   // multipole to multipole (M2M) translation matrix
   virtual Matrix<ValueType> M2M(
@@ -96,10 +96,10 @@ private:
 template <typename KernelType, typename ValueType>
 template <typename KernelFunctor>
 FmmBlackBox<KernelType, ValueType>::FmmBlackBox(
-    const KernelFunctor& kernelFunctor, unsigned int n, unsigned int levels)
+    const KernelFunctor& kernelFunctor, unsigned int n, unsigned int levels, bool compressed)
  :  m_kernels(
         new Fiber::DefaultCollectionOfKernels<KernelFunctor>(kernelFunctor)),
-    m_n(n), m_Tk(n, n), FmmTransform<ValueType>(n*n*n, levels, true)
+    m_n(n), m_Tk(n, n), FmmTransform<ValueType>(n*n*n, levels, compressed)
 {
   generateGaussPoints();
 }
