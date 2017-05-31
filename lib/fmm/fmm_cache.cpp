@@ -120,7 +120,7 @@ void
 FmmCache<ValueType>::compressM2L(bool isSymmetric)
 {
   if (!m_fmmTransform.isCompressedM2L()) return;
-  throw std::exception("Compressed cache not yet implemented")
+  throw NotImplementedError("Compressed cache not yet implemented");
 
 /*  Matrix<ValueType> kernelWeightMat;
   m_fmmTransform.getKernelWeight(kernelWeightMat, m_kernelWeightVec);

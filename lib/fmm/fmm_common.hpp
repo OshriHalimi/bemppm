@@ -3,9 +3,11 @@
 
 #include "../common/types.hpp"
 #include "../common/shared_ptr.hpp"
+#include "../common/not_implemented_error.hpp"
 
 namespace fmm {
 
+using NotImplementedError = Bempp::NotImplementedError;
 template <typename T> using Vector = Bempp::Vector<T>;
 template <typename T> using Matrix = Bempp::Matrix<T>;
 template <typename T> using Point3D = Bempp::Point3D<T>;
