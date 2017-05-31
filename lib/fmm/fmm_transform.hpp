@@ -23,11 +23,7 @@ public:
              : m_chebyshevPoints(3, chebyshevPointCount),
                m_chebyshevWeights(chebyshevPointCount),
                m_isCompressedM2L(isCompressedM2L)
-  {
-    std::cout << chebyshevPointCount << std::endl;
-    std::cout << levels << std::endl;
-    std::cout << isCompressedM2L << std::endl;
-  }
+  {}
   const Vector<CoordinateType>& getWeights() const
   {
     return m_chebyshevWeights;
