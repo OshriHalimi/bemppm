@@ -206,7 +206,7 @@ modifiedHelmholtzDoubleLayerBoundaryOperator(
                   1.1 * maxDistance(*domain->grid(), *dualToRange->grid()),
                   interpPtsPerWavelength);
     if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
-      auto singleKernel = InterpolatedKernelFunctor(waveNumber,
+      auto singleKernel = SingleInterpolatedKernelFunctor(waveNumber,
                   1.1 * maxDistance(*domain->grid(), *dualToRange->grid()),
                   interpPtsPerWavelength);
       shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
@@ -225,7 +225,7 @@ modifiedHelmholtzDoubleLayerBoundaryOperator(
   } else {
     auto kernel = NoninterpolatedKernelFunctor(waveNumber);
     if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
-      auto singleKernel = NoninterpolatedKernelFunctor(waveNumber);
+      auto singleKernel = SingleNoninterpolatedKernelFunctor(waveNumber);
       shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
       int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
       int levels = parameterList.template get<int>("options.fmm.levels");
@@ -297,7 +297,7 @@ modifiedHelmholtzAdjointDoubleLayerBoundaryOperator(
                   1.1 * maxDistance(*domain->grid(), *dualToRange->grid()),
                   interpPtsPerWavelength);
     if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
-      auto singleKernel = InterpolatedKernelFunctor(waveNumber,
+      auto singleKernel = SingleInterpolatedKernelFunctor(waveNumber,
                   1.1 * maxDistance(*domain->grid(), *dualToRange->grid()),
                   interpPtsPerWavelength);
       shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
