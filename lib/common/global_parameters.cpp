@@ -124,6 +124,9 @@ ParameterList GlobalParameters::parameterList() {
   // FMM cache compression
   parameters.put("options.fmm.compress_cache", static_cast<bool>(true));
 
+  // FMM cache compression
+  parameters.put("options.fmm.compression_factor", static_cast<double>(0.5));
+
   return parameters;
 }
 }

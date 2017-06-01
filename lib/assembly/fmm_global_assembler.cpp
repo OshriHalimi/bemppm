@@ -146,6 +146,7 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   for(int i=0;i<3;++i){
     lowerBound(i) = std::min(lowerBoundTest(i),lowerBoundTrial(i));
     upperBound(i) = std::min(upperBoundTest(i),upperBoundTrial(i));
+    if(lowerBound(i)==upperBound(i)) upperBound(i)=lowerBound(i) + 1; // TODO: think about this more!
   }
 
   // Make octree
@@ -186,9 +187,10 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   octree->enlargeBoxes(trialDofLocations, trialDofCorners);
 
   if(cacheIO){
+    auto compress = parameterList.template get<double>("options.fmm.compression_factor");
     shared_ptr<fmm::FmmCache<ResultType>>
       cache = boost::make_shared<fmm::FmmCache<ResultType>>(fmmTransform,
-                                                            levels);
+                                                            levels, compress);
     cache->initCache(lowerBound,upperBound,octree);
     octree->setCache(cache);
   }

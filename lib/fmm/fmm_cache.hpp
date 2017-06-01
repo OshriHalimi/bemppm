@@ -30,7 +30,7 @@ public:
 
   FmmCache(
     const FmmTransform<ValueType>& fmmTransform,
-    unsigned int levels);
+    unsigned int levels, double compress);
 
   void initCache(
     const Vector<CoordinateType> &lowerBound,
@@ -53,6 +53,7 @@ private:
   const unsigned int m_topLevel;
   const FmmTransform<ValueType>& m_fmmTransform;
   unsigned int m_levels;
+  double m_compression;
   Vector<ValueType> m_kernelWeightVec;
   std::vector<Matrix<ValueType> > m_Ufat;
   std::vector<Matrix<ValueType> > m_Vthin;

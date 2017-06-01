@@ -320,7 +320,7 @@ cdef class _FMMParameterList:
         def __get__(self):
             cdef char* s = b"options.fmm.cache"
             return deref(self.impl_).get_bool(s)
-        def __set__(self,int value):
+        def __set__(self,cbool value):
             cdef char* s = b"options.fmm.cache"
             deref(self.impl_).put_bool(s,value)
 
@@ -328,9 +328,17 @@ cdef class _FMMParameterList:
         def __get__(self):
             cdef char* s = b"options.fmm.compress_cache"
             return deref(self.impl_).get_bool(s)
-        def __set__(self,int value):
+        def __set__(self,cbool value):
             cdef char* s = b"options.fmm.compress_cache"
             deref(self.impl_).put_bool(s,value)
+
+    property compression_factor:
+        def __get__(self):
+            cdef char* s = b"options.fmm.compression_factor"
+            return deref(self.impl_).get_double(s)
+        def __set__(self,double value):
+            cdef char* s = b"options.fmm.compression_factor"
+            deref(self.impl_).put_double(s,value)
 
 cdef class ParameterList:
 

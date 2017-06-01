@@ -14,8 +14,9 @@ namespace fmm
 template <typename ValueType>
 FmmCache<ValueType>::FmmCache(
     const FmmTransform<ValueType>& fmmTransform,
-    unsigned int levels)
-  : m_fmmTransform(fmmTransform), m_levels(levels), m_topLevel(2)
+    unsigned int levels, double compress)
+  : m_fmmTransform(fmmTransform), m_levels(levels), m_topLevel(2),
+    m_compression(compress)
 {/**/}
 
 template <typename ValueType>
@@ -98,31 +99,17 @@ FmmCache<ValueType>::initCache(
     }
   }
 
-  compressM2L(true);
+  compressM2L(true); // TODO: when is this symmetric
 } // initCache
 
 
-// For the bbFFM the M2L operator will be block Toeplitz (fully Toeplitz in 1D)
-// when the kernel is symmetric. N.B that the order in which the interaction blocks
-// are stored does not matter. However, if symmetry is to be exploited (so that one
-// SVD suffices), the source interaction blocks must be arranged symmetrically about
-// the field center, e.g. -4 -3 x x f x x 3 4 not -4 -3 x x f x x 3 4 5.
-// If symmetry is to be exploited note that Ufat_k'*Vthin_k = \pm 1. However, since
-// we calculate multipoleCoefficients = Ufat*(Ufat'*K*Vthin)*Vthin'*multipoleCoefficients
-// the \pm 1 does not matter. For symmetric kernels it is thus safe to assume
-// Vthin = Ufat.
-// If checking Ufat_k'*Vthin_k = \pm 1, note that if kernel is isotropic in x, y 
-// and z, then triplet vectors result with the same sigma. Due to this degeneracy, the 
-// vectors do not satisfy Ufat_k'*Vthin_k = \pm 1. If one scales x, y, and z slightly 
-// differently, then the degeneracy is broken, and the equality is perfectly satisfied.
 template <typename ValueType>
 void
 FmmCache<ValueType>::compressM2L(bool isSymmetric)
 {
   if (!m_fmmTransform.isCompressedM2L()) return;
-  throw NotImplementedError("Compressed cache not yet implemented");
 
-/*  Matrix<ValueType> kernelWeightMat;
+  Matrix<ValueType> kernelWeightMat;
   m_fmmTransform.getKernelWeight(kernelWeightMat, m_kernelWeightVec);
 
   int npt = m_fmmTransform.chebyshevPointCount();
@@ -134,32 +121,25 @@ FmmCache<ValueType>::compressM2L(bool isSymmetric)
   for (unsigned int level = m_topLevel; level<=m_levels; ++level) {
     // scale all kernel matrices by the weight and copy to flat structure
     for (unsigned int item = 0; item<316; ++item) {
-      assert(kernelWeightMat.rows()==npt);
-      assert(kernelWeightMat.cols()==npt);
       for(int i=0;i<npt;++i)
         for(int j=0;j<npt;++j)
           m_cacheM2L[level-m_topLevel][item](i,j) *= kernelWeightMat(i,j);
-      kernelsFat.block(item*npt,0,npt,npt)
-          = m_cacheM2L[level-m_topLevel][item];
+      kernelsFat.block(item*npt,0,npt,npt) = m_cacheM2L[level-m_topLevel][item];
     }
 
-    Eigen::JacobiSVD<Matrix<ValueType>> svd=kernelsFat.jacobiSvd(
+    Eigen::JacobiSVD<Matrix<ValueType>> svd(kernelsFat,
                                    Eigen::ComputeFullU);
 
     Matrix<ValueType> Ufat = svd.matrixU();
 
-    // Compute the SVD of the scaled fat collection of Kernels
-    //if ( !arma::svd_econ(Ufat, sigma, Vfat, kernelsFat, 'l') )
-    //  throw std::invalid_argument("FmmCache<ValueType>::compressM2L(): "
-    //    "singular value decomposition failed");
+    int cutoff = int(std::floor(npt*m_compression));
+    cutoff = std::max(1,cutoff);
+    cutoff = std::min(npt,cutoff);
 
-    // store the first few columns of U used for the reduced rank
-    // approximation into m_Ured
-    int cutoff = npt/2 - 1;
-    m_Ufat[level-m_topLevel].resize(npt,cutoff-1);
-    m_Ufat[level-m_topLevel] = Ufat.block(0, 0, npt, cutoff-1);
+    m_Ufat[level-m_topLevel].resize(npt,cutoff);
+    m_Ufat[level-m_topLevel] = Ufat.block(0, 0, npt, cutoff);
 
-    if (isSymmetric) // if M2L or Kernel is asymmetric
+    if (isSymmetric)
       m_Vthin[level-m_topLevel] = m_Ufat[level-m_topLevel];
     else {
       Matrix<ValueType> kernelsThin(316*npt, npt);
@@ -167,11 +147,10 @@ FmmCache<ValueType>::compressM2L(bool isSymmetric)
         kernelsThin.block(item*npt, 0, npt, npt)
             = m_cacheM2L[level-m_topLevel][item];
 
-    Eigen::JacobiSVD<Matrix<ValueType>> svd2=kernelsThin.jacobiSvd(
+      Eigen::JacobiSVD<Matrix<ValueType>> svd2(kernelsThin,
                                    Eigen::ComputeThinV);
-      Matrix<ValueType> Vthin=svd.matrixV();
-
-      m_Vthin[level-m_topLevel] = Vthin.block(0, 0, npt, cutoff-1);
+      Matrix<ValueType> Vthin=svd2.matrixV();
+      m_Vthin[level-m_topLevel] = Vthin.block(0, 0, npt, cutoff);
     }
 
     // Reduce down the M2L matrices from npt x npt to cutoff x cutoff
@@ -181,7 +160,7 @@ FmmCache<ValueType>::compressM2L(bool isSymmetric)
           * m_cacheM2L[level-m_topLevel][item]
           * m_Vthin[level-m_topLevel];
   }
-*/}
+}
 
 // call before M2L operation on all nodes on all levels
 template <typename ValueType>
@@ -189,14 +168,14 @@ void
 FmmCache<ValueType>::compressMultipoleCoefficients(
     Vector<ValueType>& mcoefs,
     int level) const
-{/*
+{
   if (m_fmmTransform.isCompressedM2L()){
     Vector<ValueType> multiplied(mcoefs.rows());
     for(int i=0;i<m_kernelWeightVec.rows();++i)
         multiplied(i) = m_kernelWeightVec(i) * mcoefs(i);
     mcoefs = m_Vthin[level-m_topLevel].transpose() * multiplied;
   }
-*/}
+}
 
 // call after M2L operation on all nodes on all levels
 template <typename ValueType>
@@ -204,13 +183,13 @@ void
 FmmCache<ValueType>::explodeLocalCoefficients(
     Vector<ValueType>& lcoefs,
     int level) const
-{/*
+{
   if (m_fmmTransform.isCompressedM2L()){
     Vector<ValueType> mult = m_Ufat[level-m_topLevel]*lcoefs;
     for(int i=0;i<m_kernelWeightVec.rows();++i)
       lcoefs(i) = m_kernelWeightVec(i) * mult(i);
   }
-*/}
+}
 
 template <typename ValueType>
 Matrix<ValueType>
