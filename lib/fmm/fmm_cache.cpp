@@ -14,9 +14,9 @@ namespace fmm
 template <typename ValueType>
 FmmCache<ValueType>::FmmCache(
     const FmmTransform<ValueType>& fmmTransform,
-    unsigned int levels, double compress)
+    unsigned int levels, bool compress, double compressFactor)
   : m_fmmTransform(fmmTransform), m_levels(levels), m_topLevel(2),
-    m_compression(compress)
+    m_compressedM2L(compress), m_compressionFactor(compressFactor)
 {/**/}
 
 template <typename ValueType>
@@ -104,61 +104,67 @@ FmmCache<ValueType>::initCache(
 
 
 template <typename ValueType>
+bool
+FmmCache<ValueType>::isCompressedM2L() const
+{
+  return m_compressedM2L;
+}
+template <typename ValueType>
 void
 FmmCache<ValueType>::compressM2L(bool isSymmetric)
 {
-  if (!m_fmmTransform.isCompressedM2L()) return;
+  if (isCompressedM2L()){ //TODO: MOVING THIS
+    Matrix<ValueType> kernelWeightMat;
+    m_fmmTransform.getKernelWeight(kernelWeightMat, m_kernelWeightVec);
 
-  Matrix<ValueType> kernelWeightMat;
-  m_fmmTransform.getKernelWeight(kernelWeightMat, m_kernelWeightVec);
+    int npt = m_fmmTransform.chebyshevPointCount();
 
-  int npt = m_fmmTransform.chebyshevPointCount();
+    m_Ufat.resize(m_levels-m_topLevel+1);
+    m_Vthin.resize(m_levels-m_topLevel+1);
+    Matrix<ValueType> kernelsFat(npt, 316*npt);
 
-  m_Ufat.resize(m_levels-m_topLevel+1);
-  m_Vthin.resize(m_levels-m_topLevel+1);
-  Matrix<ValueType> kernelsFat(npt, 316*npt);
+    for (unsigned int level = m_topLevel; level<=m_levels; ++level) {
+      // scale all kernel matrices by the weight and copy to flat structure
+      for (unsigned int item = 0; item<316; ++item) {
+        for(int i=0;i<npt;++i)
+          for(int j=0;j<npt;++j)
+            m_cacheM2L[level-m_topLevel][item](i,j) *= kernelWeightMat(i,j);
+        kernelsFat.block(item*npt,0,npt,npt) = m_cacheM2L[level-m_topLevel][item];
+      }
 
-  for (unsigned int level = m_topLevel; level<=m_levels; ++level) {
-    // scale all kernel matrices by the weight and copy to flat structure
-    for (unsigned int item = 0; item<316; ++item) {
-      for(int i=0;i<npt;++i)
-        for(int j=0;j<npt;++j)
-          m_cacheM2L[level-m_topLevel][item](i,j) *= kernelWeightMat(i,j);
-      kernelsFat.block(item*npt,0,npt,npt) = m_cacheM2L[level-m_topLevel][item];
-    }
+      Eigen::JacobiSVD<Matrix<ValueType>> svd(kernelsFat,
+                                     Eigen::ComputeFullU);
 
-    Eigen::JacobiSVD<Matrix<ValueType>> svd(kernelsFat,
-                                   Eigen::ComputeFullU);
+      Matrix<ValueType> Ufat = svd.matrixU();
 
-    Matrix<ValueType> Ufat = svd.matrixU();
+      int cutoff = int(std::floor(npt*m_compressionFactor));
+      cutoff = std::max(1,cutoff);
+      cutoff = std::min(npt,cutoff);
 
-    int cutoff = int(std::floor(npt*m_compression));
-    cutoff = std::max(1,cutoff);
-    cutoff = std::min(npt,cutoff);
+      m_Ufat[level-m_topLevel].resize(npt,cutoff);
+      m_Ufat[level-m_topLevel] = Ufat.block(0, 0, npt, cutoff);
 
-    m_Ufat[level-m_topLevel].resize(npt,cutoff);
-    m_Ufat[level-m_topLevel] = Ufat.block(0, 0, npt, cutoff);
+      if (isSymmetric)
+        m_Vthin[level-m_topLevel] = m_Ufat[level-m_topLevel];
+      else {
+        Matrix<ValueType> kernelsThin(316*npt, npt);
+        for (unsigned int item = 0; item<316; ++item)
+          kernelsThin.block(item*npt, 0, npt, npt)
+              = m_cacheM2L[level-m_topLevel][item];
 
-    if (isSymmetric)
-      m_Vthin[level-m_topLevel] = m_Ufat[level-m_topLevel];
-    else {
-      Matrix<ValueType> kernelsThin(316*npt, npt);
+        Eigen::JacobiSVD<Matrix<ValueType>> svd2(kernelsThin,
+                                     Eigen::ComputeThinV);
+        Matrix<ValueType> Vthin=svd2.matrixV();
+        m_Vthin[level-m_topLevel] = Vthin.block(0, 0, npt, cutoff);
+      }
+
+      // Reduce down the M2L matrices from npt x npt to cutoff x cutoff
       for (unsigned int item = 0; item<316; ++item)
-        kernelsThin.block(item*npt, 0, npt, npt)
-            = m_cacheM2L[level-m_topLevel][item];
-
-      Eigen::JacobiSVD<Matrix<ValueType>> svd2(kernelsThin,
-                                   Eigen::ComputeThinV);
-      Matrix<ValueType> Vthin=svd2.matrixV();
-      m_Vthin[level-m_topLevel] = Vthin.block(0, 0, npt, cutoff);
+        m_cacheM2L[level-m_topLevel][item] =
+            m_Ufat [level-m_topLevel].transpose()
+            * m_cacheM2L[level-m_topLevel][item]
+            * m_Vthin[level-m_topLevel];
     }
-
-    // Reduce down the M2L matrices from npt x npt to cutoff x cutoff
-    for (unsigned int item = 0; item<316; ++item)
-      m_cacheM2L[level-m_topLevel][item] =
-          m_Ufat [level-m_topLevel].transpose()
-          * m_cacheM2L[level-m_topLevel][item]
-          * m_Vthin[level-m_topLevel];
   }
 }
 
@@ -169,7 +175,7 @@ FmmCache<ValueType>::compressMultipoleCoefficients(
     Vector<ValueType>& mcoefs,
     int level) const
 {
-  if (m_fmmTransform.isCompressedM2L()){
+  if (isCompressedM2L()){
     Vector<ValueType> multiplied(mcoefs.rows());
     for(int i=0;i<m_kernelWeightVec.rows();++i)
         multiplied(i) = m_kernelWeightVec(i) * mcoefs(i);
@@ -184,7 +190,7 @@ FmmCache<ValueType>::explodeLocalCoefficients(
     Vector<ValueType>& lcoefs,
     int level) const
 {
-  if (m_fmmTransform.isCompressedM2L()){
+  if (isCompressedM2L()){
     Vector<ValueType> mult = m_Ufat[level-m_topLevel]*lcoefs;
     for(int i=0;i<m_kernelWeightVec.rows();++i)
       lcoefs(i) = m_kernelWeightVec(i) * mult(i);

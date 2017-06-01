@@ -30,7 +30,7 @@ public:
 
   FmmCache(
     const FmmTransform<ValueType>& fmmTransform,
-    unsigned int levels, double compress);
+    unsigned int levels, bool compress, double compressFactor);
 
   void initCache(
     const Vector<CoordinateType> &lowerBound,
@@ -49,11 +49,14 @@ public:
   Matrix<ValueType> M2L(unsigned int level, unsigned int item) const;
   Matrix<ValueType> L2L(unsigned int level, unsigned int item) const;
 
+  bool isCompressedM2L() const;
+
 private:
   const unsigned int m_topLevel;
   const FmmTransform<ValueType>& m_fmmTransform;
   unsigned int m_levels;
-  double m_compression;
+  double m_compressionFactor;
+  bool m_compressedM2L;
   Vector<ValueType> m_kernelWeightVec;
   std::vector<Matrix<ValueType> > m_Ufat;
   std::vector<Matrix<ValueType> > m_Vthin;

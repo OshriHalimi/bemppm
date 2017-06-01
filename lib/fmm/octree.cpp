@@ -702,7 +702,7 @@ void Octree<ResultType>::translationStep(
     const FmmTransform<ResultType> &fmmTransform)
                                               //, Vector<ResultType>& y_inout)
 {
-  if (fmmTransform.isCompressedM2L() ) {
+  if(cache() && fmmCache().isCompressedM2L()) {
     // Compress Multipole Coefficients 
     for (unsigned int level = m_topLevel; level<=m_levels; level++) {
       unsigned int nNodes = getNodesPerLevel(level);
@@ -733,7 +733,7 @@ void Octree<ResultType>::translationStep(
     tbb::parallel_for<size_t>(0, nNodes, translationStepHelper);
   }
 
-  if (fmmTransform.isCompressedM2L() ) {
+  if (cache() && fmmCache().isCompressedM2L() ) {
     // Explode Local Coefficients
     for (unsigned int level = m_topLevel; level<=m_levels; level++) {
       unsigned int nNodes = getNodesPerLevel(level);

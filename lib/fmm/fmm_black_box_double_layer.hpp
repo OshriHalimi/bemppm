@@ -16,9 +16,8 @@ public:
   typedef typename FmmBlackBox<KernelType, ValueType>::CoordinateType CoordinateType;
 
     template <typename KernelFunctor>
-    FmmBlackBoxDoubleLayer(const KernelFunctor& kernelFunctor, unsigned int n,
-                           unsigned int levels, bool compressed)
-    : FmmBlackBox<KernelType, ValueType>(kernelFunctor, n, levels, compressed){}
+    FmmBlackBoxDoubleLayer(const KernelFunctor& kernelFunctor, unsigned int n)
+    : FmmBlackBox<KernelType, ValueType>(kernelFunctor, n){}
 
     virtual void evaluateTrial(
         const Vector<CoordinateType>& point,

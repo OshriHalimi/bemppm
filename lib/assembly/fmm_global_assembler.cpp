@@ -187,10 +187,11 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   octree->enlargeBoxes(trialDofLocations, trialDofCorners);
 
   if(cacheIO){
-    auto compress = parameterList.template get<double>("options.fmm.compression_factor");
+    auto compressFactor = parameterList.template get<double>("options.fmm.compression_factor");
+    auto compress = parameterList.template get<bool>("options.fmm.compress_cache");
     shared_ptr<fmm::FmmCache<ResultType>>
-      cache = boost::make_shared<fmm::FmmCache<ResultType>>(fmmTransform,
-                                                            levels, compress);
+      cache = boost::make_shared<fmm::FmmCache<ResultType>>(fmmTransform, levels,
+                                                            compress, compressFactor);
     cache->initCache(lowerBound,upperBound,octree);
     octree->setCache(cache);
   }

@@ -121,9 +121,7 @@ modifiedHelmholtzSingleLayerBoundaryOperator(
                   interpPtsPerWavelength);
       shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
       int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
-      int levels = parameterList.template get<int>("options.fmm.levels");
-      bool compressed = parameterList.template get<bool>("options.fmm.compress_cache");
-      fmmTransform = boost::make_shared<fmm::FmmBlackBoxSingleLayer<KernelType,ResultType>>(singleKernel,expansionOrder,levels,compressed);
+      fmmTransform = boost::make_shared<fmm::FmmBlackBoxSingleLayer<KernelType,ResultType>>(singleKernel,expansionOrder);
       newOp.reset(
           new Op(domain, range, dualToRange, label, symmetry, kernel,
                  TransformationFunctor(), TransformationFunctor(), integral,
@@ -138,9 +136,7 @@ modifiedHelmholtzSingleLayerBoundaryOperator(
       auto singleKernel = SingleNoninterpolatedKernelFunctor(waveNumber);
       shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
       int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
-      int levels = parameterList.template get<int>("options.fmm.levels");
-      bool compressed = parameterList.template get<bool>("options.fmm.compress_cache");
-      fmmTransform = boost::make_shared<fmm::FmmBlackBoxSingleLayer<KernelType,ResultType>>(singleKernel,expansionOrder,levels,compressed);
+      fmmTransform = boost::make_shared<fmm::FmmBlackBoxSingleLayer<KernelType,ResultType>>(singleKernel,expansionOrder);
       newOp.reset(
           new Op(domain, range, dualToRange, label, symmetry, kernel,
                  TransformationFunctor(), TransformationFunctor(), integral,
@@ -211,9 +207,7 @@ modifiedHelmholtzDoubleLayerBoundaryOperator(
                   interpPtsPerWavelength);
       shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
       int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
-      int levels = parameterList.template get<int>("options.fmm.levels");
-      bool compressed = parameterList.template get<bool>("options.fmm.compress_cache");
-      fmmTransform = boost::make_shared<fmm::FmmBlackBoxDoubleLayer<KernelType,ResultType>>(singleKernel,expansionOrder,levels,compressed);
+      fmmTransform = boost::make_shared<fmm::FmmBlackBoxDoubleLayer<KernelType,ResultType>>(singleKernel,expansionOrder);
       newOp.reset(
           new Op(domain, range, dualToRange, label, symmetry, kernel,
                  TransformationFunctor(), TransformationFunctor(), integral,
@@ -228,9 +222,7 @@ modifiedHelmholtzDoubleLayerBoundaryOperator(
       auto singleKernel = SingleNoninterpolatedKernelFunctor(waveNumber);
       shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
       int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
-      int levels = parameterList.template get<int>("options.fmm.levels");
-      bool compressed = parameterList.template get<bool>("options.fmm.compress_cache");
-      fmmTransform = boost::make_shared<fmm::FmmBlackBoxDoubleLayer<KernelType,ResultType>>(singleKernel,expansionOrder,levels,compressed);
+      fmmTransform = boost::make_shared<fmm::FmmBlackBoxDoubleLayer<KernelType,ResultType>>(singleKernel,expansionOrder);
       newOp.reset(
           new Op(domain, range, dualToRange, label, symmetry, kernel,
                  TransformationFunctor(), TransformationFunctor(), integral,
@@ -302,9 +294,7 @@ modifiedHelmholtzAdjointDoubleLayerBoundaryOperator(
                   interpPtsPerWavelength);
       shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
       int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
-      int levels = parameterList.template get<int>("options.fmm.levels");
-      bool compressed = parameterList.template get<bool>("options.fmm.compress_cache");
-      fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(singleKernel,expansionOrder,levels,compressed);
+      fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(singleKernel,expansionOrder);
       newOp.reset(
           new Op(domain, range, dualToRange, label, symmetry, kernel,
                  TransformationFunctor(), TransformationFunctor(), integral,
@@ -319,9 +309,7 @@ modifiedHelmholtzAdjointDoubleLayerBoundaryOperator(
       auto singleKernel = SingleNoninterpolatedKernelFunctor(waveNumber);
       shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
       int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
-      int levels = parameterList.template get<int>("options.fmm.levels");
-      bool compressed = parameterList.template get<bool>("options.fmm.compress_cache");
-      fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(singleKernel,expansionOrder,levels,compressed);
+      fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(singleKernel,expansionOrder);
       newOp.reset(
           new Op(domain, range, dualToRange, label, symmetry, kernel,
                  TransformationFunctor(), TransformationFunctor(), integral,
@@ -402,9 +390,7 @@ modifiedHelmholtzHypersingularBoundaryOperator(
                   interpPtsPerWavelength);
       shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
       int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
-      int levels = parameterList.template get<int>("options.fmm.levels");
-      bool compressed = parameterList.template get<bool>("options.fmm.compress_cache");
-      fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(singleKernel,expansionOrder,levels,compressed);
+      fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(singleKernel,expansionOrder);
       newOp.reset(
           new Op(domain, range, dualToRange, label, symmetry, kernel,
                  TransformationFunctorWithBlas(), TransformationFunctorWithBlas(),integral,
@@ -419,9 +405,7 @@ modifiedHelmholtzHypersingularBoundaryOperator(
       auto singleKernel = SingleNoninterpolatedKernelFunctor(waveNumber);
       shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
       int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
-      int levels = parameterList.template get<int>("options.fmm.levels");
-      bool compressed = parameterList.template get<bool>("options.fmm.compress_cache");
-      fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(singleKernel,expansionOrder,levels,compressed);
+      fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(singleKernel,expansionOrder);
       newOp.reset(
           new Op(domain, range, dualToRange, label, symmetry, kernel,
                  TransformationFunctorWithBlas(), TransformationFunctorWithBlas(),integral,
@@ -438,9 +422,7 @@ modifiedHelmholtzHypersingularBoundaryOperator(
     if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
       shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
       int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
-      int levels = parameterList.template get<int>("options.fmm.levels");
-      bool compressed = parameterList.template get<bool>("options.fmm.compress_cache");
-      fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(kernel,expansionOrder,levels,compressed);
+      fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(kernel,expansionOrder);
       newOp.reset(
           new Op(domain, range, dualToRange, label, symmetry, kernel,
                  TransformationFunctor(), TransformationFunctor(),
@@ -455,9 +437,7 @@ modifiedHelmholtzHypersingularBoundaryOperator(
     if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
       shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
       int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
-      int levels = parameterList.template get<int>("options.fmm.levels");
-      bool compressed = parameterList.template get<bool>("options.fmm.compress_cache");
-      fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(kernel,expansionOrder,levels,compressed);
+      fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(kernel,expansionOrder);
       newOp.reset(
           new Op(domain, range, dualToRange, label, symmetry, kernel,
                  TransformationFunctor(), TransformationFunctor(),

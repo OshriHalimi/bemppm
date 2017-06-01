@@ -17,11 +17,9 @@ class FmmTransform
 public:
   typedef typename Fiber::ScalarTraits<ValueType>::RealType CoordinateType;
 
-  FmmTransform(unsigned int chebyshevPointCount, unsigned int levels,
-               bool isCompressedM2L)
+  FmmTransform(unsigned int chebyshevPointCount)
     : m_chebyshevPoints(3, chebyshevPointCount),
-      m_chebyshevWeights(chebyshevPointCount),
-      m_isCompressedM2L(isCompressedM2L)
+      m_chebyshevWeights(chebyshevPointCount)
   {}
 
   const Vector<CoordinateType>& getWeights() const
@@ -37,11 +35,6 @@ public:
   Vector<CoordinateType> getChebyshevPoint(unsigned int index) const
   {
     return m_chebyshevPoints.col(index);
-  }
-
-  bool isCompressedM2L() const
-  {
-    return m_isCompressedM2L;
   }
 
   // multipole to multipole (M2M) translation matrix
@@ -103,7 +96,6 @@ public:
 protected:
   Matrix<CoordinateType> m_chebyshevPoints;
   Vector<CoordinateType> m_chebyshevWeights;
-  bool m_isCompressedM2L;
 };
 
 } // namespace fmm

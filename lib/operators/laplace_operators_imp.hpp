@@ -93,12 +93,9 @@ laplaceSingleLayerBoundaryOperator(
     shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
     int expansionOrder =
         parameterList.template get<int>("options.fmm.expansion_order");
-    int levels = parameterList.template get<int>("options.fmm.levels");
-    bool compressed = parameterList.template get<bool>("options.fmm.compress_cache");
     fmmTransform = boost::make_shared<fmm::FmmBlackBoxSingleLayer<KernelType,
                                       ResultType>>(SingleKernelFunctor(),
-                                                   expansionOrder,levels,
-                                                   compressed);
+                                                   expansionOrder);
     shared_ptr<
         ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>>
         newOp(new Op(domain, range, dualToRange, label, symmetry, KernelFunctor(),
@@ -154,12 +151,9 @@ laplaceDoubleLayerBoundaryOperator(
     shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
     int expansionOrder =
         parameterList.template get<int>("options.fmm.expansion_order");
-    int levels = parameterList.template get<int>("options.fmm.levels");
-    bool compressed = parameterList.template get<bool>("options.fmm.compress_cache");
     fmmTransform = boost::make_shared<fmm::FmmBlackBoxDoubleLayer<KernelType,
                                       ResultType>>(SingleKernelFunctor(),
-                                                   expansionOrder,levels,
-                                                   compressed);
+                                                   expansionOrder);
     shared_ptr<
         ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>>
         newOp(new Op(domain, range, dualToRange, label, symmetry, KernelFunctor(),
@@ -214,12 +208,9 @@ laplaceAdjointDoubleLayerBoundaryOperator(
     shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
     int expansionOrder =
         parameterList.template get<int>("options.fmm.expansion_order");
-    int levels = parameterList.template get<int>("options.fmm.levels");
-    bool compressed = parameterList.template get<bool>("options.fmm.compress_cache");
     fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,
                                       ResultType>>(SingleKernelFunctor(),
-                                                   expansionOrder,levels,
-                                                   compressed);
+                                                   expansionOrder);
     shared_ptr<
         ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>>
         newOp(new Op(domain, range, dualToRange, label, symmetry, KernelFunctor(),
@@ -275,12 +266,9 @@ laplaceHypersingularBoundaryOperator(
     shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
     int expansionOrder =
         parameterList.template get<int>("options.fmm.expansion_order");
-    int levels = parameterList.template get<int>("options.fmm.levels");
-    bool compressed = parameterList.template get<bool>("options.fmm.compress_cache");
     fmmTransform = boost::make_shared<fmm::FmmBlackBoxHypersingular<KernelType,
                                       ResultType>>(SingleKernelFunctor(),
-                                                   expansionOrder,levels,
-                                                   compressed);
+                                                   expansionOrder);
     shared_ptr<
         ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>>
         newOp(new Op(domain, range, dualToRange, label, symmetry, KernelFunctor(),
