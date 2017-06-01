@@ -25,8 +25,6 @@ public:
 
   OctreeNode(unsigned long number=0, unsigned int level=0);
 
-//	bool isEmpty() const;
-
   // must be a bit careful, since our neighbour lists are stored explicity
   // without empty boxes
 

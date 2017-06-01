@@ -106,8 +106,8 @@ Matrix<ValueType> FmmBlackBox<KernelType, ValueType>::L2L(
 
 template <typename KernelType, typename ValueType>
 Matrix<ValueType> FmmBlackBox<KernelType, ValueType>::M2L(
-    const Vector<CoordinateType>& sourceCenter, // loops over interaction list
-    const Vector<CoordinateType>& fieldCenter,  // origin
+    const Vector<CoordinateType>& sourceCenter,
+    const Vector<CoordinateType>& fieldCenter,
     const Vector<CoordinateType>& boxSize,
     unsigned int level) const
 {
@@ -270,8 +270,6 @@ void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointDiffS(
     }
 }
 
-// should be templated on KernelType and ResultType, but not added to explicit 
-// instantiation yet. The following is equivalent.
 FIBER_INSTANTIATE_CLASS_TEMPLATED_ON_BASIS_AND_RESULT(FmmBlackBox);
 
 } // namespace Bempp

@@ -29,6 +29,7 @@ namespace fmm {
     for(std::size_t i=0;i<numberOfDofs();++i)
       vOut(i)=vIn(m_map[i]);
   }
-} // namespace fmm
+
+}//namespace fmm
 
 #endif

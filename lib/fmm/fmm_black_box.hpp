@@ -89,15 +89,12 @@ private:
   shared_ptr<CollectionOfKernels> m_kernels;
 };
 
-// Constructor cannot be placed in fmm_black_box.hpp, otherwise a linker error 
-// results based on general_elementary_singular_integral_operator_imp.hpp. Note 
-// that the very reason for the presence of the imp files is to avoid linker 
-// errors. They are (and must be) directly included, yet they contain code.
 template <typename KernelType, typename ValueType>
 template <typename KernelFunctor>
 FmmBlackBox<KernelType, ValueType>::FmmBlackBox(
-    const KernelFunctor& kernelFunctor, unsigned int n, unsigned int levels, bool compressed)
- :  m_kernels(
+    const KernelFunctor& kernelFunctor, unsigned int n, unsigned int levels,
+    bool compressed)
+  : m_kernels(
         new Fiber::DefaultCollectionOfKernels<KernelFunctor>(kernelFunctor)),
     m_n(n), m_Tk(n, n), FmmTransform<ValueType>(n*n*n, levels, compressed)
 {

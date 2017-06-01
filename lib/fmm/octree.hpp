@@ -20,9 +20,9 @@ namespace fmm
 unsigned long morton(unsigned long x, unsigned long y, unsigned long z);
 unsigned long morton(std::vector<unsigned long> v);
 
-void deMorton(  unsigned long *indx, unsigned long *indy, unsigned long *indz, 
-        unsigned long n);
-void deMorton(  std::vector<unsigned long> *indv, unsigned long n);
+void deMorton(unsigned long *indx, unsigned long *indy, unsigned long *indz,
+              unsigned long n);
+void deMorton(std::vector<unsigned long> *indv, unsigned long n);
 
 unsigned long getParent(unsigned long n);
 unsigned long getFirstChild(unsigned long n);
@@ -41,89 +41,111 @@ template <typename ResultType>
 class Octree
 {
 public:
-    typedef typename Fiber::ScalarTraits<ResultType>::RealType CoordinateType;
+  typedef typename Fiber::ScalarTraits<ResultType>::RealType CoordinateType;
 
-    Octree(unsigned int levels, 
-        const FmmTransform<ResultType> &fmmTransform,
-        const Vector<CoordinateType> &lowerBound,
-        const Vector<CoordinateType> &upperBound,
-        const bool cacheIO);
+  Octree(unsigned int levels,
+      const FmmTransform<ResultType> &fmmTransform,
+      const Vector<CoordinateType> &lowerBound,
+      const Vector<CoordinateType> &upperBound,
+      const bool cacheIO);
 
-    Octree(
-        unsigned int levels,
-        const FmmTransform<ResultType>& fmmTransform,
-        const Vector<CoordinateType> &lowerBound,
-        const Vector<CoordinateType> &upperBound);
+  Octree(
+      unsigned int levels,
+      const FmmTransform<ResultType>& fmmTransform,
+      const Vector<CoordinateType> &lowerBound,
+      const Vector<CoordinateType> &upperBound);
+
+  void initialize();
+
+  const OctreeNode<ResultType> &getNodeConst(
+      unsigned long number, unsigned int level) const;
+
+  void generateNeighbours();
+
+  void assignPoints(
+      bool hermitian,
+      const std::vector<Point3D<CoordinateType>> &dofCenters,
+      std::vector<long unsigned int> &p2o,
+      bool isTest);
+
+  void enlargeBoxes(
+      const std::vector<Point3D<CoordinateType> > &dofCenters,
+      const std::vector<std::vector<Point3D<CoordinateType>>> &dofCorners);
+
+  void upwardsStep(const FmmTransform<ResultType> &fmmTransform);
+
+  void translationStep(const FmmTransform<ResultType> &fmmTransform);
+
+  void downwardsStep(const FmmTransform<ResultType> &fmmTransform);
+
+  bool cache() const
+  {
+    return m_cache;
+  }
+
+  bool multilevel() const
+  {
+    if(levels()==1)
+      return false;
+    else
+      return true;
+  }
 
 
-    void initialize();
+  // affects the local and multipole coefficients in the the leaves
+  void apply(
+      const Eigen::Ref<const Vector<ResultType>> &x_in,
+      Eigen::Ref<Vector<ResultType>> y_out,
+      const Bempp::TranspositionMode trans);
 
-    const OctreeNode<ResultType> &getNodeConst(
-        unsigned long number, unsigned int level) const;
+  unsigned int levels() const {return m_levels;}
 
-    void generateNeighbours();
-    void assignPoints(
-        bool hermitian,
-        const std::vector<Point3D<CoordinateType>> &dofCenters,
-        std::vector<long unsigned int> &p2o,
-        bool isTest);
-    void enlargeBoxes(
-        const std::vector<Point3D<CoordinateType> > &dofCenters,
-        const std::vector<std::vector<Point3D<CoordinateType>>> &dofCorners);
+  OctreeNode<ResultType> &getNode(unsigned long number, unsigned int level);
 
-    void upwardsStep(const FmmTransform<ResultType> &fmmTransform);
-    void translationStep(const FmmTransform<ResultType> &fmmTransform);
-    void downwardsStep(const FmmTransform<ResultType> &fmmTransform);
+  void unscaledNodeCenter(unsigned long number, unsigned int level,
+      Vector<CoordinateType> &center) const;
 
-    bool cache() const {return m_cache;}
-    bool multilevel() const {
-      if(levels()==1) return false;
-      else return true;
-    }
+  void scaledNodeCenter(unsigned long number, unsigned int level,
+      Vector<CoordinateType> &center) const;
 
+  void scaledNodeSize(unsigned int level,
+      Vector<CoordinateType> &size) const;
 
-    // affects the local and multipole coefficients in the the leaves
-    void apply(
-        const Eigen::Ref<const Vector<ResultType>> &x_in,
-        Eigen::Ref<Vector<ResultType>> y_out,
-        const Bempp::TranspositionMode trans);
+  void scaledNodeSize(unsigned long number, unsigned int level,
+      Vector<CoordinateType> &size){scaledNodeSize(level,size);}
 
-    unsigned int levels() const {return m_levels;}
-    OctreeNode<ResultType> &getNode(unsigned long number, unsigned int level);
-    void unscaledNodeCenter(unsigned long number, unsigned int level,
-        Vector<CoordinateType> &center) const;
-    void scaledNodeCenter(unsigned long number, unsigned int level,
-        Vector<CoordinateType> &center) const;
-    void scaledNodeSize(unsigned int level,
-        Vector<CoordinateType> &size) const;
-    void scaledNodeSize(unsigned long number, unsigned int level,
-        Vector<CoordinateType> &size){scaledNodeSize(level,size);}
-    void nodeBounds(unsigned int level,
-        Vector<CoordinateType> &min,
-        Vector<CoordinateType> &max) const;
-    void unscaledNodeSize(unsigned int level,
-        Vector<CoordinateType> &size) const;
-    void unscaledNodeSize(unsigned long number, unsigned int level,
-        Vector<CoordinateType> &size){unscaledNodeSize(level,size);}
-    void setCache(shared_ptr<FmmCache<ResultType>> &cache){
-        if(!m_cache)
-          throw std::runtime_error("Cannot set cache for an octree with caching disabled");
-        m_fmmCache=cache;
-    }
-    const FmmCache<ResultType>& fmmCache() {return *m_fmmCache;}
+  void nodeBounds(unsigned int level,
+      Vector<CoordinateType> &min,
+      Vector<CoordinateType> &max) const;
+
+  void unscaledNodeSize(unsigned int level,
+      Vector<CoordinateType> &size) const;
+
+  void unscaledNodeSize(unsigned long number, unsigned int level,
+      Vector<CoordinateType> &size){unscaledNodeSize(level,size);}
+
+  void setCache(shared_ptr<FmmCache<ResultType>> &cache)
+  {
+    if(!m_cache)
+      throw std::runtime_error("Cannot set cache for an octree with caching disabled");
+    m_fmmCache=cache;
+  }
+
+  const FmmCache<ResultType>& fmmCache() {return *m_fmmCache;}
+
 private:
-    unsigned long getLeafContainingPoint(const Point3D<CoordinateType> &point) const;
-    const unsigned int m_levels;
-    const bool m_cache;
-    const unsigned int m_topLevel;
-    // for now use a flat structure
-    std::vector<std::vector<OctreeNode<ResultType> > > m_OctreeNodes;
-    shared_ptr<DofPermutation> m_test_perm, m_trial_perm;
-    const FmmTransform<ResultType>& m_fmmTransform;
-    Vector<CoordinateType> m_lowerBound, m_upperBound;
-    shared_ptr<FmmCache<ResultType> > m_fmmCache;
-    std::vector<Vector<CoordinateType>> m_nodeMax;
-    std::vector<Vector<CoordinateType>> m_nodeMin;
+  unsigned long getLeafContainingPoint(const Point3D<CoordinateType> &point) const;
+  const unsigned int m_levels;
+  const bool m_cache;
+  const unsigned int m_topLevel;
+  // for now use a flat structure
+  std::vector<std::vector<OctreeNode<ResultType> > > m_OctreeNodes;
+  shared_ptr<DofPermutation> m_test_perm, m_trial_perm;
+  const FmmTransform<ResultType>& m_fmmTransform;
+  Vector<CoordinateType> m_lowerBound, m_upperBound;
+  shared_ptr<FmmCache<ResultType> > m_fmmCache;
+  std::vector<Vector<CoordinateType>> m_nodeMax;
+  std::vector<Vector<CoordinateType>> m_nodeMin;
 };
 
 } // namespace fmm

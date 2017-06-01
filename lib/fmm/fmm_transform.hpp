@@ -17,29 +17,33 @@ class FmmTransform
 public:
   typedef typename Fiber::ScalarTraits<ValueType>::RealType CoordinateType;
 
-  FmmTransform(unsigned int chebyshevPointCount,
-               unsigned int levels,
+  FmmTransform(unsigned int chebyshevPointCount, unsigned int levels,
                bool isCompressedM2L)
-             : m_chebyshevPoints(3, chebyshevPointCount),
-               m_chebyshevWeights(chebyshevPointCount),
-               m_isCompressedM2L(isCompressedM2L)
+    : m_chebyshevPoints(3, chebyshevPointCount),
+      m_chebyshevWeights(chebyshevPointCount),
+      m_isCompressedM2L(isCompressedM2L)
   {}
+
   const Vector<CoordinateType>& getWeights() const
   {
     return m_chebyshevWeights;
   }
+
   unsigned int chebyshevPointCount() const
   {
     return m_chebyshevPoints.cols();
   }
+
   Vector<CoordinateType> getChebyshevPoint(unsigned int index) const
   {
     return m_chebyshevPoints.col(index);
   }
+
   bool isCompressedM2L() const
   {
     return m_isCompressedM2L;
   }
+
   // multipole to multipole (M2M) translation matrix
   virtual Matrix<ValueType> M2M(
       const Vector<CoordinateType>& x1,
@@ -68,7 +72,7 @@ public:
   virtual void interpolate(
       unsigned int levelOld,
       unsigned int levelNew,
-      const Vector<ValueType>& coefficientsOld, 
+      const Vector<ValueType>& coefficientsOld,
       Vector<ValueType>& coefficientsNew) const;
 
   // multipole expansion coefficients (MEC)
@@ -91,7 +95,10 @@ public:
 
   virtual void getKernelWeight(
       Matrix<ValueType>& kernelWeightMat,
-      Vector<ValueType>& kernelWeightVec) const {return;}
+      Vector<ValueType>& kernelWeightVec) const
+  {
+    return;
+  }
 
 protected:
   Matrix<CoordinateType> m_chebyshevPoints;

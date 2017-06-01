@@ -46,39 +46,39 @@ template <typename BasisFunctionType, typename ResultType>
 class FmmNearFieldHelper
 {
 public:
-    typedef Fiber::LocalAssemblerForIntegralOperators<ResultType> LocalAssembler;
-    typedef typename Fiber::ScalarTraits<BasisFunctionType>::RealType CoordinateType;
+  typedef Fiber::LocalAssemblerForIntegralOperators<ResultType> LocalAssembler;
+  typedef typename Fiber::ScalarTraits<BasisFunctionType>::RealType CoordinateType;
 
-    FmmNearFieldHelper(
-            const shared_ptr<Octree<ResultType> > octree,
-            const Bempp::Space<BasisFunctionType>& testSpace,
-            const Bempp::Space<BasisFunctionType>& trialSpace,
-            const std::vector<LocalAssembler*>& assemblers,
-            const std::vector<ResultType>& denseTermsMultipliers,
-            const Bempp::AssemblyOptions& options,
-            const std::vector<long unsigned int> &test_p2o,
-            const std::vector<long unsigned int> &trial_p2o,
-            bool indexWithGlobalDofs);
+  FmmNearFieldHelper(
+      const shared_ptr<Octree<ResultType> > octree,
+      const Bempp::Space<BasisFunctionType>& testSpace,
+      const Bempp::Space<BasisFunctionType>& trialSpace,
+      const std::vector<LocalAssembler*>& assemblers,
+      const std::vector<ResultType>& denseTermsMultipliers,
+      const Bempp::AssemblyOptions& options,
+      const std::vector<long unsigned int> &test_p2o,
+      const std::vector<long unsigned int> &trial_p2o,
+      bool indexWithGlobalDofs);
 
-    void evaluateNearField(const shared_ptr<Octree<ResultType> > &octree,
-        unsigned int n) const;
+  void evaluateNearField(const shared_ptr<Octree<ResultType> > &octree,
+      unsigned int n) const;
 
-    void operator()(unsigned int index) const;
+  void operator()(unsigned int index) const;
 
 private:
-    Matrix<ResultType> evaluateNearFieldIntegrals(
-        unsigned int dofStartTest, unsigned int dofCountTest,
-        unsigned int dofStartTrial, unsigned int dofCountTrial) const;
+  Matrix<ResultType> evaluateNearFieldIntegrals(
+      unsigned int dofStartTest, unsigned int dofCountTest,
+      unsigned int dofStartTrial, unsigned int dofCountTrial) const;
 
-    shared_ptr<Bempp::LocalDofListsCache<BasisFunctionType> > m_testDofListsCache;
-    shared_ptr<Bempp::LocalDofListsCache<BasisFunctionType> > m_trialDofListsCache;
-    const Bempp::AssemblyOptions& m_options;
-    const Bempp::Space<BasisFunctionType>& m_testSpace;
-    const Bempp::Space<BasisFunctionType>& m_trialSpace;
+  shared_ptr<Bempp::LocalDofListsCache<BasisFunctionType> > m_testDofListsCache;
+  shared_ptr<Bempp::LocalDofListsCache<BasisFunctionType> > m_trialDofListsCache;
+  const Bempp::AssemblyOptions& m_options;
+  const Bempp::Space<BasisFunctionType>& m_testSpace;
+  const Bempp::Space<BasisFunctionType>& m_trialSpace;
 
-    const std::vector<LocalAssembler*>& m_assemblers;
-    const std::vector<ResultType>& m_denseTermsMultipliers;
-    shared_ptr<Octree<ResultType> > m_octree;
+  const std::vector<LocalAssembler*>& m_assemblers;
+  const std::vector<ResultType>& m_denseTermsMultipliers;
+  shared_ptr<Octree<ResultType> > m_octree;
 };
 
 } // namespace Bempp

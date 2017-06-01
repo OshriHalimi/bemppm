@@ -22,11 +22,8 @@
 
 namespace fmm
 {
-
-// N.B. that USE_FMM_CACHE should NOT be used for single level FMM
-
 template <typename CoordinateType>
-CoordinateType getPoint3DCoord(Point3D<CoordinateType> p,int n){
+CoordinateType getPoint3DCoord(Point3D<CoordinateType> p, int n){
     if(n==0) return p.x;
     if(n==1) return p.y;
     if(n==2) return p.z;
@@ -39,18 +36,18 @@ unsigned long contract3(unsigned long x);
 // and the children of (n,l) are ((n<<3)+[0,1..7],l+1)
 unsigned long morton(unsigned long x, unsigned long y, unsigned long z)
 {
-    return dilate3(x) | (dilate3(y)<<1) | (dilate3(z)<<2);
+  return dilate3(x) | (dilate3(y)<<1) | (dilate3(z)<<2);
 }
 /** overload */
 unsigned long morton(std::vector<unsigned long> v){
-    return morton(v[0],v[1],v[2]);
+  return morton(v[0],v[1],v[2]);
 }
 void deMorton(unsigned long *indx, unsigned long *indy,
               unsigned long *indz, unsigned long n)
 {
-    *indx = contract3(n);
-    *indy = contract3(n>>1);
-    *indz = contract3(n>>2);
+  *indx = contract3(n);
+  *indy = contract3(n>>1);
+  *indz = contract3(n>>2);
 }
 
 unsigned long getParent(unsigned long n)

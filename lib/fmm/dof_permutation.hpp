@@ -24,7 +24,8 @@ public:
 private:
   std::vector<std::size_t> m_map;
 };
-}
+
+}//namespace fmm
 
 #include "dof_permutation_impl.hpp"
 

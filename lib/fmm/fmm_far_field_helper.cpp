@@ -33,54 +33,54 @@ namespace fmm
 
 template <typename BasisFunctionType, typename ResultType>
 FmmFarFieldHelper<BasisFunctionType, ResultType>::FmmFarFieldHelper(
-            const shared_ptr<Octree<ResultType> > octree,
-            const Bempp::Space<BasisFunctionType>& testSpace,
-            const Bempp::Space<BasisFunctionType>& trialSpace,
-            const Bempp::AssemblyOptions& options,
-            const std::vector<long unsigned int> &test_p2o,
-            const std::vector<long unsigned int> &trial_p2o,
-            bool indexWithGlobalDofs,
-            const FmmTransform<ResultType> &fmmTransform,
-            const int q)
-    :    m_octree(octree), m_testSpace(testSpace), m_trialSpace(trialSpace),
-        m_options(options), m_fmmTransform(fmmTransform), m_qO(q)
+    const shared_ptr<Octree<ResultType> > octree,
+    const Bempp::Space<BasisFunctionType>& testSpace,
+    const Bempp::Space<BasisFunctionType>& trialSpace,
+    const Bempp::AssemblyOptions& options,
+    const std::vector<long unsigned int> &test_p2o,
+    const std::vector<long unsigned int> &trial_p2o,
+    bool indexWithGlobalDofs,
+    const FmmTransform<ResultType> &fmmTransform,
+    const int q)
+  : m_octree(octree), m_testSpace(testSpace), m_trialSpace(trialSpace),
+    m_options(options), m_fmmTransform(fmmTransform), m_qO(q)
 {
-    m_testDofListsCache = boost::make_shared<Bempp::LocalDofListsCache<BasisFunctionType> >
-        (m_testSpace, test_p2o, indexWithGlobalDofs);
-    m_trialDofListsCache = boost::make_shared<Bempp::LocalDofListsCache<BasisFunctionType> >
-        (m_trialSpace, trial_p2o, indexWithGlobalDofs);
+  m_testDofListsCache = boost::make_shared<Bempp::LocalDofListsCache<BasisFunctionType> >
+      (m_testSpace, test_p2o, indexWithGlobalDofs);
+  m_trialDofListsCache = boost::make_shared<Bempp::LocalDofListsCache<BasisFunctionType> >
+      (m_trialSpace, trial_p2o, indexWithGlobalDofs);
 }
 
 template <typename BasisFunctionType, typename ResultType>
 Matrix<ResultType>
 FmmFarFieldHelper<BasisFunctionType, ResultType>::makeFarFieldMat(
-        FmmLocalAssembler<BasisFunctionType, ResultType>& fmmLocalAssembler,
-        const FmmTransform<ResultType>& fmmTransform,
-        const Vector<CoordinateType> &nodeCenter, 
-        const Vector<CoordinateType> &nodeSize, 
-        unsigned int dofStart, unsigned int dofCount, bool isTest) const
+    FmmLocalAssembler<BasisFunctionType, ResultType>& fmmLocalAssembler,
+    const FmmTransform<ResultType>& fmmTransform,
+    const Vector<CoordinateType> &nodeCenter,
+    const Vector<CoordinateType> &nodeSize,
+    unsigned int dofStart, unsigned int dofCount, bool isTest) const
 {
-  return makeFarFieldMat(fmmLocalAssembler, fmmTransform,
-      nodeCenter, nodeSize, dofStart, dofCount, isTest, false);
+  return makeFarFieldMat(fmmLocalAssembler, fmmTransform, nodeCenter,
+                         nodeSize, dofStart, dofCount, isTest, false);
 }
 template <typename BasisFunctionType, typename ResultType>
 Matrix<ResultType>
 FmmFarFieldHelper<BasisFunctionType, ResultType>::makeFarFieldMat(
-        FmmLocalAssembler<BasisFunctionType, ResultType>& fmmLocalAssembler,
-        const FmmTransform<ResultType>& fmmTransform,
-        const Vector<CoordinateType> &nodeCenter, 
-        const Vector<CoordinateType> &nodeSize, 
-        unsigned int dofStart, unsigned int dofCount, bool isTest,
-        bool transposed) const
+    FmmLocalAssembler<BasisFunctionType, ResultType>& fmmLocalAssembler,
+    const FmmTransform<ResultType>& fmmTransform,
+    const Vector<CoordinateType> &nodeCenter,
+    const Vector<CoordinateType> &nodeSize,
+    unsigned int dofStart, unsigned int dofCount, bool isTest,
+    bool transposed) const
 {
-unsigned int multipoleCount = fmmTransform.chebyshevPointCount();
+  unsigned int multipoleCount = fmmTransform.chebyshevPointCount();
   Matrix<ResultType> result(multipoleCount, dofCount);
   if(transposed) result.resize(dofCount, multipoleCount);
   result.fill(0.);
 
   // Convert matrix indices into DOF indices
   shared_ptr<const Bempp::LocalDofLists<BasisFunctionType> > dofLists;
-  if (isTest)
+  if(isTest)
     dofLists = m_testDofListsCache->get(dofStart, dofCount);
   else
    dofLists = m_trialDofListsCache->get(dofStart, dofCount);

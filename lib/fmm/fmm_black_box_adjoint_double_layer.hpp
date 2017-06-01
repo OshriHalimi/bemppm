@@ -13,29 +13,29 @@ template <typename KernelType, typename ValueType>
 class FmmBlackBoxAdjointDoubleLayer : public FmmBlackBox<KernelType, ValueType>
 {
 public:
-    typedef typename FmmBlackBox<KernelType,
-                                 ValueType>::CoordinateType CoordinateType;
+  typedef typename FmmBlackBox<KernelType, ValueType>::CoordinateType CoordinateType;
 
-    template <typename KernelFunctor>
-    FmmBlackBoxAdjointDoubleLayer(const KernelFunctor& kernelFunctor, unsigned int n,
-                           unsigned int levels, bool compressed)
-        : FmmBlackBox<KernelType, ValueType>(kernelFunctor, n, levels, compressed) {}
+  template <typename KernelFunctor>
+  FmmBlackBoxAdjointDoubleLayer(const KernelFunctor& kernelFunctor,
+                                unsigned int n, unsigned int levels,
+                                bool compressed)
+  : FmmBlackBox<KernelType, ValueType>(kernelFunctor, n, levels, compressed){}
 
-    virtual void evaluateTrial(
-            const Vector<CoordinateType>& point,
-            const Vector<CoordinateType>& normal,
-            const Vector<CoordinateType>& khat,
-            const Vector<CoordinateType>& nodeCentre,
-            const Vector<CoordinateType>& nodeSize,
-            Vector<ValueType>& result) const;
+  virtual void evaluateTrial(
+      const Vector<CoordinateType>& point,
+      const Vector<CoordinateType>& normal,
+      const Vector<CoordinateType>& khat,
+      const Vector<CoordinateType>& nodeCentre,
+      const Vector<CoordinateType>& nodeSize,
+      Vector<ValueType>& result) const;
 
-    virtual void evaluateTest(
-            const Vector<CoordinateType>& point,
-            const Vector<CoordinateType>& normal,
-            const Vector<CoordinateType>& khat,
-            const Vector<CoordinateType>& nodeCentre,
-            const Vector<CoordinateType>& nodeSize,
-            Vector<ValueType>& result) const;
+  virtual void evaluateTest(
+      const Vector<CoordinateType>& point,
+      const Vector<CoordinateType>& normal,
+      const Vector<CoordinateType>& khat,
+      const Vector<CoordinateType>& nodeCentre,
+      const Vector<CoordinateType>& nodeSize,
+      Vector<ValueType>& result) const;
 };
 
 } // namespace Bempp
