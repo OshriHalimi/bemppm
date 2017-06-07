@@ -41,6 +41,13 @@ def _magnetic_field_impl(
         parameters=parameters, label=label,
         assemble_only_singular_part=assemble_only_singular_part)
 
+def _assembly_is_fmm(parameters):
+    import bempp.api
+    if parameters is None:
+        return bempp.api.global_parameters.assembly.boundary_operator_assembly_type == "fmm"
+    else:
+        return parameters.assembly.boundary_operator_assembly_type == "fmm"
+
 def electric_field(domain, range_, dual_to_range,
                    wave_number,
                    label="EFIE", symmetry='no_symmetry',
@@ -75,9 +82,7 @@ def electric_field(domain, range_, dual_to_range,
         When assembled the operator will only contain components for adjacent or
         overlapping test and trial functions (default false).
     """
-    from bempp.api.operators.boundary._common import \
-        get_wave_operator_with_space_preprocessing
-    from bempp.api.space import rewrite_operator_spaces
+    import bempp.api
 
     try:
         #pylint: disable=protected-access
@@ -86,11 +91,85 @@ def electric_field(domain, range_, dual_to_range,
         raise ValueError(
             "The dual space must be a valid Nedelec curl-conforming space.")
 
-    return rewrite_operator_spaces(get_wave_operator_with_space_preprocessing(
-        _electric_field_impl, domain, range_, hdiv_dual_to_range,
-        wave_number, label, symmetry, parameters,
-        use_projection_spaces, assemble_only_singular_part),
-                                   domain, range_, dual_to_range)
+
+    if _assembly_is_fmm(parameters):
+        from bempp.api import function_space
+        from bempp.api.operators.boundary.helmholtz import single_layer
+        domain_dp = function_space(domain.grid, "DP", 1)
+        range_dp = function_space(range_.grid, "DP", 1)
+        dual_dp = function_space(dual_to_range.grid, "DP", 1)
+        slp = single_layer(domain_dp, range_dp, dual_dp, wave_number)
+
+        from bempp.api.assembly.functors import vector_surface_curl_functor
+        from bempp.api.assembly.functors import scalar_function_value_functor
+        from bempp.api.assembly.functors import hdiv_function_value_functor
+        from bempp.api.assembly.functors import hcurl_function_value_functor
+        from bempp.api.assembly.functors import surface_divergence_functor
+        from bempp.api.assembly.functors import \
+            scalar_function_value_times_normal_functor
+        from bempp.api.assembly.functors import \
+            single_component_test_trial_integrand_functor
+        from bempp.api.assembly.functors import \
+            simple_test_trial_integrand_functor
+        from bempp.api.space.projection import rewrite_operator_spaces
+
+        compound_op = bempp.api.ZeroBoundaryOperator(
+            domain, slp.range, hdiv_dual_to_range)
+
+        for i in range(3):
+            op_part_div = \
+                bempp.api.operators.boundary.sparse.operator_from_functors(
+                    domain, slp.domain, slp.domain,
+                    scalar_function_value_functor(),
+                    hdiv_function_value_functor(),
+                    single_component_test_trial_integrand_functor(0, i),
+                    label="DOTD[{0}]".format(i),
+                    parameters=parameters)
+            op_part_curl = \
+                bempp.api.operators.boundary.sparse.operator_from_functors(
+                    hdiv_dual_to_range, slp.domain, slp.domain,
+                    scalar_function_value_functor(),
+                    hdiv_function_value_functor(),
+                    single_component_test_trial_integrand_functor(0,i),
+                    label="DOTC[{0}]".format(i),
+                    parameters=parameters)
+            compound_op += op_part_curl.dual_product(slp) * op_part_div
+
+        compound_op *= -1j*wave_number
+
+        op_part_div = \
+            bempp.api.operators.boundary.sparse.operator_from_functors(
+                domain, slp.domain, slp.domain,
+                scalar_function_value_functor(),
+                surface_divergence_functor(),
+                simple_test_trial_integrand_functor(),
+                label="DIVD".format(i),
+                parameters=parameters)
+        op_part_curl = \
+            bempp.api.operators.boundary.sparse.operator_from_functors(
+                hdiv_dual_to_range, slp.domain, slp.domain,
+                scalar_function_value_functor(),
+                surface_divergence_functor(),
+                simple_test_trial_integrand_functor(),
+                label="DIVC".format(i),
+                parameters=parameters)
+        compound_op += 1j/wave_number * op_part_curl.dual_product(slp) * op_part_div
+
+
+        return rewrite_operator_spaces(
+            compound_op, domain=domain, range_=range_,
+            dual_to_range=dual_to_range)
+
+    else:
+        from bempp.api.operators.boundary._common import \
+            get_wave_operator_with_space_preprocessing
+        from bempp.api.space import rewrite_operator_spaces
+
+        return rewrite_operator_spaces(get_wave_operator_with_space_preprocessing(
+            _electric_field_impl, domain, range_, hdiv_dual_to_range,
+            wave_number, label, symmetry, parameters,
+            use_projection_spaces, assemble_only_singular_part),
+                                       domain, range_, dual_to_range)
 
 def calderon_electric_field(grid, wave_number, parameters=None):
     """Return a pair (E^2, E) of the squared EFIE operator E^2 and E itself"""
@@ -192,7 +271,7 @@ def magnetic_field(domain, range_, dual_to_range,
         _magnetic_field_impl, domain, range_, hdiv_dual_to_range,
         wave_number, label, symmetry, parameters,
         use_projection_spaces, assemble_only_singular_part),
-                                   domain, range_, dual_to_range)
+                                       domain, range_, dual_to_range)
 
 def multitrace_operator(grid, wave_number, parameters=None):
     """Assemble the multitrace operator for Maxwell."""
