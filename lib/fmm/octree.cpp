@@ -369,7 +369,6 @@ void Octree<ResultType>::apply(
     Eigen::Ref<Vector<ResultType>> y_out,
     const Bempp::TranspositionMode trans)
 {
-    const bool showDebug = false;
     const unsigned int nLeaves = getNodesPerLevel(m_levels);
     bool transposed = (trans & Bempp::TRANSPOSE);
     Vector<ResultType> x_in_permuted(x_in.rows());
