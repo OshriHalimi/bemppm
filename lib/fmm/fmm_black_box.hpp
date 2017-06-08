@@ -82,6 +82,23 @@ protected:
       const Vector<CoordinateType>& nodeSize,
       Vector<ValueType>& result) const;
 
+  virtual void evaluateAtGaussPointGradSComponent(
+      const Vector<CoordinateType>& point,
+      const Vector<CoordinateType>& normal,
+      const Vector<CoordinateType>& khat,
+      const Vector<CoordinateType>& nodeCentre,
+      const Vector<CoordinateType>& nodeSize,
+      const int component,
+      Vector<ValueType>& result) const;
+
+  virtual void evaluateAtGaussPointGradS(
+      const Vector<CoordinateType>& point,
+      const Vector<CoordinateType>& normal,
+      const Vector<CoordinateType>& khat,
+      const Vector<CoordinateType>& nodeCentre,
+      const Vector<CoordinateType>& nodeSize,
+      Vector<ValueType>& result) const;
+
 private:
   unsigned int m_n;
   Matrix<CoordinateType> m_Tk;

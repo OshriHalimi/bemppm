@@ -232,6 +232,40 @@ void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointDiffS(
     const Vector<CoordinateType>& nodeSize,
     Vector<ValueType>& result) const
 {
+  Vector<ValueType> grad;
+  evaluateAtGaussPointGradS(point, normal, multipoleScaled,
+                            nodeCenter, nodeSize, grad);
+  result.resize(1);
+  for(int dim=0;dim<3;++dim)
+    result(0) += normal(dim) * grad(dim);
+}
+
+template <typename KernelType, typename ValueType>
+void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointGradSComponent(
+    const Vector<CoordinateType>& point,
+    const Vector<CoordinateType>& normal,
+    const Vector<CoordinateType>& multipoleScaled, // [-1,1]
+    const Vector<CoordinateType>& nodeCenter,
+    const Vector<CoordinateType>& nodeSize,
+    const int component,
+    Vector<ValueType>& result) const
+{
+  Vector<ValueType> grad;
+  evaluateAtGaussPointGradS(point, normal, multipoleScaled,
+                            nodeCenter, nodeSize, grad);
+  result.resize(1);
+  result[0] = grad[component];
+}
+
+template <typename KernelType, typename ValueType>
+void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointGradS(
+    const Vector<CoordinateType>& point,
+    const Vector<CoordinateType>& normal,
+    const Vector<CoordinateType>& multipoleScaled, // [-1,1]
+    const Vector<CoordinateType>& nodeCenter,
+    const Vector<CoordinateType>& nodeSize,
+    Vector<ValueType>& result) const
+{
   Vector<CoordinateType> pointScaled(nodeCenter.rows());
   pointScaled.fill(0.);
   for(int i=0;i<multipoleScaled.rows();++i)
@@ -257,16 +291,15 @@ void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointDiffS(
     S[dim] /= this->getN();
     diffS[dim] /= this->getN();
   }
-  result.resize(1);
-  result(0) = 0;
+  result.resize(3);
+  result.fill(0.);
   for(int dim=0;dim<3;++dim)
     if(nodeSize(dim)!=0 && normal(dim)!=0){
-      ValueType bit = normal(dim)*diffS[dim]*2./nodeSize(dim);
+      ValueType bit = diffS[dim]*2./nodeSize(dim);
       for(int i=0;i<3;++i)
         if(dim!=i)
           bit *= S[i];
-      result(0) += bit;
-      // TODO: what to do here if nodeSize is 0
+      result(dim) += bit;
     }
 }
 
