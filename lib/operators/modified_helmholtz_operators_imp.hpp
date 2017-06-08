@@ -390,7 +390,7 @@ modifiedHelmholtzHypersingularBoundaryOperator(
                   interpPtsPerWavelength);
       shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
       int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
-      fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(singleKernel,expansionOrder);
+      fmmTransform = boost::make_shared<fmm::FmmBlackBoxHypersingular<KernelType,ResultType>>(singleKernel,expansionOrder);
       newOp.reset(
           new Op(domain, range, dualToRange, label, symmetry, kernel,
                  TransformationFunctorWithBlas(), TransformationFunctorWithBlas(),integral,
@@ -405,7 +405,7 @@ modifiedHelmholtzHypersingularBoundaryOperator(
       auto singleKernel = SingleNoninterpolatedKernelFunctor(waveNumber);
       shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
       int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
-      fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(singleKernel,expansionOrder);
+      fmmTransform = boost::make_shared<fmm::FmmBlackBoxHypersingular<KernelType,ResultType>>(singleKernel,expansionOrder);
       newOp.reset(
           new Op(domain, range, dualToRange, label, symmetry, kernel,
                  TransformationFunctorWithBlas(), TransformationFunctorWithBlas(),integral,
