@@ -38,6 +38,7 @@
 #include "../fiber/laplace_3d_adjoint_double_layer_potential_kernel_functor.hpp"
 #include "../fiber/surface_curl_3d_functor.hpp"
 #include "../fiber/laplace_3d_double_layer_potential_kernel_functor.hpp"
+#include "../fiber/laplace_3d_hypersingular_off_diagonal_kernel_functor.hpp"
 #include "../fiber/scalar_function_value_functor.hpp"
 #include "../fiber/simple_test_scalar_kernel_trial_integrand_functor.hpp"
 #include "../fiber/scalar_traits.hpp"
@@ -54,7 +55,6 @@
 
 namespace Bempp {
 
-
 template <typename BasisFunctionType, typename KernelType, typename ResultType>
 shared_ptr<
     const ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>>
@@ -67,18 +67,25 @@ laplaceSingleLayerBoundaryOperator(
   Context<BasisFunctionType, ResultType> context(parameterList);
 
   auto assemblyOptions = context.assemblyOptions();
-  typedef typename ScalarTraits<BasisFunctionType>::RealType CoordinateType;
-
-  typedef Fiber::Laplace3dSingleLayerPotentialKernelFunctor<KernelType>
+  typedef
+      typename ScalarTraits<BasisFunctionType>::RealType
+      CoordinateType;
+  typedef
+      Fiber::Laplace3dSingleLayerPotentialKernelFunctor<KernelType>
       KernelFunctor;
-  typedef Fiber::Laplace3dSingleLayerPotentialKernelFunctor<KernelType>
-      SingleKernelFunctor;
-  typedef Fiber::ScalarFunctionValueFunctor<CoordinateType>
+  typedef
+      Fiber::ScalarFunctionValueFunctor<CoordinateType>
       TransformationFunctor;
-  typedef Fiber::SimpleTestScalarKernelTrialIntegrandFunctorExt<
+  typedef
+      Fiber::SimpleTestScalarKernelTrialIntegrandFunctorExt<
       BasisFunctionType, KernelType, ResultType, 1> IntegrandFunctor;
-  typedef GeneralElementarySingularIntegralOperator<BasisFunctionType,
-                                                    KernelType, ResultType> Op;
+  typedef
+      GeneralElementarySingularIntegralOperator<BasisFunctionType, KernelType, ResultType>
+      Op;
+  typedef
+      Fiber::Laplace3dSingleLayerPotentialKernelFunctor<KernelType>
+      SingleFunctor;
+
 
   shared_ptr<Fiber::TestKernelTrialIntegral<BasisFunctionType, KernelType,
                                             ResultType>> integral;
@@ -94,7 +101,7 @@ laplaceSingleLayerBoundaryOperator(
     int expansionOrder =
         parameterList.template get<int>("options.fmm.expansion_order");
     fmmTransform = boost::make_shared<fmm::FmmBlackBoxSingleLayer<KernelType,
-                                      ResultType>>(SingleKernelFunctor(),
+                                      ResultType>>(SingleFunctor(),
                                                    expansionOrder);
     shared_ptr<
         ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>>
@@ -125,19 +132,24 @@ laplaceDoubleLayerBoundaryOperator(
 
   const AssemblyOptions &assemblyOptions = context.assemblyOptions();
 
-  typedef typename ScalarTraits<BasisFunctionType>::RealType CoordinateType;
-
-  typedef Fiber::Laplace3dDoubleLayerPotentialKernelFunctor<KernelType>
+  typedef
+      typename ScalarTraits<BasisFunctionType>::RealType
+      CoordinateType;
+  typedef
+      Fiber::Laplace3dDoubleLayerPotentialKernelFunctor<KernelType>
       KernelFunctor;
-  typedef Fiber::Laplace3dSingleLayerPotentialKernelFunctor<KernelType>
-      SingleKernelFunctor;
-  typedef Fiber::ScalarFunctionValueFunctor<CoordinateType>
+  typedef
+      Fiber::ScalarFunctionValueFunctor<CoordinateType>
       TransformationFunctor;
-  typedef Fiber::SimpleTestScalarKernelTrialIntegrandFunctorExt<
-      BasisFunctionType, KernelType, ResultType, 1> IntegrandFunctor;
-
-  typedef GeneralElementarySingularIntegralOperator<BasisFunctionType,
-                                                    KernelType, ResultType> Op;
+  typedef
+      Fiber::SimpleTestScalarKernelTrialIntegrandFunctorExt<BasisFunctionType, KernelType, ResultType, 1>
+      IntegrandFunctor;
+  typedef
+      Fiber::Laplace3dSingleLayerPotentialKernelFunctor<KernelType>
+      SingleFunctor;
+  typedef
+      GeneralElementarySingularIntegralOperator<BasisFunctionType, KernelType, ResultType>
+      Op;
   shared_ptr<Fiber::TestKernelTrialIntegral<BasisFunctionType, KernelType,
                                             ResultType>> integral;
   if (shouldUseBlasInQuadrature(assemblyOptions, *domain, *dualToRange))
@@ -152,7 +164,7 @@ laplaceDoubleLayerBoundaryOperator(
     int expansionOrder =
         parameterList.template get<int>("options.fmm.expansion_order");
     fmmTransform = boost::make_shared<fmm::FmmBlackBoxDoubleLayer<KernelType,
-                                      ResultType>>(SingleKernelFunctor(),
+                                      ResultType>>(SingleFunctor(),
                                                    expansionOrder);
     shared_ptr<
         ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>>
@@ -182,16 +194,24 @@ laplaceAdjointDoubleLayerBoundaryOperator(
 
   const AssemblyOptions &assemblyOptions = context.assemblyOptions();
 
-  typedef typename ScalarTraits<BasisFunctionType>::RealType CoordinateType;
-
-  typedef Fiber::Laplace3dAdjointDoubleLayerPotentialKernelFunctor<KernelType>
+  typedef
+      typename ScalarTraits<BasisFunctionType>::RealType
+      CoordinateType;
+  typedef
+      Fiber::Laplace3dAdjointDoubleLayerPotentialKernelFunctor<KernelType>
       KernelFunctor;
-  typedef Fiber::Laplace3dSingleLayerPotentialKernelFunctor<KernelType>
-      SingleKernelFunctor;
-  typedef Fiber::ScalarFunctionValueFunctor<CoordinateType>
+  typedef
+      Fiber::ScalarFunctionValueFunctor<CoordinateType>
       TransformationFunctor;
-  typedef Fiber::SimpleTestScalarKernelTrialIntegrandFunctorExt<
-      BasisFunctionType, KernelType, ResultType, 1> IntegrandFunctor;
+  typedef
+      Fiber::SimpleTestScalarKernelTrialIntegrandFunctorExt<BasisFunctionType, KernelType, ResultType, 1>
+      IntegrandFunctor;
+  typedef
+      Fiber::Laplace3dSingleLayerPotentialKernelFunctor<KernelType>
+      SingleFunctor;
+  typedef
+      GeneralElementarySingularIntegralOperator<BasisFunctionType, KernelType, ResultType>
+      Op;
 
   shared_ptr<Fiber::TestKernelTrialIntegral<BasisFunctionType, KernelType,
                                             ResultType>> integral;
@@ -202,14 +222,12 @@ laplaceAdjointDoubleLayerBoundaryOperator(
     integral.reset(new Fiber::DefaultTestKernelTrialIntegral<IntegrandFunctor>(
         IntegrandFunctor()));
 
-  typedef GeneralElementarySingularIntegralOperator<BasisFunctionType,
-                                                    KernelType, ResultType> Op;
   if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
     shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
     int expansionOrder =
         parameterList.template get<int>("options.fmm.expansion_order");
     fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,
-                                      ResultType>>(SingleKernelFunctor(),
+                                      ResultType>>(SingleFunctor(),
                                                    expansionOrder);
     shared_ptr<
         ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>>
@@ -238,18 +256,25 @@ laplaceHypersingularBoundaryOperator(
   Context<BasisFunctionType, ResultType> context(parameterList);
   const AssemblyOptions &assemblyOptions = context.assemblyOptions();
 
-  typedef typename ScalarTraits<BasisFunctionType>::RealType CoordinateType;
+  typedef
+      typename ScalarTraits<BasisFunctionType>::RealType
+      CoordinateType;
 
-  typedef Fiber::Laplace3dSingleLayerPotentialKernelFunctor<KernelType>
+  typedef
+      Fiber::Laplace3dSingleLayerPotentialKernelFunctor<KernelType>
       KernelFunctor;
-  typedef Fiber::Laplace3dSingleLayerPotentialKernelFunctor<KernelType>
-      SingleKernelFunctor;
-  typedef Fiber::SurfaceCurl3dFunctor<CoordinateType> TransformationFunctor;
-  typedef Fiber::SimpleTestScalarKernelTrialIntegrandFunctorExt<
-      BasisFunctionType, KernelType, ResultType, 3> IntegrandFunctor;
-
-  typedef GeneralElementarySingularIntegralOperator<BasisFunctionType,
-                                                    KernelType, ResultType> Op;
+  typedef
+      Fiber::SurfaceCurl3dFunctor<CoordinateType>
+      TransformationFunctor;
+  typedef
+      Fiber::SimpleTestScalarKernelTrialIntegrandFunctorExt<BasisFunctionType, KernelType, ResultType, 3>
+      IntegrandFunctor;
+  typedef
+      Fiber::Laplace3dSingleLayerPotentialKernelFunctor<KernelType>
+      SingleFunctor;
+  typedef
+      GeneralElementarySingularIntegralOperator<BasisFunctionType, KernelType, ResultType>
+      Op;
 
   shared_ptr<Fiber::TestKernelTrialIntegral<BasisFunctionType, KernelType,
                                             ResultType>> integral;
@@ -267,7 +292,7 @@ laplaceHypersingularBoundaryOperator(
     int expansionOrder =
         parameterList.template get<int>("options.fmm.expansion_order");
     fmmTransform = boost::make_shared<fmm::FmmBlackBoxHypersingular<KernelType,
-                                      ResultType>>(SingleKernelFunctor(),
+                                      ResultType>>(SingleFunctor(),
                                                    expansionOrder);
     shared_ptr<
         ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>>
@@ -292,7 +317,9 @@ laplaceSingleLayerPotentialOperator(
     const ParameterList &parameterList) {
 
   typedef
-      typename Fiber::ScalarTraits<BasisFunctionType>::RealType CoordinateType;
+      typename Fiber::ScalarTraits<BasisFunctionType>::RealType
+      CoordinateType;
+
   shared_ptr<Matrix<CoordinateType>> pointsPtr(
       new Matrix<CoordinateType>(evaluationPoints));
 
@@ -311,7 +338,9 @@ laplaceDoubleLayerPotentialOperator(
     const ParameterList &parameterList) {
 
   typedef
-      typename Fiber::ScalarTraits<BasisFunctionType>::RealType CoordinateType;
+      typename Fiber::ScalarTraits<BasisFunctionType>::RealType
+      CoordinateType;
+
   shared_ptr<Matrix<CoordinateType>> pointsPtr(
       new Matrix<CoordinateType>(evaluationPoints));
 

@@ -29,7 +29,7 @@ void FmmBlackBoxHypersingular<KernelType, ValueType>::evaluateTest(
     const Vector<CoordinateType>& nodeSize,
     Vector<ValueType>& result) const
 {
-  this->evaluateAtGaussPointDiffS(point, normal, multipole, 
+  this->evaluateAtGaussPointDiffS(point, normal, multipole,
       nodeCentre, nodeSize, result);
   result*=-1;
 }

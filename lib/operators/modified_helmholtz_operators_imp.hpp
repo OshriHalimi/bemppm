@@ -73,52 +73,53 @@ modifiedHelmholtzSingleLayerBoundaryOperator(
     const shared_ptr<const Space<BasisFunctionType>> &range,
     const shared_ptr<const Space<BasisFunctionType>> &dualToRange,
     KernelType waveNumber, const std::string &label, int symmetry) {
-  Context<BasisFunctionType, ResultType> context(parameterList);
 
+  Context<BasisFunctionType, ResultType> context(parameterList);
   const AssemblyOptions &assemblyOptions = context.assemblyOptions();
 
-  int interpPtsPerWavelength = parameterList.get<int>(
-      "options.assembly.interpolationPointsPerWavelength");
   bool useInterpolation = parameterList.get<bool>(
       "options.assembly.enableInterpolationForOscillatoryKernels");
 
-  typedef typename ScalarTraits<BasisFunctionType>::RealType CoordinateType;
-
-  typedef Fiber::ModifiedHelmholtz3dSingleLayerPotentialKernelFunctor<
-      KernelType> NoninterpolatedKernelFunctor;
-  typedef Fiber::
-      ModifiedHelmholtz3dSingleLayerPotentialKernelInterpolatedFunctor<
-          KernelType> InterpolatedKernelFunctor;
-  typedef Fiber::ModifiedHelmholtz3dSingleLayerPotentialKernelFunctor<
-      KernelType> SingleNoninterpolatedKernelFunctor;
-  typedef Fiber::
-      ModifiedHelmholtz3dSingleLayerPotentialKernelInterpolatedFunctor<
-          KernelType> SingleInterpolatedKernelFunctor;
-  typedef Fiber::ScalarFunctionValueFunctor<CoordinateType>
+  typedef
+      typename ScalarTraits<BasisFunctionType>::RealType
+      CoordinateType;
+  typedef
+      GeneralElementarySingularIntegralOperator<BasisFunctionType, KernelType, ResultType>
+      Op;
+  typedef
+      Fiber::ScalarFunctionValueFunctor<CoordinateType>
       TransformationFunctor;
-  typedef Fiber::SimpleTestScalarKernelTrialIntegrandFunctorExt<
-      BasisFunctionType, KernelType, ResultType, 1> IntegrandFunctor;
 
-  typedef GeneralElementarySingularIntegralOperator<BasisFunctionType,
-                                                    KernelType, ResultType> Op;
+
   shared_ptr<Fiber::TestKernelTrialIntegral<BasisFunctionType, KernelType,
                                             ResultType>> integral;
   if (shouldUseBlasInQuadrature(assemblyOptions, *domain, *dualToRange))
     integral.reset(new Fiber::TypicalTestScalarKernelTrialIntegral<
                    BasisFunctionType, KernelType, ResultType>());
-  else
+  else {
+    typedef
+        Fiber::SimpleTestScalarKernelTrialIntegrandFunctorExt<BasisFunctionType, KernelType, ResultType, 1>
+        IntegrandFunctor;
     integral.reset(new Fiber::DefaultTestKernelTrialIntegral<IntegrandFunctor>(
         IntegrandFunctor()));
+  }
+
 
   shared_ptr<Op> newOp;
   if (useInterpolation){
-    auto kernel = InterpolatedKernelFunctor(waveNumber,
-                  1.1 * maxDistance(*domain->grid(), *dualToRange->grid()),
-                  interpPtsPerWavelength);
+    CoordinateType maxDistance_ = static_cast<CoordinateType>(1.1) *
+        maxDistance(*domain->grid(), *dualToRange->grid());
+    int interpPtsPerWavelength = parameterList.get<int>(
+        "options.assembly.interpolationPointsPerWavelength");
+    typedef Fiber::
+        ModifiedHelmholtz3dSingleLayerPotentialKernelInterpolatedFunctor<KernelType>
+        KernelFunctor;
+    typedef Fiber::
+        ModifiedHelmholtz3dSingleLayerPotentialKernelInterpolatedFunctor<KernelType>
+        SingleKernelFunctor;
+    auto kernel = KernelFunctor(waveNumber, maxDistance_, interpPtsPerWavelength);
     if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
-      auto singleKernel = SingleInterpolatedKernelFunctor(waveNumber,
-                  1.1 * maxDistance(*domain->grid(), *dualToRange->grid()),
-                  interpPtsPerWavelength);
+      auto singleKernel = SingleKernelFunctor(waveNumber, maxDistance_, interpPtsPerWavelength);
       shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
       int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
       fmmTransform = boost::make_shared<fmm::FmmBlackBoxSingleLayer<KernelType,ResultType>>(singleKernel,expansionOrder);
@@ -131,9 +132,15 @@ modifiedHelmholtzSingleLayerBoundaryOperator(
           new Op(domain, range, dualToRange, label, symmetry, kernel,
                  TransformationFunctor(), TransformationFunctor(), integral));
   } else {
-    auto kernel = NoninterpolatedKernelFunctor(waveNumber);
+    typedef
+        Fiber::ModifiedHelmholtz3dSingleLayerPotentialKernelFunctor<KernelType>
+        KernelFunctor;
+    typedef
+        Fiber::ModifiedHelmholtz3dSingleLayerPotentialKernelFunctor<KernelType>
+        SingleKernelFunctor;
+    auto kernel = KernelFunctor(waveNumber);
     if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
-      auto singleKernel = SingleNoninterpolatedKernelFunctor(waveNumber);
+      auto singleKernel = SingleKernelFunctor(waveNumber);
       shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
       int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
       fmmTransform = boost::make_shared<fmm::FmmBlackBoxSingleLayer<KernelType,ResultType>>(singleKernel,expansionOrder);
@@ -162,23 +169,11 @@ modifiedHelmholtzDoubleLayerBoundaryOperator(
 
   const AssemblyOptions &assemblyOptions = context.assemblyOptions();
 
-  int interpPtsPerWavelength = parameterList.get<int>(
-      "options.assembly.interpolationPointsPerWavelength");
   bool useInterpolation = parameterList.get<bool>(
       "options.assembly.enableInterpolationForOscillatoryKernels");
 
   typedef typename ScalarTraits<BasisFunctionType>::RealType CoordinateType;
 
-  typedef Fiber::ModifiedHelmholtz3dDoubleLayerPotentialKernelFunctor<
-      KernelType> NoninterpolatedKernelFunctor;
-  typedef Fiber::
-      ModifiedHelmholtz3dDoubleLayerPotentialKernelInterpolatedFunctor<
-          KernelType> InterpolatedKernelFunctor;
-  typedef Fiber::ModifiedHelmholtz3dSingleLayerPotentialKernelFunctor<
-      KernelType> SingleNoninterpolatedKernelFunctor;
-  typedef Fiber::
-      ModifiedHelmholtz3dSingleLayerPotentialKernelInterpolatedFunctor<
-          KernelType> SingleInterpolatedKernelFunctor;
   typedef Fiber::ScalarFunctionValueFunctor<CoordinateType>
       TransformationFunctor;
   typedef Fiber::SimpleTestScalarKernelTrialIntegrandFunctorExt<
@@ -198,13 +193,20 @@ modifiedHelmholtzDoubleLayerBoundaryOperator(
 
   shared_ptr<Op> newOp;
   if (useInterpolation){
-    auto kernel = InterpolatedKernelFunctor(waveNumber,
-                  1.1 * maxDistance(*domain->grid(), *dualToRange->grid()),
-                  interpPtsPerWavelength);
+    CoordinateType maxDistance_ = static_cast<CoordinateType>(1.1) *
+        maxDistance(*domain->grid(), *dualToRange->grid());
+    int interpPtsPerWavelength = parameterList.get<int>(
+        "options.assembly.interpolationPointsPerWavelength");
+
+    typedef
+        Fiber::ModifiedHelmholtz3dDoubleLayerPotentialKernelInterpolatedFunctor<KernelType>
+        KernelFunctor;
+    typedef
+        Fiber::ModifiedHelmholtz3dSingleLayerPotentialKernelInterpolatedFunctor<KernelType>
+        SingleKernelFunctor;
+    auto kernel = KernelFunctor(waveNumber, maxDistance_, interpPtsPerWavelength);
     if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
-      auto singleKernel = SingleInterpolatedKernelFunctor(waveNumber,
-                  1.1 * maxDistance(*domain->grid(), *dualToRange->grid()),
-                  interpPtsPerWavelength);
+      auto singleKernel = SingleKernelFunctor(waveNumber, maxDistance_, interpPtsPerWavelength);
       shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
       int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
       fmmTransform = boost::make_shared<fmm::FmmBlackBoxDoubleLayer<KernelType,ResultType>>(singleKernel,expansionOrder);
@@ -217,9 +219,15 @@ modifiedHelmholtzDoubleLayerBoundaryOperator(
           new Op(domain, range, dualToRange, label, symmetry, kernel,
                  TransformationFunctor(), TransformationFunctor(), integral));
   } else {
-    auto kernel = NoninterpolatedKernelFunctor(waveNumber);
+    typedef
+        Fiber::ModifiedHelmholtz3dSingleLayerPotentialKernelFunctor<KernelType>
+        SingleKernelFunctor;
+    typedef
+        Fiber::ModifiedHelmholtz3dDoubleLayerPotentialKernelFunctor<KernelType>
+        KernelFunctor;
+    auto kernel = KernelFunctor(waveNumber);
     if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
-      auto singleKernel = SingleNoninterpolatedKernelFunctor(waveNumber);
+      auto singleKernel = SingleKernelFunctor(waveNumber);
       shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
       int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
       fmmTransform = boost::make_shared<fmm::FmmBlackBoxDoubleLayer<KernelType,ResultType>>(singleKernel,expansionOrder);
@@ -250,23 +258,11 @@ modifiedHelmholtzAdjointDoubleLayerBoundaryOperator(
 
   const AssemblyOptions &assemblyOptions = context.assemblyOptions();
 
-  int interpPtsPerWavelength = parameterList.get<int>(
-      "options.assembly.interpolationPointsPerWavelength");
   bool useInterpolation = parameterList.get<bool>(
       "options.assembly.enableInterpolationForOscillatoryKernels");
 
   typedef typename ScalarTraits<BasisFunctionType>::RealType CoordinateType;
 
-  typedef Fiber::ModifiedHelmholtz3dAdjointDoubleLayerPotentialKernelFunctor<
-      KernelType> NoninterpolatedKernelFunctor;
-  typedef Fiber::
-      ModifiedHelmholtz3dAdjointDoubleLayerPotentialKernelInterpolatedFunctor<
-          KernelType> InterpolatedKernelFunctor;
-  typedef Fiber::ModifiedHelmholtz3dSingleLayerPotentialKernelFunctor<
-      KernelType> SingleNoninterpolatedKernelFunctor;
-  typedef Fiber::
-      ModifiedHelmholtz3dSingleLayerPotentialKernelInterpolatedFunctor<
-          KernelType> SingleInterpolatedKernelFunctor;
   typedef Fiber::ScalarFunctionValueFunctor<CoordinateType>
       TransformationFunctor;
   typedef Fiber::SimpleTestScalarKernelTrialIntegrandFunctorExt<
@@ -285,13 +281,20 @@ modifiedHelmholtzAdjointDoubleLayerBoundaryOperator(
                                                     KernelType, ResultType> Op;
   shared_ptr<Op> newOp;
   if (useInterpolation){
-    auto kernel = InterpolatedKernelFunctor(waveNumber,
-                  1.1 * maxDistance(*domain->grid(), *dualToRange->grid()),
-                  interpPtsPerWavelength);
+    typedef
+        Fiber::ModifiedHelmholtz3dSingleLayerPotentialKernelInterpolatedFunctor<KernelType>
+        SingleKernelFunctor;
+    typedef
+        Fiber::ModifiedHelmholtz3dAdjointDoubleLayerPotentialKernelInterpolatedFunctor<KernelType>
+        KernelFunctor;
+    CoordinateType maxDistance_ = static_cast<CoordinateType>(1.1) *
+        maxDistance(*domain->grid(), *dualToRange->grid());
+    int interpPtsPerWavelength = parameterList.get<int>(
+        "options.assembly.interpolationPointsPerWavelength");
+
+    auto kernel = KernelFunctor(waveNumber, maxDistance_, interpPtsPerWavelength);
     if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
-      auto singleKernel = SingleInterpolatedKernelFunctor(waveNumber,
-                  1.1 * maxDistance(*domain->grid(), *dualToRange->grid()),
-                  interpPtsPerWavelength);
+      auto singleKernel = SingleKernelFunctor(waveNumber, maxDistance_, interpPtsPerWavelength);
       shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
       int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
       fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(singleKernel,expansionOrder);
@@ -304,9 +307,15 @@ modifiedHelmholtzAdjointDoubleLayerBoundaryOperator(
           new Op(domain, range, dualToRange, label, symmetry, kernel,
                  TransformationFunctor(), TransformationFunctor(), integral));
   } else {
-    auto kernel = NoninterpolatedKernelFunctor(waveNumber);
+    typedef
+        Fiber::ModifiedHelmholtz3dSingleLayerPotentialKernelFunctor<KernelType>
+        SingleKernelFunctor;
+    typedef
+        Fiber::ModifiedHelmholtz3dAdjointDoubleLayerPotentialKernelFunctor<KernelType>
+        KernelFunctor;
+    auto kernel = KernelFunctor(waveNumber);
     if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
-      auto singleKernel = SingleNoninterpolatedKernelFunctor(waveNumber);
+      auto singleKernel = SingleKernelFunctor(waveNumber);
       shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
       int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
       fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(singleKernel,expansionOrder);
@@ -336,22 +345,11 @@ modifiedHelmholtzHypersingularBoundaryOperator(
 
   const AssemblyOptions &assemblyOptions = context.assemblyOptions();
 
-  int interpPtsPerWavelength = parameterList.get<int>(
-      "options.assembly.interpolationPointsPerWavelength");
   bool useInterpolation = parameterList.get<bool>(
       "options.assembly.enableInterpolationForOscillatoryKernels");
 
   typedef typename ScalarTraits<BasisFunctionType>::RealType CoordinateType;
 
-  typedef Fiber::ModifiedHelmholtz3dHypersingularKernelFunctor<KernelType>
-      NoninterpolatedKernelFunctor;
-  typedef Fiber::ModifiedHelmholtz3dHypersingularKernelInterpolatedFunctor<
-      KernelType> InterpolatedKernelFunctor;
-  typedef Fiber::ModifiedHelmholtz3dSingleLayerPotentialKernelFunctor<
-      KernelType> SingleNoninterpolatedKernelFunctor;
-  typedef Fiber::
-      ModifiedHelmholtz3dSingleLayerPotentialKernelInterpolatedFunctor<
-          KernelType> SingleInterpolatedKernelFunctor;
   typedef Fiber::ModifiedHelmholtz3dHypersingularTransformationFunctor<
       CoordinateType> TransformationFunctor;
   typedef Fiber::ModifiedHelmholtz3dHypersingularIntegrandFunctor2<
@@ -359,10 +357,6 @@ modifiedHelmholtzHypersingularBoundaryOperator(
 
   typedef Fiber::ModifiedHelmholtz3dHypersingularTransformationFunctor2<
       CoordinateType> TransformationFunctorWithBlas;
-
-  CoordinateType maxDistance_ =
-      static_cast<CoordinateType>(1.1) *
-      maxDistance(*domain->grid(), *dualToRange->grid());
 
   shared_ptr<Fiber::TestKernelTrialIntegral<BasisFunctionType, KernelType,
                                             ResultType>> integral;
@@ -377,77 +371,78 @@ modifiedHelmholtzHypersingularBoundaryOperator(
   typedef GeneralElementarySingularIntegralOperator<BasisFunctionType,
                                                     KernelType, ResultType> Op;
   shared_ptr<Op> newOp;
-  if (shouldUseBlasInQuadrature(assemblyOptions, *domain, *dualToRange)) {
-    shared_ptr<Fiber::TestKernelTrialIntegral<BasisFunctionType, KernelType,
-                                              ResultType>> integral;
-    integral.reset(new Fiber::TypicalTestScalarKernelTrialIntegral<
-                   BasisFunctionType, KernelType, ResultType>());
+
   if (useInterpolation){
-    auto kernel = InterpolatedKernelFunctor(waveNumber,maxDistance_,
-                  interpPtsPerWavelength);
+    typedef
+        Fiber::ModifiedHelmholtz3dHypersingularKernelInterpolatedFunctor<KernelType>
+        KernelFunctor;
+    typedef
+        Fiber::ModifiedHelmholtz3dSingleLayerPotentialKernelInterpolatedFunctor<KernelType>
+        SingleKernelFunctor;
+
+    int interpPtsPerWavelength = parameterList.get<int>(
+        "options.assembly.interpolationPointsPerWavelength");
+    CoordinateType maxDistance_ = static_cast<CoordinateType>(1.1) *
+        maxDistance(*domain->grid(), *dualToRange->grid());
+
+    auto kernel = KernelFunctor(waveNumber, maxDistance_, interpPtsPerWavelength);
     if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
-      auto singleKernel = SingleInterpolatedKernelFunctor(waveNumber,maxDistance_,
-                  interpPtsPerWavelength);
+      auto singleKernel = SingleKernelFunctor(waveNumber, maxDistance_, interpPtsPerWavelength);
       shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
       int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
       fmmTransform = boost::make_shared<fmm::FmmBlackBoxHypersingular<KernelType,ResultType>>(singleKernel,expansionOrder);
-      newOp.reset(
-          new Op(domain, range, dualToRange, label, symmetry, kernel,
-                 TransformationFunctorWithBlas(), TransformationFunctorWithBlas(),integral,
-                 fmmTransform));
+      if(shouldUseBlasInQuadrature(assemblyOptions, *domain, *dualToRange))
+        newOp.reset(
+            new Op(domain, range, dualToRange, label, symmetry, kernel,
+                   TransformationFunctorWithBlas(), TransformationFunctorWithBlas(),
+                   integral, fmmTransform));
+      else
+        newOp.reset(
+            new Op(domain, range, dualToRange, label, symmetry, kernel,
+                   TransformationFunctor(), TransformationFunctor(),
+                   integral, fmmTransform));
     } else
-      newOp.reset(
-          new Op(domain, range, dualToRange, label, symmetry, kernel,
-                 TransformationFunctorWithBlas(), TransformationFunctorWithBlas(),integral));
+      if(shouldUseBlasInQuadrature(assemblyOptions, *domain, *dualToRange))
+        newOp.reset(
+            new Op(domain, range, dualToRange, label, symmetry, kernel,
+                   TransformationFunctorWithBlas(), TransformationFunctorWithBlas(), integral));
+      else
+        newOp.reset(
+            new Op(domain, range, dualToRange, label, symmetry, kernel,
+                   TransformationFunctor(), TransformationFunctor(), integral));
   } else {
-    auto kernel = NoninterpolatedKernelFunctor(waveNumber);
+    typedef
+        Fiber::ModifiedHelmholtz3dSingleLayerPotentialKernelFunctor<KernelType>
+        SingleKernelFunctor;
+    typedef
+        Fiber::ModifiedHelmholtz3dHypersingularKernelFunctor<KernelType>
+        KernelFunctor;
+    auto kernel = KernelFunctor(waveNumber);
     if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
-      auto singleKernel = SingleNoninterpolatedKernelFunctor(waveNumber);
+      auto singleKernel = SingleKernelFunctor(waveNumber);
       shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
       int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
       fmmTransform = boost::make_shared<fmm::FmmBlackBoxHypersingular<KernelType,ResultType>>(singleKernel,expansionOrder);
-      newOp.reset(
-          new Op(domain, range, dualToRange, label, symmetry, kernel,
-                 TransformationFunctorWithBlas(), TransformationFunctorWithBlas(),integral,
-                 fmmTransform));
+
+      if(shouldUseBlasInQuadrature(assemblyOptions, *domain, *dualToRange))
+        newOp.reset(
+            new Op(domain, range, dualToRange, label, symmetry, kernel,
+                   TransformationFunctorWithBlas(), TransformationFunctorWithBlas(),integral,
+                   fmmTransform));
+      else
+        newOp.reset(
+            new Op(domain, range, dualToRange, label, symmetry, kernel,
+                   TransformationFunctor(), TransformationFunctor(),integral,
+                   fmmTransform));
     } else
-      newOp.reset(
-          new Op(domain, range, dualToRange, label, symmetry, kernel,
-                 TransformationFunctorWithBlas(), TransformationFunctorWithBlas(),integral));
-  }
-  } else { // no blas
-  if (useInterpolation){
-    auto kernel = InterpolatedKernelFunctor(waveNumber,maxDistance_,
-                  interpPtsPerWavelength);
-    if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
-      shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
-      int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
-      fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(kernel,expansionOrder);
-      newOp.reset(
-          new Op(domain, range, dualToRange, label, symmetry, kernel,
-                 TransformationFunctor(), TransformationFunctor(),
-                 IntegrandFunctor(),fmmTransform));
-    } else
-      newOp.reset(
-          new Op(domain, range, dualToRange, label, symmetry, kernel,
-                 TransformationFunctor(), TransformationFunctor(),
-                 IntegrandFunctor()));
-  } else {
-    auto kernel = NoninterpolatedKernelFunctor(waveNumber);
-    if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
-      shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
-      int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
-      fmmTransform = boost::make_shared<fmm::FmmBlackBoxAdjointDoubleLayer<KernelType,ResultType>>(kernel,expansionOrder);
-      newOp.reset(
-          new Op(domain, range, dualToRange, label, symmetry, kernel,
-                 TransformationFunctor(), TransformationFunctor(),
-                 IntegrandFunctor(),fmmTransform));
-    } else
-      newOp.reset(
-          new Op(domain, range, dualToRange, label, symmetry, kernel,
-                 TransformationFunctor(), TransformationFunctor(),
-                 IntegrandFunctor()));
-  }
+      if(shouldUseBlasInQuadrature(assemblyOptions, *domain, *dualToRange))
+        newOp.reset(
+            new Op(domain, range, dualToRange, label, symmetry, kernel,
+                   TransformationFunctorWithBlas(), TransformationFunctorWithBlas(),integral));
+      else
+        newOp.reset(
+            new Op(domain, range, dualToRange, label, symmetry, kernel,
+                   TransformationFunctor(), TransformationFunctor(),integral));
   }
   return newOp;
 

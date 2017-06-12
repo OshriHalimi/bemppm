@@ -31,6 +31,10 @@
 namespace Bempp
 {
 
+// TODO:
+// copy from hmat
+// cast to h matrix (shared_ptr<>)
+// add a mem consumption method here too...
 
 template <typename ValueType>
 DiscreteFmmBoundaryOperator<ValueType>::

@@ -22,6 +22,10 @@
 
 namespace fmm
 {
+
+// Uncomment this to print FMM debugging messages
+//#define DEBUG_FMM
+
 template <typename CoordinateType>
 CoordinateType getPoint3DCoord(Point3D<CoordinateType> p, int n){
     if(n==0) return p.x;
@@ -430,7 +434,7 @@ void Octree<ResultType>::apply(
         std::cout << l << "," << i << ": ";
         nice_print(mc);
         std::cout << std::endl;
-      }}
+      }}}
 #endif
 
     // **** STEP THREE ****
