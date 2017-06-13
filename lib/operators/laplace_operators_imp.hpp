@@ -38,7 +38,6 @@
 #include "../fiber/laplace_3d_adjoint_double_layer_potential_kernel_functor.hpp"
 #include "../fiber/surface_curl_3d_functor.hpp"
 #include "../fiber/laplace_3d_double_layer_potential_kernel_functor.hpp"
-#include "../fiber/laplace_3d_hypersingular_off_diagonal_kernel_functor.hpp"
 #include "../fiber/scalar_function_value_functor.hpp"
 #include "../fiber/simple_test_scalar_kernel_trial_integrand_functor.hpp"
 #include "../fiber/scalar_traits.hpp"

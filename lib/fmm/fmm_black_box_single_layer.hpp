@@ -27,7 +27,7 @@ public:
       const Vector<CoordinateType>& nodeSize,
       Vector<ValueType>& result) const;
 
-    virtual void evaluateTest(
+  virtual void evaluateTest(
       const Vector<CoordinateType>& point,
       const Vector<CoordinateType>& normal,
       const Vector<CoordinateType>& khat,
