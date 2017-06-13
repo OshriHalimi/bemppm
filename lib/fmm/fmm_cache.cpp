@@ -129,7 +129,7 @@ FmmCache<ValueType>::compressM2L(bool isSymmetric)
         for(int i=0;i<npt;++i)
           for(int j=0;j<npt;++j)
             m_cacheM2L[level-m_topLevel][item](i,j) *= kernelWeightMat(i,j);
-        kernelsFat.block(item*npt,0,npt,npt) = m_cacheM2L[level-m_topLevel][item];
+        kernelsFat.block(0,item*npt,npt,npt) = m_cacheM2L[level-m_topLevel][item];
       }
 
       Eigen::JacobiSVD<Matrix<ValueType>> svd(kernelsFat,
