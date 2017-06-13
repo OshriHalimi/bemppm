@@ -726,8 +726,8 @@ void Octree<ResultType>::translationStep(
       unsigned int nNodes = getNodesPerLevel(level);
       TranslationStepHelper<ResultType> translationStepHelper(
           *this, fmmTransform, level);
-      //tbb::parallel_for<size_t>(0, nNodes, translationStepHelper);
-      for(size_t i=0;i<nNodes;++i) translationStepHelper(i);
+      tbb::parallel_for<size_t>(0, nNodes, translationStepHelper);
+      //for(size_t i=0;i<nNodes;++i) translationStepHelper(i);
     }
   } else {
     unsigned int level = m_levels;
