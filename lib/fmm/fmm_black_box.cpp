@@ -236,6 +236,7 @@ void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointDiffS(
   evaluateAtGaussPointGradS(point, normal, multipoleScaled,
                             nodeCenter, nodeSize, grad);
   result.resize(1);
+  result.fill(0.);
   for(int dim=0;dim<3;++dim)
     result(0) += normal(dim) * grad(dim);
 }
