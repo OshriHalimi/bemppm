@@ -344,13 +344,16 @@ modifiedHelmholtzHypersingularBoundaryOperator(
 
   typedef typename ScalarTraits<BasisFunctionType>::RealType CoordinateType;
 
-  typedef Fiber::ModifiedHelmholtz3dHypersingularTransformationFunctor<
-      CoordinateType> TransformationFunctor;
-  typedef Fiber::ModifiedHelmholtz3dHypersingularIntegrandFunctor2<
-      BasisFunctionType, KernelType, ResultType> IntegrandFunctor;
+  typedef
+      Fiber::ModifiedHelmholtz3dHypersingularIntegrandFunctor2<BasisFunctionType, KernelType, ResultType>
+      IntegrandFunctor;
 
-  typedef Fiber::ModifiedHelmholtz3dHypersingularTransformationFunctor2<
-      CoordinateType> TransformationFunctorWithBlas;
+  typedef
+      Fiber::ModifiedHelmholtz3dHypersingularTransformationFunctor<CoordinateType>
+      TransformationFunctor;
+  typedef
+      Fiber::ModifiedHelmholtz3dHypersingularTransformationFunctor2<CoordinateType>
+      TransformationFunctorWithBlas;
 
   typedef
       Fiber::ModifiedHelmholtz3dSingleLayerPotentialKernelFunctor<KernelType>
@@ -358,13 +361,13 @@ modifiedHelmholtzHypersingularBoundaryOperator(
 
   shared_ptr<Fiber::TestKernelTrialIntegral<BasisFunctionType, KernelType,
                                             ResultType>> integral;
-  if (shouldUseBlasInQuadrature(assemblyOptions, *domain, *dualToRange)) {
+  bool useBlas = shouldUseBlasInQuadrature(assemblyOptions, *domain, *dualToRange);
+  if (useBlas)
     integral.reset(new Fiber::TypicalTestScalarKernelTrialIntegral<
                    BasisFunctionType, KernelType, ResultType>());
-  } else {
+  else
     integral.reset(new Fiber::DefaultTestKernelTrialIntegral<IntegrandFunctor>(
         IntegrandFunctor()));
-  }
 
   typedef GeneralElementarySingularIntegralOperator<BasisFunctionType,
                                                     KernelType, ResultType> Op;
@@ -381,23 +384,10 @@ modifiedHelmholtzHypersingularBoundaryOperator(
         maxDistance(*domain->grid(), *dualToRange->grid());
 
     auto kernel = KernelFunctor(waveNumber, maxDistance_, interpPtsPerWavelength);
-    if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
-      auto singleKernel = SingleKernelFunctor(waveNumber);
-      shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
-      int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
-      fmmTransform = boost::make_shared<fmm::FmmBlackBoxHypersingular<KernelType,ResultType>>(singleKernel,expansionOrder);
-      if(shouldUseBlasInQuadrature(assemblyOptions, *domain, *dualToRange))
-        newOp.reset(
-            new Op(domain, range, dualToRange, label, symmetry, kernel,
-                   TransformationFunctorWithBlas(), TransformationFunctorWithBlas(),
-                   integral, fmmTransform));
-      else
-        newOp.reset(
-            new Op(domain, range, dualToRange, label, symmetry, kernel,
-                   TransformationFunctor(), TransformationFunctor(),
-                   integral, fmmTransform));
-    } else
-      if(shouldUseBlasInQuadrature(assemblyOptions, *domain, *dualToRange))
+    if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM)
+      throw NotImplementedError("Assembling hypersingular operators directly using FMM is not implemented.");
+    else
+      if(useBlas)
         newOp.reset(
             new Op(domain, range, dualToRange, label, symmetry, kernel,
                    TransformationFunctorWithBlas(), TransformationFunctorWithBlas(), integral));
@@ -410,24 +400,10 @@ modifiedHelmholtzHypersingularBoundaryOperator(
         Fiber::ModifiedHelmholtz3dHypersingularKernelFunctor<KernelType>
         KernelFunctor;
     auto kernel = KernelFunctor(waveNumber);
-    if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
-      auto singleKernel = SingleKernelFunctor(waveNumber);
-      shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
-      int expansionOrder = parameterList.template get<int>("options.fmm.expansion_order");
-      fmmTransform = boost::make_shared<fmm::FmmBlackBoxHypersingular<KernelType,ResultType>>(singleKernel,expansionOrder);
-
-      if(shouldUseBlasInQuadrature(assemblyOptions, *domain, *dualToRange))
-        newOp.reset(
-            new Op(domain, range, dualToRange, label, symmetry, kernel,
-                   TransformationFunctorWithBlas(), TransformationFunctorWithBlas(),integral,
-                   fmmTransform));
-      else
-        newOp.reset(
-            new Op(domain, range, dualToRange, label, symmetry, kernel,
-                   TransformationFunctor(), TransformationFunctor(),integral,
-                   fmmTransform));
-    } else
-      if(shouldUseBlasInQuadrature(assemblyOptions, *domain, *dualToRange))
+    if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM)
+      throw NotImplementedError("Assembling hypersingular operators directly using FMM is not implemented.");
+    else
+      if(useBlas)
         newOp.reset(
             new Op(domain, range, dualToRange, label, symmetry, kernel,
                    TransformationFunctorWithBlas(), TransformationFunctorWithBlas(),integral));

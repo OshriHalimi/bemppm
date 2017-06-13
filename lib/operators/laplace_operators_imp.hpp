@@ -286,20 +286,9 @@ laplaceHypersingularBoundaryOperator(
         IntegrandFunctor()));
   }
 
-  if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
-    shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
-    int expansionOrder =
-        parameterList.template get<int>("options.fmm.expansion_order");
-    fmmTransform = boost::make_shared<fmm::FmmBlackBoxHypersingular<KernelType,
-                                      ResultType>>(SingleFunctor(),
-                                                   expansionOrder);
-    shared_ptr<
-        ElementaryIntegralOperator<BasisFunctionType, KernelType, ResultType>>
-        newOp(new Op(domain, range, dualToRange, label, symmetry, KernelFunctor(),
-                     TransformationFunctor(), TransformationFunctor(), integral,
-                     fmmTransform));
-    return newOp;
-  } else {
+  if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM)
+    throw NotImplementedError("Assembling hypersingular operators directly using FMM is not implemented.");
+  else {
     shared_ptr<Op> newOp(new Op(domain, range, dualToRange, label, symmetry,
                                 KernelFunctor(), TransformationFunctor(),
                                 TransformationFunctor(), integral));
