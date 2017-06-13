@@ -54,6 +54,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
+#include <chrono>
 
 #include <boost/type_traits/is_complex.hpp>
 
@@ -180,11 +181,17 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   std::vector<long unsigned int> test_p2o;
 
 
+  std::chrono::high_resolution_clock::time_point tt1 = std::chrono::high_resolution_clock::now();
+
   octree->assignPoints(symmetry, testDofLocations, test_p2o, true);
   octree->assignPoints(symmetry, trialDofLocations, trial_p2o, false);
   octree->generateNeighbours();
   octree->enlargeBoxes(testDofLocations, testDofCorners);
   octree->enlargeBoxes(trialDofLocations, trialDofCorners);
+
+  std::chrono::high_resolution_clock::time_point tt2 = std::chrono::high_resolution_clock::now();
+  auto tduration = std::chrono::duration_cast<std::chrono::milliseconds>( tt2 - tt1 ).count();
+  std::cout << "assignPoints & enlargeBoxes " << tduration << std::endl;
 
   if(cacheIO){
     auto compressFactor = parameterList.template get<double>("options.fmm.compression_factor");
@@ -199,16 +206,27 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
 
   unsigned int nLeaves = fmm::getNodesPerLevel(octree->levels());
 
+  std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+
   fmm::FmmNearFieldHelper<BasisFunctionType, ResultType> fmmNearFieldHelper(
         octree, testSpace, trialSpace, localAssemblers, denseTermsMultipliers, 
         options, test_p2o, trial_p2o, indexWithGlobalDofs);
   tbb::parallel_for<unsigned int>(0, nLeaves, fmmNearFieldHelper);
+
+  std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>( t2 - t1 ).count();
+  std::cout << "FmmNearFieldHelper " << duration << std::endl;
+
 
   fmm::FmmFarFieldHelper<BasisFunctionType, ResultType> fmmFarFieldHelper(
         octree, testSpace, trialSpace, options, test_p2o, trial_p2o,
         indexWithGlobalDofs, fmmTransform, qO);
   tbb::parallel_for(tbb::blocked_range<unsigned int>(0, nLeaves, 100),
       fmmFarFieldHelper);
+
+  std::chrono::high_resolution_clock::time_point t3 = std::chrono::high_resolution_clock::now();
+  duration = std::chrono::duration_cast<std::chrono::milliseconds>( t3 - t2 ).count();
+  std::cout << "FmmFarFieldHelper " << duration << std::endl;
 
   unsigned int symm = NO_SYMMETRY;
   if (symmetry) {

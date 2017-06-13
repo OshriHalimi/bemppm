@@ -261,11 +261,14 @@ def magnetic_field(domain, range_, dual_to_range,
         raise ValueError(
             "The dual space must be a valid Nedelec curl-conforming space.")
 
-    return rewrite_operator_spaces(get_wave_operator_with_space_preprocessing(
-        _magnetic_field_impl, domain, range_, hdiv_dual_to_range,
-        wave_number, label, symmetry, parameters,
-        use_projection_spaces, assemble_only_singular_part),
-                                       domain, range_, dual_to_range)
+    if assembly_is_fmm(parameters):
+        raise NotImplementedError
+    else:
+        return rewrite_operator_spaces(get_wave_operator_with_space_preprocessing(
+            _magnetic_field_impl, domain, range_, hdiv_dual_to_range,
+            wave_number, label, symmetry, parameters,
+            use_projection_spaces, assemble_only_singular_part),
+                                           domain, range_, dual_to_range)
 
 def multitrace_operator(grid, wave_number, parameters=None):
     """Assemble the multitrace operator for Maxwell."""
