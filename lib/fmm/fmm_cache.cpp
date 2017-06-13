@@ -3,6 +3,7 @@
 #include "octree.hpp"
 #include "../fiber/explicit_instantiation.hpp"
 
+#include <tbb/parallel_for.h>
 #include <iostream>
 #include <complex>
 #include <string>
@@ -45,7 +46,7 @@ FmmCache<ValueType>::initCache(
 
     Vector<CoordinateType> center(3);
 
-    unsigned int index = 0;
+    std::vector<Vector<CoordinateType>> allCenters;
     for (int indx=-3; indx<=3; indx++) {
       center[0] = indx*unscaledBoxSize[0];
       for (int indy=-3; indy<=3; indy++) {
@@ -53,14 +54,21 @@ FmmCache<ValueType>::initCache(
         for (int indz=-3; indz<=3; indz++) {
           center[2] = indz*unscaledBoxSize[2];
           if (abs(indx) > 1 || abs(indy) > 1 || abs(indz) > 1) {
-            Matrix<ValueType> m2l = m_fmmTransform.M2L(center, origin,
-                                                       scaledBoxSize, level);
-            m_cacheM2L[level-m_topLevel][index++] = m2l;
+            allCenters.push_back(center);
+//            Matrix<ValueType> m2l = m_fmmTransform.M2L(center, origin,
+//                                                       scaledBoxSize, level);
+//            m_cacheM2L[level-m_topLevel][index++] = m2l;
             //TODO: std::cout << m2l.rows() << std::endl;
           }
         }
       }
     }
+    std::cout << allCenters.size() << std::endl;
+    tbb::parallel_for<int>(0,allCenters.size(),[&](const int n){
+      Matrix<ValueType> m2l = m_fmmTransform.M2L(allCenters[n], origin,
+                                                       scaledBoxSize, level);
+      m_cacheM2L[level-m_topLevel][n] = m2l;
+    });
   }
 
   // M2M & L2L cache
