@@ -1,5 +1,12 @@
 """Common routines for operators of various types."""
 
+def assembly_is_fmm(parameters):
+    import bempp.api
+    if parameters is None:
+        return bempp.api.global_parameters.assembly.boundary_operator_assembly_type == "fmm"
+    else:
+        return parameters.assembly.boundary_operator_assembly_type == "fmm"
+
 def update_to_non_barycentric_space(domain, range_, dual_to_range):
     """Return non-barycentric spaces if possible (otherwise original spaces)"""
 

@@ -2,6 +2,8 @@
 
 # pylint: disable-msg=too-many-arguments
 
+from bempp.api.operators.boundary._common import assembly_is_fmm
+
 def _single_layer_impl(
         domain, range_, dual_to_range,
         label, symmetry, parameters, assemble_only_singular_part):
@@ -258,6 +260,9 @@ def hypersingular(domain, range_, dual_to_range,
 
     if domain != dual_to_range and use_slp:
         use_slp = False
+
+    if assembly_is_fmm(parameters):
+        use_slp = True
 
     if not use_slp:
         from bempp.api.operators.boundary._common import \

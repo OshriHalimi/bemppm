@@ -5,6 +5,8 @@ import numpy as _np
 
 # pylint: disable-msg=too-many-arguments
 
+from bempp.api.operators.boundary._common import assembly_is_fmm
+
 def single_layer(domain, range_, dual_to_range,
                  wave_number,
                  label="SLP", symmetry='no_symmetry',

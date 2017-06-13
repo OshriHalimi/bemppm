@@ -2,6 +2,7 @@
 
 # pylint: disable-msg=too-many-arguments
 
+from bempp.api.operators.boundary._common import assembly_is_fmm
 
 def _electric_field_impl(
         domain, range_, dual_to_range, wave_number,
@@ -40,13 +41,6 @@ def _magnetic_field_impl(
             domain, range_, dual_to_range),
         parameters=parameters, label=label,
         assemble_only_singular_part=assemble_only_singular_part)
-
-def _assembly_is_fmm(parameters):
-    import bempp.api
-    if parameters is None:
-        return bempp.api.global_parameters.assembly.boundary_operator_assembly_type == "fmm"
-    else:
-        return parameters.assembly.boundary_operator_assembly_type == "fmm"
 
 def electric_field(domain, range_, dual_to_range,
                    wave_number,
@@ -92,7 +86,7 @@ def electric_field(domain, range_, dual_to_range,
             "The dual space must be a valid Nedelec curl-conforming space.")
 
 
-    if _assembly_is_fmm(parameters):
+    if assembly_is_fmm(parameters):
         from bempp.api import function_space
         from bempp.api.operators.boundary.helmholtz import single_layer
         domain_dp = function_space(domain.grid, "DP", 1)
