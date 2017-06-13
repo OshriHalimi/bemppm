@@ -100,6 +100,7 @@ FmmFarFieldHelper<BasisFunctionType, ResultType>::makeFarFieldMat(
     Vector<CoordinateType> khat = fmmTransform.getChebyshevPoint(multipole);
     typedef ResultType UserFunctionType;
 
+    // TODO: raplace with potential evaluation functor
     typedef FmmFarfieldFunctionMultiplying<UserFunctionType> FunctorType;
     FunctorType functor(khat, nodeCenter, nodeSize, fmmTransform, isTest);
     Fiber::SurfaceNormalDependentFunction<FunctorType> function(functor);

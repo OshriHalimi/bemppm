@@ -23,9 +23,6 @@
 namespace fmm
 {
 
-// Uncomment this to print FMM debugging messages
-//#define DEBUG_FMM
-
 template <typename CoordinateType>
 CoordinateType getPoint3DCoord(Point3D<CoordinateType> p, int n){
     if(n==0) return p.x;
@@ -393,7 +390,7 @@ void Octree<ResultType>::apply(
     EvaluateNearFieldHelper<ResultType> evaluateNearFieldHelper(
         *this, x_in_permuted, y_out_permuted);
     tbb::parallel_for<size_t>(0, nLeaves, evaluateNearFieldHelper);
-#if defined DEBUG_FMM
+#if defined DEBUG
     std::cout << "Near field contributions" << std::endl;
     nice_print(y_out_permuted);
     std::cout << std::endl;
@@ -407,7 +404,7 @@ void Octree<ResultType>::apply(
         evaluateMultipoleCoefficientsHelper(*this, x_in_permuted);
     tbb::parallel_for<size_t>(0, nLeaves,
                               evaluateMultipoleCoefficientsHelper);
-#if defined DEBUG_FMM
+#if defined DEBUG
     std::cout << "Moments after STEP ONE" << std::endl;
     for(int i=0;i<nLeaves;++i){
         auto mc = getNode(i,levels()).getMultipoleCoefficients();
@@ -425,7 +422,7 @@ void Octree<ResultType>::apply(
     //  This function and the helper it calls are defined in octree.cpp
     // ******************
     if(multilevel()) upwardsStep(m_fmmTransform);
-#if defined DEBUG_FMM
+#if defined DEBUG
     std::cout << "Moments after STEP TWO" << std::endl;
     for(int l=levels()-1;l>=2;--l){std::cout << l << " ";
     for(int i=0;i<getNodesPerLevel(l);++i){
@@ -444,7 +441,7 @@ void Octree<ResultType>::apply(
     //  This function and the helper it calls are defined in octree.cpp
     // ********************
     translationStep(m_fmmTransform);
-#if defined DEBUG_FMM
+#if defined DEBUG
     std::cout << "Local coefficients after STEP THREE" << std::endl;
     for(int l=2;l<=levels();++l)
     for(int i=0;i<getNodesPerLevel(l);++i){
@@ -463,7 +460,7 @@ void Octree<ResultType>::apply(
     //  This function and the helper it calls are defined in octree.cpp
     // *******************
     if(multilevel()) downwardsStep(m_fmmTransform);
-#if defined DEBUG_FMM
+#if defined DEBUG
     std::cout << "Local coefficients after STEP FOUR" << std::endl;
     for(int l=3;l<=levels();++l)
     for(int i=0;i<getNodesPerLevel(l);++i){
@@ -491,7 +488,7 @@ void Octree<ResultType>::apply(
                                                   y_out_permuted);
     tbb::parallel_for<size_t>(0, nLeaves,
                               evaluateFarFieldMatrixVectorProductHelper);
-#if defined DEBUG_FMM
+#if defined DEBUG
     std::cout << "Calculations in STEP FIVE" << std::endl;
     for(int i=0;i<getNodesPerLevel(levels());++i){
         auto ffm = getNode(i,levels()).getTestFarFieldMat();
@@ -622,6 +619,7 @@ public:
     Vector<CoordinateType> R; // center of the node
     m_octree.scaledNodeCenter(node,m_level, R);
     Vector<ResultType> lcoef(m_fmmTransform.chebyshevPointCount());
+    //std::cout << m_fmmTransform.chebyshevPointCount() << std::endl;
     lcoef.fill(0.0);
 
     Vector<CoordinateType> boxSize;

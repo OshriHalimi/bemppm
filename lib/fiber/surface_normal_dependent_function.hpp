@@ -91,7 +91,8 @@ public:
 
     const size_t pointCount = points.cols();
     const size_t dim = points.rows();
-    result.resize(dim, pointCount);
+    const size_t resultDim = codomainDimension();
+    result.resize(resultDim, pointCount);
     for (size_t i = 0; i < pointCount; ++i) {
       //std::cout << "<start>" << std::endl;
       Vector<ValueType> activeResultColumn;//(result.col(i).data(),
@@ -110,7 +111,7 @@ public:
       }
       //m_functor.evaluate(points.col(i), normals.col(i), activeResultColumn);
       m_functor.evaluate(p_coli, n_coli, activeResultColumn);
-      for (size_t j=0;j<dim;++j)
+      for (size_t j=0;j<resultDim;++j)
         result(j,i)=activeResultColumn(j);
       //std::cout << "<end>" << std::endl;
     }

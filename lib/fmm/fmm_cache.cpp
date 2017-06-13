@@ -56,6 +56,7 @@ FmmCache<ValueType>::initCache(
             Matrix<ValueType> m2l = m_fmmTransform.M2L(center, origin,
                                                        scaledBoxSize, level);
             m_cacheM2L[level-m_topLevel][index++] = m2l;
+            //TODO: std::cout << m2l.rows() << std::endl;
           }
         }
       }
@@ -159,11 +160,14 @@ FmmCache<ValueType>::compressM2L(bool isSymmetric)
       }
 
       // Reduce down the M2L matrices from npt x npt to cutoff x cutoff
-      for (unsigned int item = 0; item<316; ++item)
+      for (unsigned int item = 0; item<316; ++item){
         m_cacheM2L[level-m_topLevel][item] =
             m_Ufat [level-m_topLevel].transpose()
             * m_cacheM2L[level-m_topLevel][item]
             * m_Vthin[level-m_topLevel];
+        std::cout << m_cacheM2L[level-m_topLevel][item].rows() << "," << 
+                    m_cacheM2L[level-m_topLevel][item].cols() << std::endl;
+      }
     }
   }
 }
