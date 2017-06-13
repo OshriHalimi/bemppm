@@ -176,15 +176,15 @@ void Octree<ResultType>::enlargeBoxes(
       for(int dim=0;dim<3;++dim)
         if(center(dim)>corner(dim))
           nodeMinAdd(dim) = std::max(nodeMinAdd(dim),
-                                     center(dim)-corner(dim)-nodeSize(dim)/2);
+                                     center(dim)-corner(dim)-nodeSize(dim)*CoordinateType(.5));
         else
           nodeMaxAdd(dim) = std::max(nodeMaxAdd(dim),
-                                     corner(dim)-center(dim)-nodeSize(dim)/2);
+                                     corner(dim)-center(dim)-nodeSize(dim)*CoordinateType(.5));
     }
 
   }
   for(int dim=0;dim<3;++dim)
-    if(nodeMinAdd(dim)>nodeSize(dim)/2 || nodeMaxAdd(dim)>nodeSize(dim)/2){
+    if(2*nodeMinAdd(dim)>nodeSize(dim) || 2*nodeMaxAdd(dim)>nodeSize(dim)){
       std::cout << "Boxes are being extended by more than half their size, "
                 << "consider lowering number of FMM levels." << std::endl;
       break;
@@ -337,9 +337,9 @@ void Octree<ResultType>::scaledNodeCenter(unsigned long number, unsigned int lev
 
   Vector<CoordinateType> max;
   Vector<CoordinateType> min;
-  nodeBounds(level,max,min);
+  nodeBounds(level,min,max);
 
-  center = uncenter + (max-min)/2;
+  center = uncenter + (max-min)*.5;
 }
 
 template <typename ResultType>
