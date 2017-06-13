@@ -121,7 +121,7 @@ FmmNearFieldHelper<BasisFunctionType, ResultType>::evaluateNearFieldIntegrals(
 
   return result;
 
-} // Octree::evaMatluateNearFieldIntegrals
+} // Octree::evaluateNearFieldIntegrals
 
 template <typename BasisFunctionType, typename ResultType>
 void FmmNearFieldHelper<BasisFunctionType, ResultType>::evaluateNearField(
@@ -146,6 +146,7 @@ void FmmNearFieldHelper<BasisFunctionType, ResultType>::evaluateNearField(
                                                   trialDofStart, trialDofCount);
   }
 
+
   // repeat for the neighbours: trial functions are fixed in the current node
   // test functions are in the neighbourhood
   for (unsigned long neigh = 0; neigh < neighbourList.size(); neigh++) {
@@ -156,6 +157,7 @@ void FmmNearFieldHelper<BasisFunctionType, ResultType>::evaluateNearField(
     nearFieldMats[neigh+1] = evaluateNearFieldIntegrals(testDofStart, testDofCount,
                                                         trialDofStart, trialDofCount);
   }
+
   node.setNearFieldMats(nearFieldMats);
 }
 
