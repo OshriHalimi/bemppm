@@ -65,7 +65,6 @@ FmmCache<ValueType>::initCache(
         }
       }
     }
-    std::cout << allCenters.size() << std::endl;
     tbb::parallel_for<int>(0,allCenters.size(),[&](const int n){
       Matrix<ValueType> m2l = m_fmmTransform.M2L(allCenters[n], origin,
                                                        scaledBoxSize, level);
