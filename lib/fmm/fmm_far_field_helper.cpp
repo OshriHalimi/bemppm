@@ -100,7 +100,7 @@ FmmFarFieldHelper<BasisFunctionType, ResultType>::makeFarFieldMat(
     Vector<CoordinateType> khat = fmmTransform.getChebyshevPoint(multipole);
     typedef ResultType UserFunctionType;
 
-    // TODO: raplace with potential evaluation functor
+    // TODO: replace with potential evaluation functor
     typedef FmmFarfieldFunctionMultiplying<UserFunctionType> FunctorType;
     FunctorType functor(khat, nodeCenter, nodeSize, fmmTransform, isTest);
     Fiber::SurfaceNormalDependentFunction<FunctorType> function(functor);
@@ -137,6 +137,7 @@ void FmmFarFieldHelper<BasisFunctionType, ResultType>::operator()(
       fmmTrialLocalAssembler(m_trialSpace, m_options, false);
 
   fmmTestLocalAssembler.setQuadratureOrder(m_qO);
+  fmmTrialLocalAssembler.setQuadratureOrder(m_qO);
 
   for( unsigned int n=range.begin(); n!=range.end(); ++n ) {
     OctreeNode<ResultType> &node = m_octree->getNode(n, m_octree->levels());
