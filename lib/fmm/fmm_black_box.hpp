@@ -66,6 +66,30 @@ public:
 
 protected:
 
+  virtual void scalePoint(
+      const Vector<CoordinateType>& point,
+      const Vector<CoordinateType>& center,
+      const Vector<CoordinateType>& size,
+      Vector<CoordinateType>& pointScaled) const;
+
+  virtual void clenshawS(
+      const Vector<CoordinateType>& point,
+      const unsigned int mx,
+      const unsigned int my,
+      const unsigned int mz,
+      Vector<ValueType>& result) const;
+
+  virtual ValueType clenshawS_1D(
+      const CoordinateType point,
+      const unsigned int m) const;
+
+  virtual void SMatrix_1D(
+      const CoordinateType parentPosition,
+      const CoordinateType parentSize,
+      const CoordinateType childPosition,
+      const CoordinateType childSize,
+      Matrix<ValueType>& result) const;
+
   virtual void evaluateAtGaussPointS(
       const Vector<CoordinateType>& point,
       const Vector<CoordinateType>& normal,

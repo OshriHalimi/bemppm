@@ -8,7 +8,6 @@
 
 #include <iostream>
 #include <limits>
-
 namespace fmm
 {
 
@@ -64,31 +63,113 @@ Matrix<ValueType> FmmBlackBox<KernelType, ValueType>::M2M(
     unsigned int level) const
 {
   const size_t quadPoints = this->chebyshevPointCount();
+  const size_t N = this->getN();
   Matrix<ValueType> result;
   result.resize(quadPoints,quadPoints);
+
+  Matrix<ValueType> S1,S2,S3;
+  SMatrix_1D(parentPosition(0), parentSize(0),
+             childPosition(0), childSize(0),
+             S1);
+  SMatrix_1D(parentPosition(1), parentSize(1),
+             childPosition(1), childSize(1),
+             S2);
+  SMatrix_1D(parentPosition(2), parentSize(2),
+             childPosition(2), childSize(2),
+             S3);
+
+  size_t i=0;
+  for(size_t i1=0;i1<N;++i1)
+    for(size_t i2=0;i2<N;++i2)
+      for(size_t i3=0;i3<N;++i3){
+        size_t j=0;
+        for(size_t j1=0;j1<N;++j1)
+          for(size_t j2=0;j2<N;++j2)
+            for(size_t j3=0;j3<N;++j3)
+              result(j++,i)=S1(j1,i1)*S2(j2,i2)*S3(j3,i3);
+        i++;
+      }
 
   for(int i=0;i<quadPoints;++i){
     Vector<CoordinateType> childMultipole(3);
     for(int dim=0;dim<3;++dim)
       childMultipole(dim) = this->m_chebyshevPoints(dim, i);
-    for(int j=0;j<quadPoints;++j){
-      Vector<CoordinateType> parentMultipole(3);
-      for(int dim=0;dim<3;++dim)
-        parentMultipole(dim) = this->m_chebyshevPoints(dim, j);
-      Vector<ValueType> entry;
-      Vector<CoordinateType> normal;
+    size_t j=0;
+    for(size_t j1=0;j1<N;++j1)
+      for(size_t j2=0;j2<N;++j2)
+        for(size_t j3=0;j3<N;++j3){
+          Vector<CoordinateType> parentMultipole(3);
+          for(int dim=0;dim<3;++dim)
+            parentMultipole(dim) = this->m_chebyshevPoints(dim, j);
+          Vector<ValueType> entry;
+          Vector<CoordinateType> normal;
 
-      Vector<CoordinateType> point(3);
-      for(int dim=0;dim<3;++dim)
-        point(dim) = childPosition(dim)
-                   + childMultipole(dim)*childSize(dim)/2;
-      evaluateAtGaussPointS(point, normal, parentMultipole, parentPosition,
-                            parentSize, entry);
-      result(j,i)=entry(0);
-    }
+          Vector<CoordinateType> point(3);
+          for(int dim=0;dim<3;++dim)
+            point(dim) = childPosition(dim)
+                       + childMultipole(dim)*childSize(dim)/2;
+          Vector<CoordinateType> pointScaled;
+          scalePoint(point, parentPosition, parentSize, pointScaled);
+          clenshawS(pointScaled,j1,j2,j3,entry);
+          result(j++,i)=entry(0);
+        }
   }
 
   return result;
+}
+
+template <typename KernelType, typename ValueType>
+void FmmBlackBox<KernelType, ValueType>::SMatrix_1D(
+    const CoordinateType parentPosition,
+    const CoordinateType parentSize,
+    const CoordinateType childPosition,
+    const CoordinateType childSize,
+    Matrix<ValueType>& result) const
+{
+  const size_t N = this->getN();
+  result.resize(N,N);
+
+  CoordinateType m = childSize/parentSize;
+  CoordinateType c = 2*(childPosition-parentPosition)/parentSize;
+
+  for(int i=0;i<N;++i){
+    CoordinateType childP = m * m_Tk(i,1) + c;
+    for(size_t j1=0;j1<N;++j1){
+      CoordinateType parentP = m_Tk(j1,1);
+      result(j1,i) = clenshawS_1D(parentP,childP);
+    }
+  }
+}
+
+template <typename KernelType, typename ValueType>
+void FmmBlackBox<KernelType, ValueType>::clenshawS(
+    const Vector<CoordinateType>& point,
+    const unsigned int mx,
+    const unsigned int my,
+    const unsigned int mz,
+    Vector<ValueType>& result) const
+{
+  unsigned int N = this->getN();
+  ValueType S=1.;
+  for(int dim=0;dim<3;++dim){
+    const unsigned int m = dim==0 ? mx : dim==1 ? my : mz;
+    S *= clenshawS_1D(point(dim),m);
+  }
+  result.resize(1);
+  result(0) = S;
+}
+
+template <typename KernelType, typename ValueType>
+ValueType FmmBlackBox<KernelType, ValueType>::clenshawS_1D(
+    const CoordinateType p,
+    const unsigned int m) const
+{
+  unsigned int N = this->getN();
+  ValueType b[N + 2];
+  b[N] = b[N + 1] = 0;
+  for(int k=N-1;k>0;--k)
+    b[k] = m_Tk(m,k) + 2*p*b[k+1] - b[k+2];
+  return (ValueType(.5)+p*b[1]-b[2])*2./ValueType(N);
 }
 
 template <typename KernelType, typename ValueType>
@@ -191,21 +272,30 @@ void FmmBlackBox<KernelType, ValueType>::getKernelWeight(
     kernelWeightVec(i) = 1. / kernelWeightVec(i);
 }
 
+template <typename KernelType, typename ValueType>
+void FmmBlackBox<KernelType, ValueType>::scalePoint(
+    const Vector<CoordinateType>& point,
+    const Vector<CoordinateType>& center,
+    const Vector<CoordinateType>& size,
+    Vector<CoordinateType>& pointScaled) const
+{
+  pointScaled.resize(3);
+  pointScaled.fill(0.);
+  for(int i=0;i<3;++i)
+    pointScaled(i) = 2*(point(i)-center(i))/size(i);
+}
 
 template <typename KernelType, typename ValueType>
 void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointS(
     const Vector<CoordinateType>& point,
     const Vector<CoordinateType>& normal,
-    const Vector<CoordinateType>& multipoleScaled, // [-1,1]
+    const Vector<CoordinateType>& multipoleScaled,
     const Vector<CoordinateType>& nodeCenter,
     const Vector<CoordinateType>& nodeSize,
     Vector<ValueType>& result) const
 {
-  Vector<CoordinateType> pointScaled(nodeCenter.rows());
-  pointScaled.fill(0.);
-  for(int i=0;i<multipoleScaled.rows();++i)
-    if(nodeSize(i)>0)
-      pointScaled(i) = 2*(point(i)-nodeCenter(i))/nodeSize(i);
+  Vector<CoordinateType> pointScaled;
+  scalePoint(point, nodeCenter, nodeSize, pointScaled);
 
   CoordinateType S = 1.0;
   CoordinateType TkMultipole[this->getN()];
@@ -267,11 +357,8 @@ void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointGradS(
     const Vector<CoordinateType>& nodeSize,
     Vector<ValueType>& result) const
 {
-  Vector<CoordinateType> pointScaled(nodeCenter.rows());
-  pointScaled.fill(0.);
-  for(int i=0;i<multipoleScaled.rows();++i)
-    if(nodeSize(i)>0)
-      pointScaled(i) = 2*(point(i)-nodeCenter(i))/nodeSize(i);
+  Vector<CoordinateType> pointScaled;
+  scalePoint(point,nodeCenter,nodeSize,pointScaled);
 
   CoordinateType S[3], diffS[3];
   CoordinateType TkMultipole[this->getN()];

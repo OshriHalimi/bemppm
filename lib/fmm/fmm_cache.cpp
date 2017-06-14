@@ -8,7 +8,6 @@
 #include <complex>
 #include <string>
 #include <sstream>
-#include <chrono>
 
 namespace fmm
 {
@@ -32,8 +31,6 @@ FmmCache<ValueType>::initCache(
   origin.fill(0);
 
   m_cacheM2L.resize(m_levels-m_topLevel+1);
-
-    std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
 
   for (unsigned int level = m_topLevel; level<=m_levels; ++level) {
     // there are 7^3-3^3=316 unique translation matrices for translation
@@ -71,10 +68,6 @@ FmmCache<ValueType>::initCache(
       m_cacheM2L[level-m_topLevel][n] = m2l;
     });
   }
-    std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>( t2 - t1 ).count();
-    std::cout << "Duration " << duration << std::endl;
-
   // M2M & L2L cache
   m_cacheM2M.resize(m_levels-m_topLevel);
   m_cacheL2L.resize(m_levels-m_topLevel);

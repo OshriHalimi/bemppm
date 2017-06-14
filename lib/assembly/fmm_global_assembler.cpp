@@ -210,8 +210,8 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   octree->enlargeBoxes(trialDofLocations, trialDofCorners);
 
   std::chrono::high_resolution_clock::time_point tt2 = std::chrono::high_resolution_clock::now();
-  auto tduration = std::chrono::duration_cast<std::chrono::milliseconds>( tt2 - tt1 ).count();
-  std::cout << "assignPoints & enlargeBoxes " << tduration << std::endl;
+  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>( tt2 - tt1 ).count();
+  std::cout << "assignPoints & enlargeBoxes " << duration << std::endl;
 
   if(cacheIO){
     auto compressFactor = parameterList.template get<double>("options.fmm.compression_factor");
@@ -227,6 +227,8 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   unsigned int nLeaves = fmm::getNodesPerLevel(octree->levels());
 
   std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+  duration = std::chrono::duration_cast<std::chrono::milliseconds>( t1 - tt2 ).count();
+  std::cout << "initCache " << duration << std::endl;
 
   fmm::FmmNearFieldHelper<BasisFunctionType, ResultType> fmmNearFieldHelper(
         octree, testSpace, trialSpace, localAssemblers, denseTermsMultipliers, 
@@ -234,7 +236,7 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   tbb::parallel_for<unsigned int>(0, nLeaves, fmmNearFieldHelper);
 
   std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>( t2 - t1 ).count();
+  duration = std::chrono::duration_cast<std::chrono::milliseconds>( t2 - t1 ).count();
   std::cout << "FmmNearFieldHelper " << duration << std::endl;
 
 
@@ -247,6 +249,7 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   std::chrono::high_resolution_clock::time_point t3 = std::chrono::high_resolution_clock::now();
   duration = std::chrono::duration_cast<std::chrono::milliseconds>( t3 - t2 ).count();
   std::cout << "FmmFarFieldHelper " << duration << std::endl;
+
 
   unsigned int symm = NO_SYMMETRY;
   if (symmetry) {
