@@ -308,14 +308,14 @@ laplaceSingleLayerPotentialOperator(
       typename Fiber::ScalarTraits<BasisFunctionType>::RealType
       CoordinateType;
 
-/*  typedef
-      PotentialOperator<BasisFunctionType, ResultType>
-      Op;*/
+  typedef
+      Laplace3dDoubleLayerPotentialOperator<BasisFunctionType, ResultType>
+      Op;
 
   shared_ptr<Matrix<CoordinateType>> pointsPtr(
       new Matrix<CoordinateType>(evaluationPoints));
 
-  shared_ptr<Op> op;
+  shared_ptr<PotentialOperator<BasisFunctionType, ResultType>> op;
 
 /*  if(assemblyOptions.assemblyMode() == AssemblyOptions::FMM) {
     shared_ptr<fmm::FmmTransform<ResultType>> fmmTransform;
@@ -325,9 +325,10 @@ laplaceSingleLayerPotentialOperator(
                                       ResultType>>(SingleFunctor(),
                                                    expansionOrder);
     op.reset(new Op(fmmTransform));
-  } else*/
-    op.reset(new Op<BasisFunctionType, ResultType>());
-  return op->assemble(space, pointsPtr, parameterList).discreteOperator();
+  } else {*/
+    op.reset(new Op());
+    return op->assemble(space, pointsPtr, parameterList).discreteOperator();
+  //}
 }
 
 template <typename BasisFunctionType, typename ResultType>
