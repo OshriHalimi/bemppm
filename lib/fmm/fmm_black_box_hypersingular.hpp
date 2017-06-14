@@ -22,16 +22,20 @@ public:
   virtual void evaluateTrial(
       const Vector<CoordinateType>& point,
       const Vector<CoordinateType>& normal,
-      const Vector<CoordinateType>& khat,
-      const Vector<CoordinateType>& nodeCentre,
+      const unsigned int mx,
+      const unsigned int my,
+      const unsigned int mz,
+      const Vector<CoordinateType>& nodeCenter,
       const Vector<CoordinateType>& nodeSize,
       Vector<ValueType>& result) const;
 
   virtual void evaluateTest(
       const Vector<CoordinateType>& point,
       const Vector<CoordinateType>& normal,
-      const Vector<CoordinateType>& khat,
-      const Vector<CoordinateType>& nodeCentre,
+      const unsigned int mx,
+      const unsigned int my,
+      const unsigned int mz,
+      const Vector<CoordinateType>& nodeCenter,
       const Vector<CoordinateType>& nodeSize,
       Vector<ValueType>& result) const;
 };

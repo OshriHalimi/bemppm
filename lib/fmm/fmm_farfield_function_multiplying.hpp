@@ -18,8 +18,11 @@ public:
   typedef ResultType ValueType;
   typedef typename Bempp::ScalarTraits<ValueType>::RealType CoordinateType;
 
-  FmmFarfieldFunctionMultiplying(const Vector<CoordinateType>& khat,
-      const Vector<CoordinateType>& nodeCentre,
+  FmmFarfieldFunctionMultiplying(
+      const size_t mx,
+      const size_t my,
+      const size_t mz,
+      const Vector<CoordinateType>& nodeCenter,
       const Vector<CoordinateType>& nodeSize,
       const FmmTransform<ResultType>& fmmTransform,
       const bool isTest);
@@ -35,8 +38,10 @@ public:
       const Vector<CoordinateType>& normal,
       Vector<ValueType>& result) const;
 private:
-  const Vector<CoordinateType> &m_khat;
-  const Vector<CoordinateType> &m_nodeCentre;
+  const int m_mx;
+  const int m_my;
+  const int m_mz;
+  const Vector<CoordinateType> &m_nodeCenter;
   const Vector<CoordinateType> &m_nodeSize;
   const FmmTransform<ResultType>& m_fmmTransform;
   const bool m_isTest;

@@ -23,6 +23,8 @@
 namespace fmm
 {
 
+//#define DEBUG
+
 template <typename CoordinateType>
 CoordinateType getPoint3DCoord(Point3D<CoordinateType> p, int n){
     if(n==0) return p.x;

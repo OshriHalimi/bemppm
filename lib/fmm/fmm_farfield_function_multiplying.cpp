@@ -9,13 +9,13 @@ namespace fmm
 
 template <typename ResultType>
 FmmFarfieldFunctionMultiplying<ResultType>::FmmFarfieldFunctionMultiplying(
-    const Vector<CoordinateType>& khat,
-    const Vector<CoordinateType>& nodeCentre,
+    const size_t mx, const size_t my, const size_t mz,
+    const Vector<CoordinateType>& nodeCenter,
     const Vector<CoordinateType>& nodeSize,
     const FmmTransform<ResultType>& fmmTransform,
     const bool isTest)
-  : m_khat(khat), m_nodeCentre(nodeCentre), m_nodeSize(nodeSize),
-    m_fmmTransform(fmmTransform), m_isTest(isTest)
+  : m_mx(mx), m_my(my), m_mz(mz), m_nodeCenter(nodeCenter),
+    m_nodeSize(nodeSize), m_fmmTransform(fmmTransform), m_isTest(isTest)
 {}
 
 template <typename ResultType>
@@ -37,11 +37,11 @@ inline void FmmFarfieldFunctionMultiplying<ResultType>::evaluate(
     Vector<ValueType>& result) const
 {
   if(m_isTest)
-    m_fmmTransform.evaluateTest(point, normal, m_khat, m_nodeCentre,
-                                m_nodeSize, result);
+    m_fmmTransform.evaluateTest(point, normal, m_mx, m_my, m_mz,
+                                 m_nodeCenter, m_nodeSize, result);
   else
-    m_fmmTransform.evaluateTrial(point, normal, m_khat, m_nodeCentre,
-                                 m_nodeSize, result);
+    m_fmmTransform.evaluateTrial(point, normal, m_mx, m_my, m_mz,
+                                 m_nodeCenter, m_nodeSize, result);
 }
 
 FIBER_INSTANTIATE_CLASS_TEMPLATED_ON_RESULT(FmmFarfieldFunctionMultiplying);

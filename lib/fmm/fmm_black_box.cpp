@@ -13,7 +13,7 @@ namespace fmm
 
 // kind 1: T_k(x), kind 2: U_k(x), for k=0..N-1
 template <typename ValueType>
-void chebyshev(ValueType *Tk, unsigned int N, ValueType x, int kind=1)
+void chebyshev(ValueType *Tk, const unsigned int N, ValueType x, int kind=1)
 {
   Tk[0] = 1;
   Tk[1] = kind*x;
@@ -89,32 +89,6 @@ Matrix<ValueType> FmmBlackBox<KernelType, ValueType>::M2M(
               result(j++,i)=S1(j1,i1)*S2(j2,i2)*S3(j3,i3);
         i++;
       }
-
-  for(int i=0;i<quadPoints;++i){
-    Vector<CoordinateType> childMultipole(3);
-    for(int dim=0;dim<3;++dim)
-      childMultipole(dim) = this->m_chebyshevPoints(dim, i);
-    size_t j=0;
-    for(size_t j1=0;j1<N;++j1)
-      for(size_t j2=0;j2<N;++j2)
-        for(size_t j3=0;j3<N;++j3){
-          Vector<CoordinateType> parentMultipole(3);
-          for(int dim=0;dim<3;++dim)
-            parentMultipole(dim) = this->m_chebyshevPoints(dim, j);
-          Vector<ValueType> entry;
-          Vector<CoordinateType> normal;
-
-          Vector<CoordinateType> point(3);
-          for(int dim=0;dim<3;++dim)
-            point(dim) = childPosition(dim)
-                       + childMultipole(dim)*childSize(dim)/2;
-          Vector<CoordinateType> pointScaled;
-          scalePoint(point, parentPosition, parentSize, pointScaled);
-          clenshawS(pointScaled,j1,j2,j3,entry);
-          result(j++,i)=entry(0);
-        }
-  }
-
   return result;
 }
 
@@ -134,29 +108,9 @@ void FmmBlackBox<KernelType, ValueType>::SMatrix_1D(
 
   for(int i=0;i<N;++i){
     CoordinateType childP = m * m_Tk(i,1) + c;
-    for(size_t j1=0;j1<N;++j1){
-      CoordinateType parentP = m_Tk(j1,1);
-      result(j1,i) = clenshawS_1D(parentP,childP);
-    }
+    for(size_t j1=0;j1<N;++j1)
+      result(j1,i) = clenshawS_1D(childP,j1);
   }
-}
-
-template <typename KernelType, typename ValueType>
-void FmmBlackBox<KernelType, ValueType>::clenshawS(
-    const Vector<CoordinateType>& point,
-    const unsigned int mx,
-    const unsigned int my,
-    const unsigned int mz,
-    Vector<ValueType>& result) const
-{
-  unsigned int N = this->getN();
-  ValueType S=1.;
-  for(int dim=0;dim<3;++dim){
-    const unsigned int m = dim==0 ? mx : dim==1 ? my : mz;
-    S *= clenshawS_1D(point(dim),m);
-  }
-  result.resize(1);
-  result(0) = S;
 }
 
 template <typename KernelType, typename ValueType>
@@ -164,7 +118,7 @@ ValueType FmmBlackBox<KernelType, ValueType>::clenshawS_1D(
     const CoordinateType p,
     const unsigned int m) const
 {
-  unsigned int N = this->getN();
+  const unsigned int N = this->getN();
   ValueType b[N + 2];
   b[N] = b[N + 1] = 0;
   for(int k=N-1;k>0;--k)
@@ -195,16 +149,18 @@ Matrix<ValueType> FmmBlackBox<KernelType, ValueType>::M2L(
   Fiber::GeometricalData<CoordinateType> fieldData;
   Fiber::GeometricalData<CoordinateType> sourceData;
 
-  CoordinateType n3 = getN()*getN()*getN();
+  const unsigned int N = this->getN();
+
+  CoordinateType n3 = N*N*N;
   fieldData.globals.resize(3, n3);
   sourceData.globals.resize(3, n3);
   fieldData.normals.resize(3, n3);
   sourceData.normals.resize(3, n3);
 
   Matrix<CoordinateType> fieldNodes;
-  fieldNodes.resize(getN(), 3);
+  fieldNodes.resize(N, 3);
   Matrix<CoordinateType> sourceNodes;
-  sourceNodes.resize(getN(), 3);
+  sourceNodes.resize(N, 3);
   for (unsigned int dim = 0; dim < boxSize.rows(); dim++) {
     for(int i=0;i<fieldNodes.rows();++i){
       fieldNodes(i,dim)  = (m_Tk(i,1)*boxSize(dim)/2 + fieldCenter (dim));
@@ -215,13 +171,13 @@ Matrix<ValueType> FmmBlackBox<KernelType, ValueType>::M2L(
   Vector<CoordinateType> fieldPos (fieldCenter.rows());
   Vector<CoordinateType> sourcePos(sourceCenter.rows());
   unsigned int m = 0;
-  for (unsigned int m1 = 0; m1 < getN(); m1++) {
+  for (unsigned int m1 = 0; m1 < N; m1++) {
     fieldPos(0) = fieldNodes(m1, 0);
     sourcePos(0) = sourceNodes(m1, 0);
-    for (unsigned int m2 = 0; m2 < getN(); m2++) {
+    for (unsigned int m2 = 0; m2 < N; m2++) {
       fieldPos(1) = fieldNodes(m2, 1);
       sourcePos(1) = sourceNodes(m2, 1);
-      for (unsigned int m3 = 0; m3 < getN(); m3++) {
+      for (unsigned int m3 = 0; m3 < N; m3++) {
         fieldPos(2) = fieldNodes(m3, 2);
         sourcePos(2) = sourceNodes(m3, 2);
         fieldData.globals.col(m) = fieldPos;
@@ -251,18 +207,19 @@ void FmmBlackBox<KernelType, ValueType>::getKernelWeight(
     Matrix<ValueType>& kernelWeightMat,
     Vector<ValueType>& kernelWeightVec) const
 {
-  CoordinateType n3 = getN()*getN()*getN();
+  const unsigned int N = this->getN();
+  CoordinateType n3 = N*N*N;
   kernelWeightVec.resize(n3);
 
   // Here, we use Omega directly, following the bbFMM code directly, as opposed 
   // to sqrt(Omega) as detailed in Fong's paper. Need to look into differences.
-  CoordinateType weights[getN()];
-  for (unsigned int k = 0; k < getN(); k++)
+  CoordinateType weights[N];
+  for (unsigned int k = 0; k < N; k++)
     weights[k] = sqrt(1 - m_Tk(k,1)*m_Tk(k,1));
   unsigned int m = 0;
-  for (unsigned int m1 = 0; m1 < getN(); m1++)
-    for (unsigned int m2 = 0; m2 < getN(); m2++)
-      for (unsigned int m3 = 0; m3 < getN(); m3++) {
+  for (unsigned int m1 = 0; m1 < N; m1++)
+    for (unsigned int m2 = 0; m2 < N; m2++)
+      for (unsigned int m3 = 0; m3 < N; m3++) {
         CoordinateType weightm = weights[m1]*weights[m2]*weights[m3];
         kernelWeightVec(m) = weightm;
         ++m;
@@ -289,7 +246,9 @@ template <typename KernelType, typename ValueType>
 void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointS(
     const Vector<CoordinateType>& point,
     const Vector<CoordinateType>& normal,
-    const Vector<CoordinateType>& multipoleScaled,
+    const unsigned int mx,
+    const unsigned int my,
+    const unsigned int mz,
     const Vector<CoordinateType>& nodeCenter,
     const Vector<CoordinateType>& nodeSize,
     Vector<ValueType>& result) const
@@ -297,33 +256,25 @@ void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointS(
   Vector<CoordinateType> pointScaled;
   scalePoint(point, nodeCenter, nodeSize, pointScaled);
 
-  CoordinateType S = 1.0;
-  CoordinateType TkMultipole[this->getN()];
-  CoordinateType TkPoint[this->getN()];
-  for (unsigned int dim=0; dim<point.rows(); ++dim) {
-    chebyshev(TkMultipole, this->getN(), multipoleScaled[dim], 1);
-    chebyshev(TkPoint, this->getN(), pointScaled[dim], 1);
-
-    CoordinateType localS = TkMultipole[0]*TkPoint[0];
-    for (unsigned int j = 1; j < this->getN(); ++j)
-      localS += 2*TkMultipole[j]*TkPoint[j];
-    S *= localS/(this->getN());
-  }
   result.resize(1);
-  result(0) =  S;
+  result(0) = clenshawS_1D(pointScaled(0),mx);
+  result(0)*= clenshawS_1D(pointScaled(1),my);
+  result(0)*= clenshawS_1D(pointScaled(2),mz);
 }
 
 template <typename KernelType, typename ValueType>
 void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointDiffS(
     const Vector<CoordinateType>& point,
     const Vector<CoordinateType>& normal,
-    const Vector<CoordinateType>& multipoleScaled, // [-1,1]
+    const unsigned int mx,
+    const unsigned int my,
+    const unsigned int mz,
     const Vector<CoordinateType>& nodeCenter,
     const Vector<CoordinateType>& nodeSize,
     Vector<ValueType>& result) const
 {
   Vector<ValueType> grad;
-  evaluateAtGaussPointGradS(point, normal, multipoleScaled,
+  evaluateAtGaussPointGradS(point, normal, mx, my, mz,
                             nodeCenter, nodeSize, grad);
   result.resize(1);
   result.fill(0.);
@@ -335,14 +286,16 @@ template <typename KernelType, typename ValueType>
 void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointGradSComponent(
     const Vector<CoordinateType>& point,
     const Vector<CoordinateType>& normal,
-    const Vector<CoordinateType>& multipoleScaled, // [-1,1]
+    const unsigned int mx,
+    const unsigned int my,
+    const unsigned int mz,
     const Vector<CoordinateType>& nodeCenter,
     const Vector<CoordinateType>& nodeSize,
     const int component,
     Vector<ValueType>& result) const
 {
   Vector<ValueType> grad;
-  evaluateAtGaussPointGradS(point, normal, multipoleScaled,
+  evaluateAtGaussPointGradS(point, normal, mx, my, mz,
                             nodeCenter, nodeSize, grad);
   result.resize(1);
   result[0] = grad[component];
@@ -352,7 +305,9 @@ template <typename KernelType, typename ValueType>
 void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointGradS(
     const Vector<CoordinateType>& point,
     const Vector<CoordinateType>& normal,
-    const Vector<CoordinateType>& multipoleScaled, // [-1,1]
+    const unsigned int mx,
+    const unsigned int my,
+    const unsigned int mz,
     const Vector<CoordinateType>& nodeCenter,
     const Vector<CoordinateType>& nodeSize,
     Vector<ValueType>& result) const
@@ -360,24 +315,26 @@ void FmmBlackBox<KernelType, ValueType>::evaluateAtGaussPointGradS(
   Vector<CoordinateType> pointScaled;
   scalePoint(point,nodeCenter,nodeSize,pointScaled);
 
-  CoordinateType S[3], diffS[3];
-  CoordinateType TkMultipole[this->getN()];
-  CoordinateType TkPoint[this->getN()];
-  CoordinateType UkPoint[this->getN()];
-  for (unsigned int dim=0; dim<point.rows(); ++dim) {
-    chebyshev(TkMultipole, this->getN(), multipoleScaled[dim], 1);
-    chebyshev(TkPoint, this->getN(), pointScaled[dim], 1);
-    chebyshev(UkPoint, this->getN(), pointScaled[dim], 2);
+  const unsigned int N = this->getN();
 
-    S[dim] = TkMultipole[0]*TkPoint[0];
+  CoordinateType S[3], diffS[3];
+  CoordinateType TkPoint[N];
+  CoordinateType UkPoint[N];
+  for (unsigned int dim=0; dim<point.rows(); ++dim) {
+    const unsigned int m = dim==0 ? mx : (dim==1 ? my : mz);
+//    chebyshev(TkMultipole, N, multipoleScaled[dim], 1);
+    chebyshev(TkPoint, N, pointScaled[dim], 1);
+    chebyshev(UkPoint, N, pointScaled[dim], 2);
+
+    S[dim] = m_Tk(m,0)*TkPoint[0];
     diffS[dim] = 0;
-    for (unsigned int j = 1; j < this->getN(); ++j){
-      S[dim] += 2*TkMultipole[j]*TkPoint[j];
+    for (unsigned int j = 1; j < N; ++j){
+      S[dim] += 2*m_Tk(m,j)*TkPoint[j];
       CoordinateType diffTkPoint = j*UkPoint[j-1];
-      diffS[dim] += 2*TkMultipole[j]*diffTkPoint;
+      diffS[dim] += 2*m_Tk(m,j)*diffTkPoint;
     }
-    S[dim] /= this->getN();
-    diffS[dim] /= this->getN();
+    S[dim] /= N;
+    diffS[dim] /= N;
   }
   result.resize(3);
   result.fill(0.);

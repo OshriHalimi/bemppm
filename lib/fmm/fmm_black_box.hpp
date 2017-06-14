@@ -43,8 +43,8 @@ public:
 
   // multipole to local (M2L) translation matrix
   virtual Matrix<ValueType> M2L(
-      const Vector<CoordinateType>& sourceCentre,
-      const Vector<CoordinateType>& fieldCentre,
+      const Vector<CoordinateType>& sourceCenter,
+      const Vector<CoordinateType>& fieldCenter,
       const Vector<CoordinateType>& boxSize,
       unsigned int level) const;
 
@@ -62,8 +62,6 @@ public:
       Matrix<ValueType>& kernelWeightMat,
       Vector<ValueType>& kernelWeightVec) const;
 
-  unsigned int getN() const {return m_n;}
-
 protected:
 
   virtual void scalePoint(
@@ -71,13 +69,6 @@ protected:
       const Vector<CoordinateType>& center,
       const Vector<CoordinateType>& size,
       Vector<CoordinateType>& pointScaled) const;
-
-  virtual void clenshawS(
-      const Vector<CoordinateType>& point,
-      const unsigned int mx,
-      const unsigned int my,
-      const unsigned int mz,
-      Vector<ValueType>& result) const;
 
   virtual ValueType clenshawS_1D(
       const CoordinateType point,
@@ -93,24 +84,30 @@ protected:
   virtual void evaluateAtGaussPointS(
       const Vector<CoordinateType>& point,
       const Vector<CoordinateType>& normal,
-      const Vector<CoordinateType>& khat,
-      const Vector<CoordinateType>& nodeCentre,
+      const unsigned int mx,
+      const unsigned int my,
+      const unsigned int mz,
+      const Vector<CoordinateType>& nodeCenter,
       const Vector<CoordinateType>& nodeSize,
       Vector<ValueType>& result) const;
 
   virtual void evaluateAtGaussPointDiffS(
       const Vector<CoordinateType>& point,
       const Vector<CoordinateType>& normal,
-      const Vector<CoordinateType>& khat,
-      const Vector<CoordinateType>& nodeCentre,
+      const unsigned int mx,
+      const unsigned int my,
+      const unsigned int mz,
+      const Vector<CoordinateType>& nodeCenter,
       const Vector<CoordinateType>& nodeSize,
       Vector<ValueType>& result) const;
 
   virtual void evaluateAtGaussPointGradSComponent(
       const Vector<CoordinateType>& point,
       const Vector<CoordinateType>& normal,
-      const Vector<CoordinateType>& khat,
-      const Vector<CoordinateType>& nodeCentre,
+      const unsigned int mx,
+      const unsigned int my,
+      const unsigned int mz,
+      const Vector<CoordinateType>& nodeCenter,
       const Vector<CoordinateType>& nodeSize,
       const int component,
       Vector<ValueType>& result) const;
@@ -118,8 +115,10 @@ protected:
   virtual void evaluateAtGaussPointGradS(
       const Vector<CoordinateType>& point,
       const Vector<CoordinateType>& normal,
-      const Vector<CoordinateType>& khat,
-      const Vector<CoordinateType>& nodeCentre,
+      const unsigned int mx,
+      const unsigned int my,
+      const unsigned int mz,
+      const Vector<CoordinateType>& nodeCenter,
       const Vector<CoordinateType>& nodeSize,
       Vector<ValueType>& result) const;
 
@@ -136,7 +135,7 @@ FmmBlackBox<KernelType, ValueType>::FmmBlackBox(
     unsigned int n)
   : m_kernels(
         new Fiber::DefaultCollectionOfKernels<KernelFunctor>(kernelFunctor)),
-    m_n(n), m_Tk(n, n), FmmTransform<ValueType>(n*n*n)
+    m_n(n), m_Tk(n, n), FmmTransform<ValueType>(n)
 {
   generateGaussPoints();
 }

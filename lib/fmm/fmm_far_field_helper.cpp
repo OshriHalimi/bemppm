@@ -74,6 +74,7 @@ FmmFarFieldHelper<BasisFunctionType, ResultType>::makeFarFieldMat(
     bool transposed) const
 {
   unsigned int multipoleCount = fmmTransform.chebyshevPointCount();
+  unsigned int N = fmmTransform.getN();
   Matrix<ResultType> result(multipoleCount, dofCount);
   if(transposed) result.resize(dofCount, multipoleCount);
   result.fill(0.);
@@ -96,31 +97,36 @@ FmmFarFieldHelper<BasisFunctionType, ResultType>::makeFarFieldMat(
   const std::vector<std::vector<int> >& blockCols =
       dofLists->arrayIndices;
 
-  for (size_t multipole = 0; multipole < multipoleCount; ++multipole) {
-    Vector<CoordinateType> khat = fmmTransform.getChebyshevPoint(multipole);
-    typedef ResultType UserFunctionType;
 
-    // TODO: replace with potential evaluation functor
-    typedef FmmFarfieldFunctionMultiplying<UserFunctionType> FunctorType;
-    FunctorType functor(khat, nodeCenter, nodeSize, fmmTransform, isTest);
-    Fiber::SurfaceNormalDependentFunction<FunctorType> function(functor);
+  size_t multipole = 0;
+  for (size_t mx = 0; mx < N; ++mx)
+    for (size_t my = 0; my < N; ++my)
+      for (size_t mz = 0; mz < N; ++mz){
+        typedef ResultType UserFunctionType;
 
-    fmmLocalAssembler.setFunction(&function);
+        // TODO: replace with potential evaluation functor
+        typedef FmmFarfieldFunctionMultiplying<UserFunctionType> FunctorType;
+        FunctorType functor(mx, my, mz, nodeCenter, nodeSize,
+                            fmmTransform, isTest);
+        Fiber::SurfaceNormalDependentFunction<FunctorType> function(functor);
 
-    std::vector<Vector<ResultType> > localResult;
-    fmmLocalAssembler.evaluateLocalWeakForms(elementIndices, localResult);
+        fmmLocalAssembler.setFunction(&function);
 
-    for (size_t nElem = 0; nElem < elementIndices.size(); ++nElem)
-      for (size_t nDof = 0;nDof < localDofs[nElem].size();++nDof)
-        if(transposed)
-          result(blockCols[nElem][nDof], multipole) +=
-              localDofWeights[nElem][nDof]
-            * localResult[nElem](localDofs[nElem][nDof]);
-        else
-          result(multipole, blockCols[nElem][nDof]) +=
-              localDofWeights[nElem][nDof]
-            * localResult[nElem](localDofs[nElem][nDof]);
-  } // for each multipole
+        std::vector<Vector<ResultType> > localResult;
+        fmmLocalAssembler.evaluateLocalWeakForms(elementIndices, localResult);
+
+        for (size_t nElem = 0; nElem < elementIndices.size(); ++nElem)
+          for (size_t nDof = 0;nDof < localDofs[nElem].size();++nDof)
+            if(transposed)
+              result(blockCols[nElem][nDof], multipole) +=
+                  localDofWeights[nElem][nDof]
+                * localResult[nElem](localDofs[nElem][nDof]);
+            else
+              result(multipole, blockCols[nElem][nDof]) +=
+                  localDofWeights[nElem][nDof]
+                * localResult[nElem](localDofs[nElem][nDof]);
+        ++multipole;
+      } // for each multipole
   return result;
 } // Octree::makeFarFieldMat
 

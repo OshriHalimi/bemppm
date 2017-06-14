@@ -17,9 +17,10 @@ class FmmTransform
 public:
   typedef typename Fiber::ScalarTraits<ValueType>::RealType CoordinateType;
 
-  FmmTransform(unsigned int chebyshevPointCount)
-    : m_chebyshevPoints(3, chebyshevPointCount),
-      m_chebyshevWeights(chebyshevPointCount)
+  FmmTransform(unsigned int N)
+    : m_chebyshevPoints(3, N*N*N),
+      m_chebyshevWeights(N*N*N),
+      m_N(N)
   {}
 
   const Vector<CoordinateType>& getWeights() const
@@ -30,6 +31,11 @@ public:
   unsigned int chebyshevPointCount() const
   {
     return m_chebyshevPoints.cols();
+  }
+
+  unsigned int getN() const
+  {
+    return m_N;
   }
 
   Vector<CoordinateType> getChebyshevPoint(unsigned int index) const
@@ -72,7 +78,9 @@ public:
   virtual void evaluateTrial(
       const Vector<CoordinateType>& point,
       const Vector<CoordinateType>& normal,
-      const Vector<CoordinateType>& khat,
+      const unsigned int mx,
+      const unsigned int my,
+      const unsigned int mz,
       const Vector<CoordinateType>& nodeCenter,
       const Vector<CoordinateType>& nodeSize,
       Vector<ValueType>& result) const = 0;
@@ -81,7 +89,9 @@ public:
   virtual void evaluateTest(
       const Vector<CoordinateType>& point,
       const Vector<CoordinateType>& normal,
-      const Vector<CoordinateType>& khat,
+      const unsigned int mx,
+      const unsigned int my,
+      const unsigned int mz,
       const Vector<CoordinateType>& nodeCenter,
       const Vector<CoordinateType>& nodeSize,
       Vector<ValueType>& result) const = 0;
@@ -94,6 +104,7 @@ public:
   }
 
 protected:
+  const unsigned int m_N;
   Matrix<CoordinateType> m_chebyshevPoints;
   Vector<CoordinateType> m_chebyshevWeights;
 };
