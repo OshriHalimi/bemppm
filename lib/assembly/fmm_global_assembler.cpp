@@ -29,6 +29,7 @@
 #include "potential_operator_hmat_assembly_helper.hpp"
 #include "weak_form_hmat_assembly_helper.hpp"
 #include "discrete_fmm_boundary_operator.hpp"
+#include "dense_global_assembler.hpp"
 
 #include "../common/auto_timer.hpp"
 #include "../common/bounding_box.hpp"
@@ -149,6 +150,25 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
     upperBound(i) = std::min(upperBoundTest(i),upperBoundTrial(i));
     if(lowerBound(i)==upperBound(i)) upperBound(i)=lowerBound(i) + 1; // TODO: think about this more!
   }
+
+
+  // Compute maximum possible number of levels
+
+  const auto& grid = *actualTrialSpace->grid();
+  double maxDiam = (upperBound - lowerBound).maxCoeff();
+  double h = grid.leafView()->maximumElementDiameter();
+
+  int maxLevels = (int) std::trunc(std::log2(maxDiam / (3 * h)));
+  std::cout << "Maximum Level " << maxLevels << std::endl;
+
+  if (levels < 0 || levels > maxLevels) levels = maxLevels;
+
+  // If too few levels return a dense assembler
+
+  if (levels < 3)
+    return DenseGlobalAssembler<BasisFunctionType, ResultType>::
+        assembleDetachedWeakForm(testSpace, trialSpace,
+            *localAssemblers[0], context);
 
   // Make octree
   shared_ptr<fmm::Octree<ResultType>> octree;

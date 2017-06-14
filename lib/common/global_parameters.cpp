@@ -113,7 +113,7 @@ ParameterList GlobalParameters::parameterList() {
   parameters.put("options.hmat.compressionAlgorithm", std::string("aca"));
 
   // FMM levels
-  parameters.put("options.fmm.levels", static_cast<int>(3));
+  parameters.put("options.fmm.levels", static_cast<int>(-1));
 
   // FMM expansion order
   parameters.put("options.fmm.expansion_order", static_cast<int>(4));

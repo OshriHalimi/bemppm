@@ -30,6 +30,14 @@ cdef class GridView:
     def __init__(self):
         pass
 
+    cpdef maximum_element_diameter(self):
+        """Return maximum element diameter (via circumcircle)."""
+        return deref(self.impl_).maximumElementDiameter()
+
+    cpdef minimum_element_diameter(self):
+        """Return minimum element diameter (via circumcircle)."""
+        return deref(self.impl_).minimumElementDiameter()
+
     cpdef size_t entity_count(self,int codim):
         """Return the number of entities of the given codim."""
         return deref(self.impl_).entityCount(codim)

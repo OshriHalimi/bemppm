@@ -19,6 +19,8 @@ cdef extern from "bempp/grid/grid_view.hpp" namespace "Bempp":
     cdef cppclass c_GridView "Bempp::GridView":
         int dim() const
         int dimWorld() const
+        double minimumElementDiameter() const
+        double maximumElementDiameter() const
         size_t entityCount(int codim) const
         const c_IndexSet& indexSet() const
 
@@ -34,6 +36,7 @@ cdef extern from "bempp/grid/grid_view.hpp" namespace "Bempp":
         unique_ptr[c_EntityIterator[codim_two]]\
             entityIterator2 "entityIterator<2>"() const
         
+        
 
 cdef class GridView:
     cdef cbool _raw_data_is_computed 
@@ -44,6 +47,8 @@ cdef class GridView:
     cdef Grid _grid
     cpdef size_t entity_count(self,int codim)
     cpdef IndexSet index_set(self)
+    cpdef minimum_element_diameter(self)
+    cpdef maximum_element_diameter(self)
     cdef void _compute_raw_element_data(self)
     cpdef EntityIterator0 _entity_iterator0(self)
     cpdef EntityIterator1 _entity_iterator1(self)

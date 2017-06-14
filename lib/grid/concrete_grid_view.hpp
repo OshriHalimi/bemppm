@@ -103,6 +103,47 @@ public:
     return m_reverse_element_mapper;
   }
 
+  virtual double minimumElementDiameter() const {
+
+    double result = std::numeric_limits<double>::infinity();
+
+    for (auto it = this->entityIterator<0>(); !it->finished(); it->next() ){
+      const auto& elem = it->entity();
+      Matrix<double> corners;
+      elem.geometry().getCorners(corners);
+      Eigen::Vector3d a = (corners.col(1) - corners.col(0));
+      Eigen::Vector3d b = (corners.col(2) - corners.col(0));
+      double diam = a.norm() * b.norm() * (a - b).norm() / a.cross(b).norm();
+
+      if (diam < result) result = diam;
+    }
+
+    return result;
+
+  }
+
+  virtual double maximumElementDiameter() const {
+
+    double result = 0;
+
+    for (auto it = this->entityIterator<0>(); !it->finished(); it->next() ){
+      const auto& elem = it->entity();
+      Matrix<double> corners;
+      elem.geometry().getCorners(corners);
+
+      Eigen::Vector3d a = corners.col(1) - corners.col(0);
+      Eigen::Vector3d b = corners.col(2) - corners.col(0);
+
+      double diam = a.norm() * b.norm() * (a - b).norm() / a.cross(b).norm();
+
+      if (diam > result) result = diam;
+    }
+
+    return result;
+
+  }
+
+
   virtual std::unique_ptr<VtkWriter>
   vtkWriter(Dune::VTK::DataMode dm = Dune::VTK::conforming) const {
     return std::unique_ptr<VtkWriter>(
