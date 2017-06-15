@@ -148,7 +148,10 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   for(int i=0;i<3;++i){
     lowerBound(i) = std::min(lowerBoundTest(i),lowerBoundTrial(i));
     upperBound(i) = std::min(upperBoundTest(i),upperBoundTrial(i));
-    if(lowerBound(i)==upperBound(i)) upperBound(i)=lowerBound(i) + 1; // TODO: think about this more!
+    if(lowerBound(i)==upperBound(i)){
+      upperBound(i)+=.5;
+      lowerBound(i)-=.5;
+    }
   }
 
 
