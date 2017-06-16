@@ -98,33 +98,32 @@ FmmFarFieldHelper<BasisFunctionType, ResultType>::makeFarFieldMat(
       dofLists->arrayIndices;
 
 
+  typedef ResultType UserFunctionType;
+
+  // TODO: replace with potential evaluation functor
+  typedef FmmFarfieldFunctionMultiplying<UserFunctionType> FunctorType;
+  FunctorType functor(nodeCenter, nodeSize, fmmTransform, isTest);
+  Fiber::SurfaceNormalDependentFunction<FunctorType> function(functor);
+
+  fmmLocalAssembler.setFunction(&function);
+
+  std::vector<Vector<Vector<ResultType>> > localResult;
+  fmmLocalAssembler.evaluateLocalWeakForms(elementIndices, localResult);
+
   size_t multipole = 0;
   for (size_t mx = 0; mx < N; ++mx)
     for (size_t my = 0; my < N; ++my)
       for (size_t mz = 0; mz < N; ++mz){
-        typedef ResultType UserFunctionType;
-
-        // TODO: replace with potential evaluation functor
-        typedef FmmFarfieldFunctionMultiplying<UserFunctionType> FunctorType;
-        FunctorType functor(mx, my, mz, nodeCenter, nodeSize,
-                            fmmTransform, isTest);
-        Fiber::SurfaceNormalDependentFunction<FunctorType> function(functor);
-
-        fmmLocalAssembler.setFunction(&function);
-
-        std::vector<Vector<Vector<ResultType>> > localResult;
-        fmmLocalAssembler.evaluateLocalWeakForms(elementIndices, localResult);
-
         for (size_t nElem = 0; nElem < elementIndices.size(); ++nElem)
           for (size_t nDof = 0;nDof < localDofs[nElem].size();++nDof)
             if(transposed)
               result(blockCols[nElem][nDof], multipole) +=
                   localDofWeights[nElem][nDof]
-                * localResult[nElem](localDofs[nElem][nDof])(0);
+                * localResult[nElem](localDofs[nElem][nDof])(multipole);
             else
               result(multipole, blockCols[nElem][nDof]) +=
                   localDofWeights[nElem][nDof]
-                * localResult[nElem](localDofs[nElem][nDof])(0);
+                * localResult[nElem](localDofs[nElem][nDof])(multipole);
         ++multipole;
       } // for each multipole
   return result;

@@ -126,13 +126,11 @@ void MultidimensionalNumericalTestFunctionIntegrator<
     for (int testDof = 0; testDof < testDofCount; ++testDof) {
       Vector<ResultType> v(m_function.codomainDimension());
       v.fill(0.);
-      for (size_t point = 0; point < pointCount; ++point) {
-        for(int i=0;i<v.rows();++i){
+      for (size_t point = 0; point < pointCount; ++point)
+        for(int i=0;i<v.rows();++i)
           v(i) += m_quadWeights[point] * geomData.integrationElements(point) *
                  conjugate(testValues[0](0, testDof, point)) *
                  functionValues(i,point);
-        }
-      }
       result(testDof, e) = v;
     }
   }

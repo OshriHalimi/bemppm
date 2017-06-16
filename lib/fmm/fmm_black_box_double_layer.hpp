@@ -22,9 +22,6 @@ public:
     virtual void evaluateTrial(
         const Vector<CoordinateType>& point,
         const Vector<CoordinateType>& normal,
-        const unsigned int mx,
-        const unsigned int my,
-        const unsigned int mz,
         const Vector<CoordinateType>& nodeCenter,
         const Vector<CoordinateType>& nodeSize,
         Vector<ValueType>& result) const;
@@ -32,9 +29,6 @@ public:
     virtual void evaluateTest(
         const Vector<CoordinateType>& point,
         const Vector<CoordinateType>& normal,
-        const unsigned int mx,
-        const unsigned int my,
-        const unsigned int mz,
         const Vector<CoordinateType>& nodeCenter,
         const Vector<CoordinateType>& nodeSize,
         Vector<ValueType>& result) const;

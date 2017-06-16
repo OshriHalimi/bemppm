@@ -74,6 +74,10 @@ protected:
       const CoordinateType point,
       const unsigned int m) const;
 
+  virtual ValueType clenshawDiffS_1D(
+      const CoordinateType point,
+      const unsigned int m) const;
+
   virtual void SMatrix_1D(
       const CoordinateType parentPosition,
       const CoordinateType parentSize,
@@ -84,9 +88,6 @@ protected:
   virtual void evaluateAtGaussPointS(
       const Vector<CoordinateType>& point,
       const Vector<CoordinateType>& normal,
-      const unsigned int mx,
-      const unsigned int my,
-      const unsigned int mz,
       const Vector<CoordinateType>& nodeCenter,
       const Vector<CoordinateType>& nodeSize,
       Vector<ValueType>& result) const;
@@ -94,9 +95,6 @@ protected:
   virtual void evaluateAtGaussPointDiffS(
       const Vector<CoordinateType>& point,
       const Vector<CoordinateType>& normal,
-      const unsigned int mx,
-      const unsigned int my,
-      const unsigned int mz,
       const Vector<CoordinateType>& nodeCenter,
       const Vector<CoordinateType>& nodeSize,
       Vector<ValueType>& result) const;
@@ -104,9 +102,6 @@ protected:
   virtual void evaluateAtGaussPointGradSComponent(
       const Vector<CoordinateType>& point,
       const Vector<CoordinateType>& normal,
-      const unsigned int mx,
-      const unsigned int my,
-      const unsigned int mz,
       const Vector<CoordinateType>& nodeCenter,
       const Vector<CoordinateType>& nodeSize,
       const int component,
@@ -115,12 +110,9 @@ protected:
   virtual void evaluateAtGaussPointGradS(
       const Vector<CoordinateType>& point,
       const Vector<CoordinateType>& normal,
-      const unsigned int mx,
-      const unsigned int my,
-      const unsigned int mz,
       const Vector<CoordinateType>& nodeCenter,
       const Vector<CoordinateType>& nodeSize,
-      Vector<ValueType>& result) const;
+      Matrix<ValueType>& result) const;
 
 private:
   unsigned int m_n;

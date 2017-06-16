@@ -208,7 +208,6 @@ void FmmLocalAssembler<BasisFunctionType, ResultType>::evaluateLocalWeakForms(
         result[e] = localResult.col(i++);
 
   } // for each quadrature variant
-
 }
 
 
