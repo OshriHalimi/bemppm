@@ -7,8 +7,8 @@
 #include "../fiber/function.hpp"
 
 #include "../fiber/collection_of_3d_arrays.hpp"
-#include "../fiber/numerical_test_function_integrator.hpp"
-#include "../fiber/test_function_integrator.hpp"
+#include "../fiber/multidimensional_numerical_test_function_integrator.hpp"
+#include "../fiber/multidimensional_test_function_integrator.hpp"
 #include "../fiber/quadrature_options.hpp"
 #include "../grid/geometry_factory.hpp"
 
@@ -80,7 +80,7 @@ void FmmLocalAssembler<BasisFunctionType, ResultType>::clearIntegratorMap()
 
 
 template <typename BasisFunctionType, typename ResultType>
-const Fiber::TestFunctionIntegrator<BasisFunctionType, ResultType>& 
+const Fiber::MultidimensionalTestFunctionIntegrator<BasisFunctionType, ResultType>& 
 FmmLocalAssembler<BasisFunctionType,
                   ResultType>::selectIntegrator(int elementIndex)
 {
@@ -98,7 +98,7 @@ FmmLocalAssembler<BasisFunctionType,
 }
 
 template <typename BasisFunctionType, typename ResultType>
-const Fiber::TestFunctionIntegrator<BasisFunctionType, ResultType>& 
+const Fiber::MultidimensionalTestFunctionIntegrator<BasisFunctionType, ResultType>& 
 FmmLocalAssembler<BasisFunctionType, ResultType>::getIntegrator(
     const Fiber::SingleQuadratureDescriptor& desc)
 {
@@ -118,7 +118,7 @@ FmmLocalAssembler<BasisFunctionType, ResultType>::getIntegrator(
   Integrator* integrator;
 
   if (m_conjugateBasis) {
-    typedef Fiber::NumericalTestFunctionIntegrator<BasisFunctionType,
+    typedef Fiber::MultidimensionalNumericalTestFunctionIntegrator<BasisFunctionType,
         UserFunctionType, ResultType, Bempp::GeometryFactory> ConcreteIntegrator;
 
     integrator = new ConcreteIntegrator(points, weights,
@@ -126,7 +126,7 @@ FmmLocalAssembler<BasisFunctionType, ResultType>::getIntegrator(
                                         *m_transformations, *m_function,
                                         *m_openClHandler );
   } else {
-    typedef Fiber::NumericalTestFunctionIntegrator<BasisFunctionType,
+    typedef Fiber::MultidimensionalNumericalTestFunctionIntegrator<BasisFunctionType,
         UserFunctionType, ResultType, Bempp::GeometryFactory> ConcreteIntegrator;
 
     integrator = new ConcreteIntegrator(points, weights,
@@ -151,7 +151,7 @@ FmmLocalAssembler<BasisFunctionType, ResultType>::getIntegrator(
 template <typename BasisFunctionType, typename ResultType>
 void FmmLocalAssembler<BasisFunctionType, ResultType>::evaluateLocalWeakForms(
   const std::vector<int>& elementIndices,
-  std::vector<Vector<ResultType> > & result)
+  std::vector<Vector<Vector<ResultType>> > & result)
 {
   typedef Fiber::Shapeset<BasisFunctionType> Shapeset;
 
@@ -196,7 +196,7 @@ void FmmLocalAssembler<BasisFunctionType, ResultType>::evaluateLocalWeakForms(
         activeElementIndices.push_back(elementIndices[e]);
 
     // Integrate!
-    Matrix<ResultType> localResult;
+    Matrix<Vector<ResultType>> localResult;
 
     activeIntegrator.integrate(activeElementIndices, activeTestShapeset,
                                localResult);

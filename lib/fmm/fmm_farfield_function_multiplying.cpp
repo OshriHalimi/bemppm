@@ -27,7 +27,7 @@ int FmmFarfieldFunctionMultiplying<ResultType>::argumentDimension() const
 template <typename ResultType>
 int FmmFarfieldFunctionMultiplying<ResultType>::resultDimension() const
 {
-    return 1;
+    return m_fmmTransform.chebyshevPointCount();
 }
 
 template <typename ResultType>
@@ -36,12 +36,15 @@ inline void FmmFarfieldFunctionMultiplying<ResultType>::evaluate(
     const Vector<CoordinateType>& normal,
     Vector<ValueType>& result) const
 {
+  Vector<ValueType> result2;
   if(m_isTest)
     m_fmmTransform.evaluateTest(point, normal, m_mx, m_my, m_mz,
-                                 m_nodeCenter, m_nodeSize, result);
+                                 m_nodeCenter, m_nodeSize, result2);
   else
     m_fmmTransform.evaluateTrial(point, normal, m_mx, m_my, m_mz,
-                                 m_nodeCenter, m_nodeSize, result);
+                                 m_nodeCenter, m_nodeSize, result2);
+  result.resize(resultDimension());
+  result.fill(result2(0));
 }
 
 FIBER_INSTANTIATE_CLASS_TEMPLATED_ON_RESULT(FmmFarfieldFunctionMultiplying);

@@ -7,7 +7,7 @@
 #include "../common/shared_ptr.hpp"
 
 #include "../fiber/numerical_quadrature.hpp"
-#include "../fiber/test_function_integrator.hpp"
+#include "../fiber/multidimensional_test_function_integrator.hpp"
 
 #include <tbb/concurrent_unordered_map.h>
 #include <map>
@@ -51,11 +51,11 @@ public:
 
   void evaluateLocalWeakForms(
       const std::vector<int>& elementIndices,
-      std::vector<Vector<ResultType> > & result);
+      std::vector<Vector<Vector<ResultType>> > & result);
 
   ~FmmLocalAssembler();
 private:
-  typedef Fiber::TestFunctionIntegrator<BasisFunctionType, ResultType> Integrator;
+  typedef Fiber::MultidimensionalTestFunctionIntegrator<BasisFunctionType, ResultType> Integrator;
   typedef tbb::concurrent_unordered_map<Fiber::SingleQuadratureDescriptor,
       Integrator*> IntegratorMap;
 

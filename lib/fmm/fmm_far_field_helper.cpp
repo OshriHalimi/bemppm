@@ -112,7 +112,7 @@ FmmFarFieldHelper<BasisFunctionType, ResultType>::makeFarFieldMat(
 
         fmmLocalAssembler.setFunction(&function);
 
-        std::vector<Vector<ResultType> > localResult;
+        std::vector<Vector<Vector<ResultType>> > localResult;
         fmmLocalAssembler.evaluateLocalWeakForms(elementIndices, localResult);
 
         for (size_t nElem = 0; nElem < elementIndices.size(); ++nElem)
@@ -120,11 +120,11 @@ FmmFarFieldHelper<BasisFunctionType, ResultType>::makeFarFieldMat(
             if(transposed)
               result(blockCols[nElem][nDof], multipole) +=
                   localDofWeights[nElem][nDof]
-                * localResult[nElem](localDofs[nElem][nDof]);
+                * localResult[nElem](localDofs[nElem][nDof])(0);
             else
               result(multipole, blockCols[nElem][nDof]) +=
                   localDofWeights[nElem][nDof]
-                * localResult[nElem](localDofs[nElem][nDof]);
+                * localResult[nElem](localDofs[nElem][nDof])(0);
         ++multipole;
       } // for each multipole
   return result;
