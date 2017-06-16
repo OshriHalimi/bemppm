@@ -309,7 +309,7 @@ laplaceSingleLayerPotentialOperator(
       CoordinateType;
 
   typedef
-      Laplace3dDoubleLayerPotentialOperator<BasisFunctionType, ResultType>
+      Laplace3dSingleLayerPotentialOperator<BasisFunctionType, ResultType>
       Op;
 
   shared_ptr<Matrix<CoordinateType>> pointsPtr(
