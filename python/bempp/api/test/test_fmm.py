@@ -40,7 +40,6 @@ class TestFmm(TestCase):
 
             diff.append(np.linalg.norm(result_fmm - result_hmat) / 
                 np.linalg.norm(result_hmat))
-            print(diff[-1])
 
         self.assertTrue(np.all(np.array(diff) < TOL) )
 

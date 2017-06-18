@@ -246,7 +246,7 @@ FMMGlobalAssembler<BasisFunctionType, ResultType>::assembleDetachedWeakForm(
   fmm::FmmFarFieldHelper<BasisFunctionType, ResultType> fmmFarFieldHelper(
         octree, testSpace, trialSpace, options, test_p2o, trial_p2o,
         indexWithGlobalDofs, fmmTransform, qO);
-  tbb::parallel_for(tbb::blocked_range<unsigned int>(0, nLeaves, 100),
+  tbb::parallel_for(tbb::blocked_range<unsigned int>(0, nLeaves, 5000),
       fmmFarFieldHelper);
 
   std::chrono::high_resolution_clock::time_point t3 = std::chrono::high_resolution_clock::now();
