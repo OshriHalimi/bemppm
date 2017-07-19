@@ -56,8 +56,8 @@ void PotentialOperatorHMatAssemblyHelper<BasisFunctionType, ResultType>::
     testVolumes.resize(m_points.cols());
     trialVolumes.resize(numberOfTrialIndices);
 
-    testVolumes.array() = 1;
-    trialVolumes.array() = std::numeric_limits<double>::max();
+    testVolumes.array().fill(1);
+    trialVolumes.array().fill(std::numeric_limits<double>::max());
 
     const std::vector<std::vector<int> >& trialIndices = trialDofLists->arrayIndices;
 

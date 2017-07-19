@@ -137,8 +137,8 @@ void WeakFormHMatAssemblyHelper<BasisFunctionType, ResultType>::dofVolumes(
     testVolumes.resize(numberOfTestIndices);
     trialVolumes.resize(numberOfTrialIndices);
 
-    testVolumes.array() = std::numeric_limits<double>::max();
-    trialVolumes.array() = std::numeric_limits<double>::max();
+    testVolumes.array().fill(std::numeric_limits<double>::max());
+    trialVolumes.array().fill(std::numeric_limits<double>::max());
 
     const std::vector<std::vector<int> >& testIndices = testDofLists->arrayIndices;
     const std::vector<std::vector<int> >& trialIndices = trialDofLists->arrayIndices;
