@@ -49,10 +49,10 @@ inline Octree::Octree(const shared_ptr<const Bempp::Grid> &grid, int levels)
     const auto &entity = it->entity();
     int entityIndex = indexSet.entityIndex(entity);
 
-    Vector<double> centroid(3);
+    Vector<double> centroid;
 
     // Get the center and corners of the entity.
-    entity.geometry().getCenter(centroid);
+    entity.geometry().getCenter(Eigen::Ref<Vector<double>>(centroid));
 
     // Find out in which leaf node the element lives
     unsigned long nodeIndex =
