@@ -41,6 +41,14 @@
 
 namespace Bempp {
 
+double sideLength(Vector<double> v1, Vector<double> v2){
+    // Note: this function returns the distance between v1 ans v2 SQUARED
+    double out = 0;
+    for(int i=0;i<3;++i)
+      out += (v1(i)-v2(i))*(v1(i)-v2(i));
+    return out;
+}
+
 /** \ingroup grid_internal
  *\brief Permute domain indices according to the grid index ordering. */
 
@@ -53,7 +61,7 @@ permuteInsertionDomainIndices(const std::vector<int> &domainIndices,
   std::vector<int> output(domainIndices.size());
   auto view = grid.leafGridView();
   const auto &indexSet = view.indexSet();
-  for (auto it = grid.template leafbegin<0>(); it != grid.template leafend<0>();
+  for (auto it = grid.leafGridView().template begin<0>(); it != grid.leafGridView().template end<0>();
        ++it) {
     const typename DuneGrid::template Codim<0>::Entity &element = *it;
     int insertionIndex = factory.insertionIndex(element);
@@ -258,10 +266,23 @@ public:
           const int ent0Number = index.entityIndex(entity);
           Matrix<double> corners;
           entity.geometry().getCorners(corners);
-          for (int j = 0; j != 3; ++j) {
-            barycentricVertices(j, ent2Count + ent1Count + ent0Number) =
-                (corners(j, 0) + corners(j, 1) + corners(j, 2)) / 3;
-          }
+          Vector<double> sides(3);
+          sides(0) = sideLength(corners.col(1),corners.col(2));
+          sides(1) = sideLength(corners.col(0),corners.col(2));
+          sides(2) = sideLength(corners.col(0),corners.col(1));
+          for (int j = 0; j != 3; ++j){
+            double coord = 0;
+            double div = 0;
+            coord += sides(0)*(sides(1)+sides(2)-sides(0))*corners(j,0);
+            coord += sides(1)*(sides(0)+sides(2)-sides(1))*corners(j,1);
+            coord += sides(2)*(sides(0)+sides(1)-sides(2))*corners(j,2);
+            div += sides(0)*(sides(1)+sides(2)-sides(0));
+            div += sides(1)*(sides(0)+sides(2)-sides(1));
+            div += sides(2)*(sides(0)+sides(1)-sides(2));
+            barycentricVertices(j, ent2Count + ent1Count + ent0Number)
+              = coord/div;
+            //    (corners(j, 0) + corners(j, 1) + corners(j, 2)) / 3;
+            }
         }
 
         barycentricElementCorners.conservativeResize(3, 6 * ent0Count);
