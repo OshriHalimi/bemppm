@@ -35,8 +35,8 @@ sys.path.insert(0, os.path.abspath('../build/python_package'))
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
-#    'sphinx.ext.napoleon',
-    'sphinxcontrib.napoleon',
+    'sphinx.ext.napoleon',
+#    'sphinxcontrib.napoleon',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
