@@ -11,7 +11,10 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   readme
+   source/modules
+
+.. autosummary::
+   :toctree: _autosummary
 
 
 Indices and tables
