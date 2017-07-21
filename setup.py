@@ -260,8 +260,8 @@ setup(
     name = "bempp",
     version = "3.1.5",
 
-    setup_requires = ['numpy', 'scipy', 'cython>=0.23', 'mpi4py'],
-    install_requires = ['numpy', 'scipy', 'cython>=0.23', 'mpi4py'],
+    setup_requires = ['numpy', 'scipy', 'cython>=0.23'],#, 'mpi4py'],
+    install_requires = ['numpy', 'scipy', 'cython>=0.23'],#, 'mpi4py'],
     platforms = ['GNU/Linux','Unix','Mac OS-X'],
 
     zip_safe = False,
