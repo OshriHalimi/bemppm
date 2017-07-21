@@ -281,6 +281,15 @@ public:
             div += sides(2)*(sides(0)+sides(1)-sides(2));
             barycentricVertices(j, ent2Count + ent1Count + ent0Number)
               = coord/div;
+            double aPlusb = 0;
+            double maxSide = 0;
+            for(int i=0;i<3;++i){
+              aPlusb += sides(i);
+              maxSide = std::max(maxSide,sides(i));
+            }
+            aPlusb -= maxSide;
+            if(aPlusb <= 1.1*maxSide)
+              throw std::runtime_error("Point is almost outside triangle!");
             //    (corners(j, 0) + corners(j, 1) + corners(j, 2)) / 3;
             }
         }
