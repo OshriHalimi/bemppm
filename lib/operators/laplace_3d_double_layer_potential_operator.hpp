@@ -58,7 +58,8 @@ class Laplace3dDoubleLayerPotentialOperator
   typedef Laplace3dPotentialOperatorBase<
       Laplace3dDoubleLayerPotentialOperatorImpl<BasisFunctionType_,
                                                 ResultType_>,
-      BasisFunctionType_, ResultType_> Base;
+      BasisFunctionType_, ResultType_>
+      Base;
 
 public:
   /** \copydoc Laplace3dPotentialOperatorBase::BasisFunctionType */

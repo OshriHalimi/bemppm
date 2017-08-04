@@ -4,10 +4,10 @@
 #define HMAT_HMATRIX_ACA_COMPRESSOR_HPP
 
 #include "common.hpp"
+#include "data_accessor.hpp"
 #include "eigen_fwd.hpp"
 #include "hmatrix_compressor.hpp"
 #include "hmatrix_dense_compressor.hpp"
-#include "data_accessor.hpp"
 #include <set>
 
 namespace hmat {
@@ -16,11 +16,7 @@ template <typename ValueType, int N>
 class HMatrixAcaCompressor : public HMatrixCompressor<ValueType, N> {
 public:
   HMatrixAcaCompressor(const DataAccessor<ValueType, N> &dataAccessor,
-                       double eps, unsigned int maxRank);
-
-  void
-  compressBlock(const BlockClusterTreeNode<N> &blockClusterTreeNode,
-                shared_ptr<HMatrixData<ValueType>> &hMatrixData) const override;
+                       double eps, unsigned int maxRank, double cutoff);
 
   enum class ModeType { ROW, COL };
   enum class CrossStatusType { SUCCESS, ZERO };
@@ -32,6 +28,11 @@ public:
     RANK_LIMIT_REACHED
   };
   enum class AcaAlgorithmStateType { START, ROW_TRIAL, COLUMN_TRIAL };
+
+protected:
+  void compressBlockImpl(
+      const BlockClusterTreeNode<N> &blockClusterTreeNode,
+      shared_ptr<HMatrixData<ValueType>> &hMatrixData) const override;
 
 private:
   static std::size_t randomIndex(const IndexRangeType &range,
@@ -72,6 +73,8 @@ private:
   double m_eps;
   unsigned int m_maxRank;
   HMatrixDenseCompressor<ValueType, N> m_hMatrixDenseCompressor;
+  Vector<double> m_testVolumes;
+  Vector<double> m_trialVolumes;
 };
 }
 
