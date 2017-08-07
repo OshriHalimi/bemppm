@@ -66,7 +66,7 @@ Vector<double> crossProduct(Vector<double> v1, Vector<double> v2){
 	Vector<double> out(3);
 	out(0)=v1(1) * v2(2) - v1(2) * v2(1);
 	out(1)=v1(2) * v2(0) - v1(0) * v2(2);
-	out(2)=v1(0) * v2(1) - v1(1) * v2(1);
+	out(2)=v1(0) * v2(1) - v1(1) * v2(0);
 	return out;    
 }
 
@@ -295,9 +295,9 @@ public:
           sides(0) = LengthSquared(corners.col(1),corners.col(2));
           sides(1) = LengthSquared(corners.col(0),corners.col(2));
           sides(2) = LengthSquared(corners.col(0),corners.col(1));
-//            std::cout << "Side1 " << sides(0) << "\n";
-//            std::cout << "Side2 " << sides(1) << "\n";
-//            std::cout << "Side3 " << sides(2) << "\n";
+            std::cout << "Side1 " << sides(0) << "\n";
+            std::cout << "Side2 " << sides(1) << "\n";
+            std::cout << "Side3 " << sides(2) << "\n";
             
 //          for (int j = 0; j != 3; ++j){
 //            double coord = 0;
@@ -326,13 +326,13 @@ public:
             
             Vector<double> angle(3);
             angle(0) = acos((sides(1) + sides(2) - sides(0)) / (2 * sqrt(sides(1)) * sqrt(sides(2))));
-//            std::cout << "Angle1 = " << angle(0) << "\n";
+            std::cout << "Angle1 = " << angle(0) << "\n";
             angle(1) = acos((sides(0) + sides(2) - sides(1)) / (2 * sqrt(sides(0)) * sqrt(sides(2))));
-//            std::cout << "Angle2 = " << angle(1) << "\n";
+            std::cout << "Angle2 = " << angle(1) << "\n";
             angle(2) = acos((sides(1) + sides(0) - sides(2)) / (2 * sqrt(sides(1)) * sqrt(sides(0))));
-//            std::cout << "Angle3 = " << angle(2) << "\n";
+            std::cout << "Angle3 = " << angle(2) << "\n";
             
-//            std::cout << "Total = " << angle(0) + angle(1) + angle(2) << "\n";
+            std::cout << "Total = " << angle(0) + angle(1) + angle(2) << "\n";
 //            if(angle(0)+angle(1)+angle(2) != PI){
 //                throw std::runtime_error("Angles do not total to pi!");
 //            }
@@ -347,78 +347,79 @@ public:
             
             // Get the middle point if one of the angles is large
             if(sides(0) - sides(1) - sides(2)>=0){ //   angle(0) > PI/2
-//                std::cout << "case 1 \n";
+                std::cout << "case 1 \n";
 //                std::cout << "angles: " << sin(angle(1)) << "\n";
 //                std::cout << "angles: " << sin(angle(2)) << "\n";
 //                std::cout << "angles: " << cos(angle(1) - angle(2)) << "\n";
                 beta = (2.0/3.0) * sin(angle(1)) * sin(angle(2)) / cos(angle(1) - angle(2));
-//                std::cout << "Beta: " << beta << "\n";
-//                std::cout << "r1 " << corners.col(0) << "\n";
-//                std::cout << "r2 " << corners.col(1) << "\n";
-//                std::cout << "r3 " << corners.col(2) << "\n";
+                std::cout << "Beta: " << beta << "\n";
+                std::cout << "r1 " << corners.col(0) << "\n";
+                std::cout << "r2 " << corners.col(1) << "\n";
+                std::cout << "r3 " << corners.col(2) << "\n";
                 normal = crossProduct(corners.col(1) - corners.col(0), corners.col(2) - corners.col(0));
-//                std::cout << "Normal: " << normal << "\n";
+                std::cout << "Normal: " << normal << "\n";
                 normal_size = sqrt(dotProduct(normal, normal));
                 normal = normal / normal_size;
-//                std::cout << "Unit Normal: " << normal << "\n";
+                std::cout << "Unit Normal: " << normal << "\n";
                 res = crossProduct(normal, corners.col(1) - corners.col(0));
-//                std::cout << "Res: " << res << "\n";
-//                std::cout << "dot product: " << dotProduct(res, corners.col(2) - corners.col(0)) << "\n";
+                std::cout << "Res: " << res << "\n";
+                std::cout << "dot product: " << dotProduct(res, corners.col(2) - corners.col(0)) << "\n";
                 t = -beta * dotProduct(corners.col(1) - corners.col(2), corners.col(2) - corners.col(0)) / dotProduct(res, corners.col(2) - corners.col(0));
-//                std::cout << "t: " << t << "\n";
+                std::cout << "t: " << t << "\n";
                 barycentricVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(0) + beta * (corners.col(1) - corners.col(0)) + t * res;
-//                std::cout << barycentricVertices.col(ent2Count + ent1Count + ent0Number) << "\n";
+                std::cout << barycentricVertices.col(ent2Count + ent1Count + ent0Number) << "\n";
             }
             else if(sides(1) - sides(0) - sides(2)>=0){ //  angle(1) > PI/2
-//                std::cout << "case2 \n";
+                std::cout << "case2 \n";
 //                std::cout << "angles: " << sin(angle(1)) << "\n";
 //                std::cout << "angles: " << sin(angle(2)) << "\n";
 //                std::cout << "angles: " << cos(angle(1) - angle(2)) << "\n";
                 beta = (2.0/3.0) * sin(angle(2)) * sin(angle(0)) / cos(angle(2) - angle(0));
-//                std::cout << "Beta: " << beta << "\n";
-//                std::cout << "r1 " << corners.col(0) << "\n";
-//                std::cout << "r2 " << corners.col(1) << "\n";
-//                std::cout << "r3 " << corners.col(2) << "\n";
-                normal = crossProduct(corners.col(2) - corners.col(1), corners.col(0) - corners.col(1));
-//                std::cout << "Normal: " << normal << "\n";
+                std::cout << "Beta: " << beta << "\n";
+                std::cout << "r1 " << corners.col(0) << "\n";
+                std::cout << "r2 " << corners.col(1) << "\n";
+                std::cout << "r3 " << corners.col(2) << "\n";
+                normal = crossProduct(corners.col(0) - corners.col(1), corners.col(2) - corners.col(1));
+                std::cout << "Normal: " << normal << "\n";
                 normal_size = sqrt(dotProduct(normal, normal));
                 normal = normal / normal_size;
-//                std::cout << "Unit Normal: " << normal << "\n";
+                std::cout << "Unit Normal: " << normal << "\n";
                 res = crossProduct(normal, corners.col(2) - corners.col(1));
-//                std::cout << "Res: " << res << "\n";
-//                std::cout << "dot product: " << dotProduct(res, corners.col(0) - corners.col(1)) << "\n";
+                std::cout << "Res: " << res << "\n";
+                std::cout << "dot product: " << dotProduct(res, corners.col(0) - corners.col(1)) << "\n";
                 t = -beta * dotProduct(corners.col(2) - corners.col(0), corners.col(0) - corners.col(1)) / dotProduct(res, corners.col(0) - corners.col(1));
-//                std::cout << "t: " << t << "\n";
+                std::cout << "t: " << t << "\n";
                 barycentricVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(1) + beta *(corners.col(2) - corners.col(1)) + t * res;
-//                std::cout << barycentricVertices.col(ent2Count + ent1Count + ent0Number) << "\n";
+                std::cout << barycentricVertices.col(ent2Count + ent1Count + ent0Number) << "\n";
             }
             else if(sides(2) - sides(0) - sides(1) >=0){ //   angle(2) > PI/2
-//                std::cout << "case3 \n";
+                std::cout << "case3 \n";
 //                std::cout << "angles: " << sin(angle(1)) << "\n";
 //                std::cout << "angles: " << sin(angle(2)) << "\n";
 //                std::cout << "angles: " << cos(angle(1) - angle(2)) << "\n";
                 beta = (2.0/3.0) * sin(angle(0)) * sin(angle(1)) / cos(angle(0) - angle(1));
-//                std::cout << "Beta: " << beta << "\n";
-//                std::cout << "r1 " << corners.col(0) << "\n";
-//                std::cout << "r2 " << corners.col(1) << "\n";
-//                std::cout << "r3 " << corners.col(2) << "\n";
-                normal = crossProduct(corners.col(1) - corners.col(2), corners.col(0) - corners.col(2));
-//                std::cout << "Normal: " << normal << "\n";
+                std::cout << "Beta: " << beta << "\n";
+                std::cout << "r1 " << corners.col(0) << "\n";
+                std::cout << "r2 " << corners.col(1) << "\n";
+                std::cout << "r3 " << corners.col(2) << "\n";
+                normal = crossProduct(corners.col(0) - corners.col(2), corners.col(1) - corners.col(2));
+                std::cout << "Normal: " << normal << "\n";
                 normal_size = sqrt(dotProduct(normal, normal));
                 normal = normal / normal_size;
-//                std::cout << "Unit Normal: " << normal << "\n";
+                std::cout << "Unit Normal: " << normal << "\n";
                 res = crossProduct(normal, corners.col(0) - corners.col(2));
-//                std::cout << "Res: " << res << "\n";
-//                std::cout << "dot product: " << dotProduct(res, corners.col(1) - corners.col(2)) << "\n";
+                std::cout << "Res: " << res << "\n";
+                std::cout << "dot product: " << dotProduct(res, corners.col(1) - corners.col(2)) << "\n";
                 t = -beta * dotProduct(corners.col(0) - corners.col(1), corners.col(1) - corners.col(2)) / dotProduct(res, corners.col(1) - corners.col(2));
-//                std::cout << "t: " << t << "\n";
+                std::cout << "t: " << t << "\n";
                 barycentricVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(2) + beta * (corners.col(0) - corners.col(2)) + t * res;
-//                std::cout << barycentricVertices.col(ent2Count + ent1Count + ent0Number) << "\n";
+                std::cout << barycentricVertices.col(ent2Count + ent1Count + ent0Number) << "\n";
             }
             else {//If none of the angles reaches pi/2, use the barycenter. The factor 2/3 has been chosen to make the transition continuous
-//                std::cout << "r1 " << corners.col(0) << "\n";
-//                std::cout << "r2 " << corners.col(1) << "\n";
-//                std::cout << "r3 " << corners.col(2) << "\n";
+                std::cout << "Barycenter \n";
+                std::cout << "r1 " << corners.col(0) << "\n";
+                std::cout << "r2 " << corners.col(1) << "\n";
+                std::cout << "r3 " << corners.col(2) << "\n";
                 barycentricVertices.col(ent2Count + ent1Count + ent0Number) = (corners.col(0) + corners.col(1) + corners.col(2)) /3;
 //                std::cout << barycentricVertices.col(ent2Count + ent1Count + ent0Number) << "\n";
             }
