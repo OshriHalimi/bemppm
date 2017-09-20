@@ -182,6 +182,16 @@ def multitrace_identity(grid, parameters=None, spaces='linear'):
             rwg_space, rwg_space, rbc_space, parameters=parameters)
         blocked_operator[1, 1] = identity(
             bc_space, bc_space, snc_space, parameters=parameters)
+    elif spaces == 'maxwell-RT':
+        rwg_space = bempp.api.function_space(grid, "B-RT", 0)
+        snc_space = bempp.api.function_space(grid, "B-NC", 0)
+        bc_space = bempp.api.function_space(grid, "BC", 0)
+        rbc_space = bempp.api.function_space(grid, "RBC", 0)
+
+        blocked_operator[0, 0] = identity(
+            rwg_space, rwg_space, rbc_space, parameters=parameters)
+        blocked_operator[1, 1] = identity(
+            bc_space, bc_space, snc_space, parameters=parameters)
     else:
         raise ValueError(
             "'spaces' must be one of 'dual', 'linear', or 'maxwell'")

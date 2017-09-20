@@ -30,6 +30,12 @@ def fenics_to_bempp_trace_data(fenics_space):
             return p1_coupling.p1_trace(fenics_space)
         else:
             raise NotImplementedError()
+    elif family=="Nedelec 1st kind H(curl)":
+        if degree==1:
+            from . import rt0_coupling
+            return rt0_coupling.n1curl_to_rt0_tangential_trace(fenics_space)
+        else:
+            raise NotImplementedError
     else:
         raise NotImplementedError()
 

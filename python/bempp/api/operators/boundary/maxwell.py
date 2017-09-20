@@ -194,7 +194,7 @@ def magnetic_field(domain, range_, dual_to_range,
         use_projection_spaces, assemble_only_singular_part),
                                    domain, range_, dual_to_range)
 
-def multitrace_operator(grid, wave_number, parameters=None):
+def multitrace_operator(grid, wave_number, parameters=None, spaces="RWG"):
     """Assemble the multitrace operator for Maxwell."""
 
     from bempp.api.assembly import BlockedOperator
@@ -203,12 +203,22 @@ def multitrace_operator(grid, wave_number, parameters=None):
 
     blocked_operator = BlockedOperator(2, 2)
 
-    rwg_space_fine = bempp.api.function_space(grid.barycentric_grid(), "RWG", 0)
-    rwg_space = bempp.api.function_space(grid, "B-RWG", 0)
-    bc_space = bempp.api.function_space(grid, "BC", 0)
-    rbc_space = bempp.api.function_space(grid, "RBC", 0)
-    snc_space = bempp.api.function_space(grid, "B-SNC", 0)
-    snc_space_fine = bempp.api.function_space(grid.barycentric_grid(), "SNC", 0)
+    if spaces == "RWG":
+        rwg_space_fine = bempp.api.function_space(grid.barycentric_grid(), "RWG", 0)
+        rwg_space = bempp.api.function_space(grid, "B-RWG", 0)
+        bc_space = bempp.api.function_space(grid, "BC", 0)
+        rbc_space = bempp.api.function_space(grid, "RBC", 0)
+        snc_space = bempp.api.function_space(grid, "B-SNC", 0)
+        snc_space_fine = bempp.api.function_space(grid.barycentric_grid(), "SNC", 0)
+    elif spaces == "RT":
+        rwg_space_fine = bempp.api.function_space(grid.barycentric_grid(), "RT", 0)
+        rwg_space = bempp.api.function_space(grid, "B-RT", 0)
+        bc_space = bempp.api.function_space(grid, "BC", 0)
+        rbc_space = bempp.api.function_space(grid, "RBC", 0)
+        snc_space = bempp.api.function_space(grid, "B-NC", 0)
+        snc_space_fine = bempp.api.function_space(grid.barycentric_grid(), "NC", 0)
+    else:
+        raise ValueError("spaces must be RWG or RT")
 
     efie_fine = electric_field(
         rwg_space_fine, rwg_space_fine,
