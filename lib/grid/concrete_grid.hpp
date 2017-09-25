@@ -79,17 +79,16 @@ permuteInsertionDomainIndices(const std::vector<int> &domainIndices,
                               const Dune::GridFactory<DuneGrid> &factory,
                               const DuneGrid &grid) {
 
-  std::vector<int> output(domainIndices.size());
-  auto view = grid.leafGridView();
-  const auto &indexSet = view.indexSet();
-  for (auto it = grid.leafGridView().template begin<0>(); it != grid.leafGridView().template end<0>();
-       ++it) {
-    const typename DuneGrid::template Codim<0>::Entity &element = *it;
-    int insertionIndex = factory.insertionIndex(element);
-    output[indexSet.index(element)] = domainIndices[insertionIndex];
-  }
-
-  return output;
+    std::vector<int> output(domainIndices.size());
+    auto view = grid.leafGridView();
+    const auto &indexSet = view.indexSet();
+    for (auto it = grid.leafGridView().template begin<0>(); it != grid.leafGridView().template end<0>();
+             ++it) {
+        const typename DuneGrid::template Codim<0>::Entity &element = *it;
+        int insertionIndex = factory.insertionIndex(element);
+        output[indexSet.index(element)] = domainIndices[insertionIndex];
+    }
+    return output;
 }
 
 /** \cond FORWARD_DECL */
@@ -106,16 +105,16 @@ class GridView;
  */
 template <typename DuneGrid> class ConcreteGrid : public Grid {
 private:
-  DuneGrid *m_dune_grid;
-  bool m_owns_dune_grid;
-  GridParameters::Topology m_topology;
-  ConcreteIdSet<DuneGrid, typename DuneGrid::GlobalIdSet> m_global_id_set;
-  ConcreteDomainIndex<DuneGrid> m_domain_index;
-  shared_ptr<const Dune::GridFactory<DuneGrid>> m_factory;
+    DuneGrid *m_dune_grid;
+    bool m_owns_dune_grid;
+    GridParameters::Topology m_topology;
+    ConcreteIdSet<DuneGrid, typename DuneGrid::GlobalIdSet> m_global_id_set;
+    ConcreteDomainIndex<DuneGrid> m_domain_index;
+    shared_ptr<const Dune::GridFactory<DuneGrid>> m_factory;
 
 public:
   /** \brief Underlying Dune grid's type*/
-  typedef DuneGrid DuneGridType;
+    typedef DuneGrid DuneGridType;
 
   /** \brief Wrap an existing Dune grid object.
 
@@ -124,7 +123,7 @@ public:
    \param[in]  domainIndices Vector of domain indices.
    \param[in]  own  If true, *dune_grid is deleted in this object's destructor.
    */
-  explicit ConcreteGrid(DuneGrid *dune_grid, GridParameters::Topology topology,
+    explicit ConcreteGrid(DuneGrid *dune_grid, GridParameters::Topology topology,
                         bool own = false)
       : m_dune_grid(ensureNotNull(dune_grid)), m_owns_dune_grid(own),
         m_topology(topology), m_global_id_set(&dune_grid->globalIdSet()),
@@ -271,18 +270,7 @@ public:
             
         }
 
-        for (std::unique_ptr<EntityIterator<1>> it = view->entityIterator<1>();
-             !it->finished(); it->next()) {
-          const Entity<1> &entity = it->entity();
-          const int ent1Number = index.entityIndex(entity);
-          Matrix<double> corners;
-          entity.geometry().getCorners(corners);
-          for (int j = 0; j != 3; ++j) {
-            barycentricVertices(j, ent2Count + ent1Number) =
-                (corners(j, 0) + corners(j, 1)) / 2;
-//              std::cout << barycentricVertices(j, ent2Cout + ent1Number) << "\n";
-          }
-        }
+        
 
         for (std::unique_ptr<EntityIterator<0>> it = view->entityIterator<0>();
              !it->finished(); it->next()) {
@@ -337,7 +325,7 @@ public:
             
             // Get the middle point if one of the angles is large
             if(sides(0) - sides(1) - sides(2)>=0){ //   angle(0) > PI/2
-//                std::cout << "case 1 \n";
+                std::cout << "case 1 \n";
                 beta = (2.0/3.0) * sin(angle(1)) * sin(angle(2)) / cos(angle(1) - angle(2));
                 normal = crossProduct(corners.col(1) - corners.col(0), corners.col(2) - corners.col(0));
                 normal_size = sqrt(dotProduct(normal, normal));
@@ -345,9 +333,10 @@ public:
                 res = crossProduct(normal, corners.col(1) - corners.col(0));
                 t = -beta * dotProduct(corners.col(1) - corners.col(2), corners.col(2) - corners.col(0)) / dotProduct(res, corners.col(2) - corners.col(0));
                 barycentricVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(0) + beta * (corners.col(1) - corners.col(0)) + t * res;
+                std::cout << barycentricVertices.col(ent2Count + ent1Count + ent0Number)<< "\n";
             }
             else if(sides(1) - sides(0) - sides(2)>=0){ //  angle(1) > PI/2
-//                std::cout << "case2 \n";
+                std::cout << "case2 \n";
                 beta = (2.0/3.0) * sin(angle(2)) * sin(angle(0)) / cos(angle(2) - angle(0));
                 normal = crossProduct(corners.col(0) - corners.col(1), corners.col(2) - corners.col(1));
                 normal_size = sqrt(dotProduct(normal, normal));
@@ -355,9 +344,10 @@ public:
                 res = crossProduct(normal, corners.col(2) - corners.col(1));
                 t = -beta * dotProduct(corners.col(2) - corners.col(0), corners.col(0) - corners.col(1)) / dotProduct(res, corners.col(0) - corners.col(1));
                 barycentricVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(1) + beta *(corners.col(2) - corners.col(1)) + t * res;
+                std::cout << barycentricVertices.col(ent2Count + ent1Count + ent0Number)<< "\n";
             }
             else if(sides(2) - sides(0) - sides(1) >=0){ //   angle(2) > PI/2
-//                std::cout << "case3 \n";
+                std::cout << "case3 \n";
                 beta = (2.0/3.0) * sin(angle(0)) * sin(angle(1)) / cos(angle(0) - angle(1));
                 normal = crossProduct(corners.col(0) - corners.col(2), corners.col(1) - corners.col(2));
                 normal_size = sqrt(dotProduct(normal, normal));
@@ -365,14 +355,45 @@ public:
                 res = crossProduct(normal, corners.col(0) - corners.col(2));
                 t = -beta * dotProduct(corners.col(0) - corners.col(1), corners.col(1) - corners.col(2)) / dotProduct(res, corners.col(1) - corners.col(2));
                 barycentricVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(2) + beta * (corners.col(0) - corners.col(2)) + t * res;
+                std::cout << barycentricVertices.col(ent2Count + ent1Count + ent0Number)<< "\n";
             }
             else {//If none of the angles reaches pi/2, use the barycenter. The factor 2/3 has been chosen to make the transition continuous
-//                std::cout << "Barycenter \n";
+                std::cout << "Barycenter \n";
                 barycentricVertices.col(ent2Count + ent1Count + ent0Number) = (corners.col(0) + corners.col(1) + corners.col(2)) /3;
+                std::cout << barycentricVertices.col(ent2Count + ent1Count + ent0Number)<< "\n";
             }
 		
         }
+          
+          std::cout << ent1Count << "\n";
 
+          Vector<Vector<int>> edgeToFaceMap(ent1Count);
+//          edgeToFaceMap.resize(ent1Count); // number of edges
+          for(int i=0;i<ent1Count;++i){
+              edgeToFaceMap[i].resize(2);
+              edgeToFaceMap[i][0] = -1;
+              edgeToFaceMap[i][1] = -1;
+          }
+          
+          // fill this with -1s
+          std::cout << edgeToFaceMap << "\n";
+          
+          for (std::unique_ptr<EntityIterator<1>> it = view->entityIterator<1>();
+               !it->finished(); it->next()) {
+              const Entity<1> &entity = it->entity();
+              const int ent1Number = index.entityIndex(entity);
+              Matrix<double> corners;
+              entity.geometry().getCorners(corners);
+//              This is taking the mid point of each edge of a triangle
+              for (int j = 0; j != 3; ++j) {
+                  barycentricVertices(j, ent2Count + ent1Number) =
+                  (corners(j, 0) + corners(j, 1)) / 2;
+                  //              std::cout << barycentricVertices(j, ent2Cout + ent1Number) << "\n";
+              }
+          }
+          
+          std::cout << barycentricVertices << "\n";
+          
         barycentricElementCorners.conservativeResize(3, 6 * ent0Count);
         Matrix<int> tempSonMap;
         tempSonMap.conservativeResize(6 * ent0Count, 2);
