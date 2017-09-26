@@ -404,29 +404,64 @@ public:
               if(edgeToFaceMap[ent1Number][0] == -1){
                   std::cout << ent1Number << " lies on the boundary \n";
                   faceNumber = edgeToFaceMap[ent1Number][1];
-                  std::cout << "Associated triangle: " << faceNumber << " with center " << barycentricVertices.col(ent2Count + ent1Count + faceNumber) << "\n";
+//                  std::cout << "Associated triangle: " << faceNumber << " with center " << barycentricVertices.col(ent2Count + ent1Count + faceNumber) << "\n";
                   //find "midpoint"
                   barycentricVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
               }
               else if(edgeToFaceMap[ent1Number][1] == -1){
                   std::cout << ent1Number << " lies on the boundary \n";
                   faceNumber = edgeToFaceMap[ent1Number][0];
-                  std::cout << "Associated triangle: " << faceNumber << " with center " << barycentricVertices.col(ent2Count + ent1Count + faceNumber) << "\n";
+//                  std::cout << "Associated triangle: " << faceNumber << " with center " << barycentricVertices.col(ent2Count + ent1Count + faceNumber) << "\n";
                   //find "midpoint"
                   barycentricVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
               }
               else{
                   std::cout << ent1Number << " doesn't lie on the boundary \n";
+                  Vector<double> center1(3);
+                  Vector<double> center2(3);
                   faceNumber = edgeToFaceMap[ent1Number][0];
-                  std::cout << "Associated triangle: " << faceNumber << " with center " << barycentricVertices.col(ent2Count + ent1Count + faceNumber) << "\n";
+                  center1 = barycentricVertices.col(ent2Count + ent1Count + faceNumber);
+//                  std::cout << "Associated triangle: " << faceNumber << " with center " <<  center1 << "\n";
                   faceNumber = edgeToFaceMap[ent1Number][1];
-                  std::cout << "Associated triangle: " << faceNumber << " with center " << barycentricVertices.col(ent2Count + ent1Count + faceNumber) << "\n";
+                  center2 = barycentricVertices.col(ent2Count + ent1Count + faceNumber);
+//                  std::cout << "Associated triangle: " << faceNumber << " with center " << center2  << "\n";
                   //find "midpoint"
-                  barycentricVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
+                  
+                  Vector<double> normalToPlane(3);
+                  double normal_size;
+                  
+                  normalToPlane = crossProduct(corners.col(0) - center1, corners.col(1) - center1);
+                  normal_size = sqrt(dotProduct(normalToPlane, normalToPlane));
+                  normalToPlane = normalToPlane / normal_size;
+                  
+                  std::cout << "normal to plane: " << normalToPlane << "\n";
+                  
+                  //check if both triangles lie on the same plane
+                  if (dotProduct(normalToPlane, center2) - dotProduct(normalToPlane, center1) == 0) {
+                      std::cout << "same plane \n";
+                      Vector<double> directionNodes(3);
+                      Vector<double> directionCenters(3);
+                      Vector<double> intersectionPoint(3);
+                      double t;
+                      
+                      directionNodes = corners.col(0) - corners.col(1);
+                      directionCenters = center1 - center2;
+                      
+                      t = dotProduct(crossProduct(normalToPlane, center2 - corners.col(1)), directionCenters) / dotProduct(crossProduct(normalToPlane, directionNodes),directionCenters);
+                      
+                      intersectionPoint = corners.col(1) + t * directionNodes;
+                      barycentricVertices.col(ent2Count + ent1Number) = intersectionPoint;
+                      std::cout << "intersectionPoint: " << intersectionPoint << "\n";
+                      
+                      std::cout << (corners.col(0) + corners.col(1))/2 << "\n";
+                  }
+                  else{
+                      std::cout << "not same plane \n";
+                      barycentricVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
+
+                  }
               }
           }
-          
-          
           
         barycentricElementCorners.conservativeResize(3, 6 * ent0Count);
         Matrix<int> tempSonMap;
@@ -435,12 +470,14 @@ public:
              !it->finished(); it->next()) {
           const Entity<0> &entity = it->entity();
           const int ent0Number = index.subEntityIndex(entity, 0, 0);
+            
           barycentricElementCorners(0, 6 * ent0Number) =
               index.subEntityIndex(entity, 0, 2);
           barycentricElementCorners(1, 6 * ent0Number) =
               ent2Count + ent1Count + ent0Number;
           barycentricElementCorners(2, 6 * ent0Number) =
               ent2Count + index.subEntityIndex(entity, 1, 1);
+        
 
           barycentricElementCorners(0, 6 * ent0Number + 1) =
               index.subEntityIndex(entity, 0, 2);
@@ -490,7 +527,7 @@ public:
           tempSonMap(6 * ent0Number + 4, 1) = 4;
           tempSonMap(6 * ent0Number + 5, 1) = 5;
         }
-
+          
         shared_ptr<Grid> newGrid =
             GridFactory::createGridFromConnectivityArrays(
                 params, barycentricVertices, barycentricElementCorners,
