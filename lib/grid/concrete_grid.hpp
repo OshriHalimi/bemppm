@@ -262,21 +262,21 @@ public:
                                                       ent0Count);
           std::cout << "barycentricVertices: " << barycentricVertices << "\n";
 
+//          iterating through each vertex (node)
         for (std::unique_ptr<EntityIterator<2>> it = view->entityIterator<2>();
              !it->finished(); it->next()) {
           const Entity<2> &entity = it->entity();
           const int ent2Number = index.entityIndex(entity);
+            std::cout << "ent2Number: " << ent2Number << "\n";
           Matrix<double> corners;
           entity.geometry().getCorners(corners);
-            
           for (int j = 0; j != 3; ++j) {
               barycentricVertices(j, ent2Number) = corners(j, 0);
           }
-            
         }
 
-        
-
+          
+//          iterating through each face (triangle) to find the center
         for (std::unique_ptr<EntityIterator<0>> it = view->entityIterator<0>();
              !it->finished(); it->next()) {
           const Entity<0> &entity = it->entity();
@@ -370,8 +370,6 @@ public:
 		
         }
           
-          std::cout << ent1Count << "\n";
-
           Vector<Vector<int>> edgeToFaceMap(ent1Count,2);
 //          edgeToFaceMap.resize(ent1Count); // number of edges
 //          for(int i=0;i<ent1Count;++i){
@@ -383,6 +381,8 @@ public:
           // fill this with -1s
 //          std::cout << edgeToFaceMap << "\n";
         
+          
+//          iterating through each edge to fing midpoint
           for (std::unique_ptr<EntityIterator<1>> it = view->entityIterator<1>();
                !it->finished(); it->next()) {
               const Entity<1> &entity = it->entity();
