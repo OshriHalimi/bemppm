@@ -260,14 +260,13 @@ public:
           
         barycentricVertices.conservativeResize(3, ent2Count + ent1Count +
                                                       ent0Count);
-//          std::cout << "barycentricVertices: " << "\n" << barycentricVertices << "\n";
 
 //          iterating through each vertex (node) of the coarse grid
         for (std::unique_ptr<EntityIterator<2>> it = view->entityIterator<2>();
              !it->finished(); it->next()) {
           const Entity<2> &entity = it->entity();
           const int ent2Number = index.entityIndex(entity);
-            std::cout << "ent2Number: " << ent2Number << "\n";
+//            std::cout << "ent2Number: " << ent2Number << "\n";
           Matrix<double> corners;
           entity.geometry().getCorners(corners);
           barycentricVertices.col(ent2Number) = corners.col(0);
@@ -336,7 +335,7 @@ public:
                 res = crossProduct(normal, corners.col(1) - corners.col(0));
                 t = -beta * dotProduct(corners.col(1) - corners.col(2), corners.col(2) - corners.col(0)) / dotProduct(res, corners.col(2) - corners.col(0));
                 barycentricVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(0) + beta * (corners.col(1) - corners.col(0)) + t * res;
-                std::cout << barycentricVertices.col(ent2Count + ent1Count + ent0Number)<< "\n";
+//                std::cout << barycentricVertices.col(ent2Count + ent1Count + ent0Number)<< "\n";
             }
             else if(sides(1) - sides(0) - sides(2)>=0){ //  angle(1) > PI/2
                 std::cout << "case2 \n";
@@ -347,7 +346,7 @@ public:
                 res = crossProduct(normal, corners.col(2) - corners.col(1));
                 t = -beta * dotProduct(corners.col(2) - corners.col(0), corners.col(0) - corners.col(1)) / dotProduct(res, corners.col(0) - corners.col(1));
                 barycentricVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(1) + beta *(corners.col(2) - corners.col(1)) + t * res;
-                std::cout << barycentricVertices.col(ent2Count + ent1Count + ent0Number)<< "\n";
+//                std::cout << barycentricVertices.col(ent2Count + ent1Count + ent0Number)<< "\n";
             }
             else if(sides(2) - sides(0) - sides(1) >=0){ //   angle(2) > PI/2
                 std::cout << "case3 \n";
@@ -358,39 +357,76 @@ public:
                 res = crossProduct(normal, corners.col(0) - corners.col(2));
                 t = -beta * dotProduct(corners.col(0) - corners.col(1), corners.col(1) - corners.col(2)) / dotProduct(res, corners.col(1) - corners.col(2));
                 barycentricVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(2) + beta * (corners.col(0) - corners.col(2)) + t * res;
-                std::cout << barycentricVertices.col(ent2Count + ent1Count + ent0Number)<< "\n";
+//                std::cout << barycentricVertices.col(ent2Count + ent1Count + ent0Number)<< "\n";
             }
             else {//If none of the angles reaches pi/2, use the barycenter. The factor 2/3 has been chosen to make the transition continuous
                 std::cout << "Barycenter \n";
                 barycentricVertices.col(ent2Count + ent1Count + ent0Number) = (corners.col(0) + corners.col(1) + corners.col(2)) /3;
-                std::cout << barycentricVertices.col(ent2Count + ent1Count + ent0Number)<< "\n";
+//                std::cout << barycentricVertices.col(ent2Count + ent1Count + ent0Number)<< "\n";
             }
 		
         }
+          std::cout << barycentricVertices << "\n";
+
           
-          Vector<Vector<int>> edgeToFaceMap(ent1Count,2);
-//          edgeToFaceMap.resize(ent1Count); // number of edges
-//          for(int i=0;i<ent1Count;++i){
-//              edgeToFaceMap[i].resize(2);
-//              edgeToFaceMap(i)(0) = -1;
-//              edgeToFaceMap(i)(1) = -1;
-//          }
+          Vector<Vector<int>> edgeToFaceMap;
+          edgeToFaceMap.resize(ent1Count);
+          for(int i=0;i<ent1Count;++i){
+              edgeToFaceMap[i].resize(2);
+              edgeToFaceMap[i][0] = -1;
+              edgeToFaceMap[i][1] = -1;
+          }
           
-          // fill this with -1s
-//          std::cout << edgeToFaceMap << "\n";
-        
+//          find associated triangles with each edge. If associated triangle is -1 then the edge lies on the boundary
+          for (std::unique_ptr<EntityIterator<0>> it = view->entityIterator<0>();
+               !it->finished(); it->next()) {
+              const Entity<0> &entity = it->entity();
+              const int ent0Number = index.subEntityIndex(entity, 0, 0); //what do the 0,0 mean?
+              for (int i = 0; i != 3; ++i) {
+                  const int edgeNumber = index.subEntityIndex(entity,i,1);
+                  if(edgeToFaceMap[edgeNumber][0]==-1) edgeToFaceMap[edgeNumber][0] = ent0Number;
+                  else edgeToFaceMap[edgeNumber][1] = ent0Number;
+                  std::cout << "edgeToFaceMap[" << edgeNumber << "]: \n" << edgeToFaceMap[edgeNumber] << "\n";
+              }
+          }
           
-//          iterating through each edge to fing midpoint
+//          iterating through each edge to find "midpoint"
           for (std::unique_ptr<EntityIterator<1>> it = view->entityIterator<1>();
                !it->finished(); it->next()) {
               const Entity<1> &entity = it->entity();
-              const int ent1Number = index.entityIndex(entity);
+              const int ent1Number = index.entityIndex(entity); //number of edge
+              int faceNumber;
+              
               Matrix<double> corners;
               entity.geometry().getCorners(corners);
-              barycentricVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
+              
+              //use edgeToFaceMap to find centers of associated triangles
+              if(edgeToFaceMap[ent1Number][0] == -1){
+                  std::cout << ent1Number << " lies on the boundary \n";
+                  faceNumber = edgeToFaceMap[ent1Number][1];
+                  std::cout << "Associated triangle: " << faceNumber << " with center " << barycentricVertices.col(ent2Count + ent1Count + faceNumber) << "\n";
+                  //find "midpoint"
+                  barycentricVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
+              }
+              else if(edgeToFaceMap[ent1Number][1] == -1){
+                  std::cout << ent1Number << " lies on the boundary \n";
+                  faceNumber = edgeToFaceMap[ent1Number][0];
+                  std::cout << "Associated triangle: " << faceNumber << " with center " << barycentricVertices.col(ent2Count + ent1Count + faceNumber) << "\n";
+                  //find "midpoint"
+                  barycentricVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
+              }
+              else{
+                  std::cout << ent1Number << " doesn't lie on the boundary \n";
+                  faceNumber = edgeToFaceMap[ent1Number][0];
+                  std::cout << "Associated triangle: " << faceNumber << " with center " << barycentricVertices.col(ent2Count + ent1Count + faceNumber) << "\n";
+                  faceNumber = edgeToFaceMap[ent1Number][1];
+                  std::cout << "Associated triangle: " << faceNumber << " with center " << barycentricVertices.col(ent2Count + ent1Count + faceNumber) << "\n";
+                  //find "midpoint"
+                  barycentricVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
+              }
           }
           
-          std::cout << barycentricVertices << "\n";
+          
           
         barycentricElementCorners.conservativeResize(3, 6 * ent0Count);
         Matrix<int> tempSonMap;
