@@ -404,16 +404,14 @@ public:
               if(edgeToFaceMap[ent1Number][0] == -1){
                   std::cout << ent1Number << " lies on the boundary \n";
                   faceNumber = edgeToFaceMap[ent1Number][1];
-//                  std::cout << "Associated triangle: " << faceNumber << " with center " << barycentricVertices.col(ent2Count + ent1Count + faceNumber) << "\n";
-                  //find "midpoint"
                   barycentricVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
+                  //if the edge is only associated with one triangle then pick the midpoint
               }
               else if(edgeToFaceMap[ent1Number][1] == -1){
                   std::cout << ent1Number << " lies on the boundary \n";
                   faceNumber = edgeToFaceMap[ent1Number][0];
-//                  std::cout << "Associated triangle: " << faceNumber << " with center " << barycentricVertices.col(ent2Count + ent1Count + faceNumber) << "\n";
-                  //find "midpoint"
                   barycentricVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
+                  //if the edge is only associated with one triangle then pick the midpoint
               }
               else{
                   std::cout << ent1Number << " doesn't lie on the boundary \n";
@@ -421,11 +419,8 @@ public:
                   Vector<double> center2(3);
                   faceNumber = edgeToFaceMap[ent1Number][0];
                   center1 = barycentricVertices.col(ent2Count + ent1Count + faceNumber);
-//                  std::cout << "Associated triangle: " << faceNumber << " with center " <<  center1 << "\n";
                   faceNumber = edgeToFaceMap[ent1Number][1];
                   center2 = barycentricVertices.col(ent2Count + ent1Count + faceNumber);
-//                  std::cout << "Associated triangle: " << faceNumber << " with center " << center2  << "\n";
-                  //find "midpoint"
                   
                   Vector<double> normalToPlane(3);
                   double normal_size;
@@ -434,14 +429,12 @@ public:
                   normal_size = sqrt(dotProduct(normalToPlane, normalToPlane));
                   normalToPlane = normalToPlane / normal_size;
                   
-                  std::cout << "normal to plane: " << normalToPlane << "\n";
                   
                   //check if both triangles lie on the same plane
                   if (dotProduct(normalToPlane, center2) - dotProduct(normalToPlane, center1) == 0) {
                       std::cout << "same plane \n";
                       Vector<double> directionNodes(3);
                       Vector<double> directionCenters(3);
-                      Vector<double> intersectionPoint(3);
                       double t;
                       
                       directionNodes = corners.col(0) - corners.col(1);
@@ -449,16 +442,62 @@ public:
                       
                       t = dotProduct(crossProduct(normalToPlane, center2 - corners.col(1)), directionCenters) / dotProduct(crossProduct(normalToPlane, directionNodes),directionCenters);
                       
-                      intersectionPoint = corners.col(1) + t * directionNodes;
-                      barycentricVertices.col(ent2Count + ent1Number) = intersectionPoint;
-                      std::cout << "intersectionPoint: " << intersectionPoint << "\n";
-                      
-                      std::cout << (corners.col(0) + corners.col(1))/2 << "\n";
+                      barycentricVertices.col(ent2Count + ent1Number) = corners.col(1) + t * directionNodes;
                   }
                   else{
                       std::cout << "not same plane \n";
-                      barycentricVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
+                      Vector<double> directionNodes(3);
+                      Vector<double> sideLengths(3);
+                      Vector<double> perpdirectionNodes(3);
+                      Vector<double> newCenter1(3);
+                      Vector<double> newCenter2(3);
+                      Vector<double> newCenter(3);
+                      Vector<double> directionCenters(3);
+                      double center1ToNewCenter1;
+                      double center1ToNewCenter2;
+                      double a;
+                      double height;
+                      double t;
+                      
+                      sideLengths(0) = sqrt(dotProduct(corners.col(1) - center2, corners.col(1) - center2));
+                      sideLengths(1) = sqrt(dotProduct(corners.col(0) - center2, corners.col(0) - center2));
+                      sideLengths(2) = sqrt(dotProduct(corners.col(0) - corners.col(1), corners.col(0) - corners.col(1)));
+                      
+                      a = (sideLengths(2) * sideLengths(2) + sideLengths(1) * sideLengths(1) - sideLengths(0) * sideLengths(0))/(2 * sideLengths(2));
+                      height = sqrt(sideLengths(1) * sideLengths(1) - a * a);
+                      
+                      directionNodes = (corners.col(1) - corners.col(0))/sideLengths(2); //unit vector
+                      perpdirectionNodes = crossProduct(normalToPlane, directionNodes);
+                      
+                      newCenter1 = corners.col(0) + a * directionNodes + height * perpdirectionNodes;
+                      newCenter2 = corners.col(0) + a * directionNodes - height * perpdirectionNodes;
+                      
+                      center1ToNewCenter1 = sqrt(dotProduct(center1 - newCenter1, center1 - newCenter1));
+                      center1ToNewCenter2 = sqrt(dotProduct(center1 - newCenter2, center1 - newCenter2));
+                      
+                      if (center1ToNewCenter1< center1ToNewCenter2) {
+                          newCenter = newCenter2;
+                      }
+                      else if(center1ToNewCenter1 > center1ToNewCenter2){
+                          newCenter = newCenter1;
+                      }
+                      else{
+                          std::cout << "Why are the centers the same distance?";
+                      }
+                      
 
+                      directionNodes = corners.col(0) - corners.col(1);
+                      directionCenters = center1 - newCenter;
+                      
+                      t = dotProduct(crossProduct(normalToPlane, newCenter - corners.col(1)), directionCenters) / dotProduct(crossProduct(normalToPlane, directionNodes),directionCenters);
+                      
+                      barycentricVertices.col(ent2Count + ent1Number) = corners.col(1) + t * directionNodes;
+                      
+//                        barycentricVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
+
+                      
+                      std::cout << dotProduct(barycentricVertices.col(ent2Count + ent1Number) - corners.col(0), barycentricVertices.col(ent2Count + ent1Number) - corners.col(0))<< "\n";
+                      std::cout << dotProduct(barycentricVertices.col(ent2Count + ent1Number) - corners.col(1), barycentricVertices.col(ent2Count + ent1Number) - corners.col(1)) << "\n";
                   }
               }
           }
