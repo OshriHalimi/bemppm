@@ -254,8 +254,13 @@ public:
         const size_t ent1Count = view->entityCount(1); // edges
         const size_t ent2Count = view->entityCount(2); // vertices
 
+          std::cout << "ent0Count: " << ent0Count << "\n";
+          std::cout << "ent1Count: " << ent1Count << "\n";
+          std::cout << "ent2Count: " << ent2Count << "\n";
+          
         barycentricVertices.conservativeResize(3, ent2Count + ent1Count +
                                                       ent0Count);
+          std::cout << "barycentricVertices: " << barycentricVertices << "\n";
 
         for (std::unique_ptr<EntityIterator<2>> it = view->entityIterator<2>();
              !it->finished(); it->next()) {
@@ -367,17 +372,17 @@ public:
           
           std::cout << ent1Count << "\n";
 
-          Vector<Vector<int>> edgeToFaceMap(ent1Count);
+          Vector<Vector<int>> edgeToFaceMap(ent1Count,2);
 //          edgeToFaceMap.resize(ent1Count); // number of edges
-          for(int i=0;i<ent1Count;++i){
-              edgeToFaceMap[i].resize(2);
-              edgeToFaceMap[i][0] = -1;
-              edgeToFaceMap[i][1] = -1;
-          }
+//          for(int i=0;i<ent1Count;++i){
+//              edgeToFaceMap[i].resize(2);
+//              edgeToFaceMap(i)(0) = -1;
+//              edgeToFaceMap(i)(1) = -1;
+//          }
           
           // fill this with -1s
-          std::cout << edgeToFaceMap << "\n";
-          
+//          std::cout << edgeToFaceMap << "\n";
+        
           for (std::unique_ptr<EntityIterator<1>> it = view->entityIterator<1>();
                !it->finished(); it->next()) {
               const Entity<1> &entity = it->entity();
