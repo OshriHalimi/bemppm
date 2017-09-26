@@ -260,9 +260,9 @@ public:
           
         barycentricVertices.conservativeResize(3, ent2Count + ent1Count +
                                                       ent0Count);
-          std::cout << "barycentricVertices: " << barycentricVertices << "\n";
+//          std::cout << "barycentricVertices: " << "\n" << barycentricVertices << "\n";
 
-//          iterating through each vertex (node)
+//          iterating through each vertex (node) of the coarse grid
         for (std::unique_ptr<EntityIterator<2>> it = view->entityIterator<2>();
              !it->finished(); it->next()) {
           const Entity<2> &entity = it->entity();
@@ -270,9 +270,7 @@ public:
             std::cout << "ent2Number: " << ent2Number << "\n";
           Matrix<double> corners;
           entity.geometry().getCorners(corners);
-          for (int j = 0; j != 3; ++j) {
-              barycentricVertices(j, ent2Number) = corners(j, 0);
-          }
+          barycentricVertices.col(ent2Number) = corners.col(0);
         }
 
           
@@ -389,12 +387,7 @@ public:
               const int ent1Number = index.entityIndex(entity);
               Matrix<double> corners;
               entity.geometry().getCorners(corners);
-//              This is taking the mid point of each edge of a triangle
-              for (int j = 0; j != 3; ++j) {
-                  barycentricVertices(j, ent2Count + ent1Number) =
-                  (corners(j, 0) + corners(j, 1)) / 2;
-                  //              std::cout << barycentricVertices(j, ent2Cout + ent1Number) << "\n";
-              }
+              barycentricVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
           }
           
           std::cout << barycentricVertices << "\n";
