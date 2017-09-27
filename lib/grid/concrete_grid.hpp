@@ -262,7 +262,6 @@ public:
              !it->finished(); it->next()) {
           const Entity<2> &entity = it->entity();
           const int ent2Number = index.entityIndex(entity);
-//            std::cout << "ent2Number: " << ent2Number << "\n";
           Matrix<double> corners;
           entity.geometry().getCorners(corners);
           barycentricVertices.col(ent2Number) = corners.col(0);
@@ -281,29 +280,6 @@ public:
           sides(0) = LengthSquared(corners.col(1),corners.col(2));
           sides(1) = LengthSquared(corners.col(0),corners.col(2));
           sides(2) = LengthSquared(corners.col(0),corners.col(1));
-            
-//          for (int j = 0; j != 3; ++j){
-//            double coord = 0;
-//            double div = 0;
-//            coord += sides(0)*(sides(1)+sides(2)-sides(0))*corners(j,0);
-//            coord += sides(1)*(sides(0)+sides(2)-sides(1))*corners(j,1);
-//            coord += sides(2)*(sides(0)+sides(1)-sides(2))*corners(j,2);
-//            div += sides(0)*(sides(1)+sides(2)-sides(0));
-//            div += sides(1)*(sides(0)+sides(2)-sides(1));
-//            div += sides(2)*(sides(0)+sides(1)-sides(2));
-//            barycentricVertices(j, ent2Count + ent1Count + ent0Number)
-//              = coord/div;
-//            double aPlusb = 0;
-//            double maxSide = 0;
-//            for(int i=0;i<3;++i){
-//              aPlusb += sides(i);
-//              maxSide = std::max(maxSide,sides(i));
-//            }
-//            aPlusb -= maxSide;
-//            if(aPlusb <= 1.1*maxSide)
-//              throw std::runtime_error("Point is almost outside triangle!");
-//            //    (corners(j, 0) + corners(j, 1) + corners(j, 2)) / 3;
-//            }
 
             const double PI = 3.14;
             
@@ -368,7 +344,7 @@ public:
           for (std::unique_ptr<EntityIterator<0>> it = view->entityIterator<0>();
                !it->finished(); it->next()) {
               const Entity<0> &entity = it->entity();
-              const int ent0Number = index.subEntityIndex(entity, 0, 0); //what do the 0,0 mean?
+              const int ent0Number = index.subEntityIndex(entity, 0, 0);
               for (int i = 0; i != 3; ++i) {
                   const int edgeNumber = index.subEntityIndex(entity,i,1);
                   if(edgeToFaceMap[edgeNumber][0]==-1) edgeToFaceMap[edgeNumber][0] = ent0Number;
@@ -461,12 +437,10 @@ public:
                       }
                       else if (center1ToNewCenter1 > center1ToNewCenter2){
                           newCenter = newCenter1;
-                          std::cout << "Minus sign \n";
                       }
                       else{
                           std::cout << "Why are the centers the same distance?";
                       }
-                      
 
                       directionNodes = corners.col(0) - corners.col(1);
                       directionCenters = center1 - newCenter;
