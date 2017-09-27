@@ -253,10 +253,6 @@ public:
         const size_t ent0Count = view->entityCount(0); // faces
         const size_t ent1Count = view->entityCount(1); // edges
         const size_t ent2Count = view->entityCount(2); // vertices
-
-          std::cout << "ent0Count: " << ent0Count << "\n";
-          std::cout << "ent1Count: " << ent1Count << "\n";
-          std::cout << "ent2Count: " << ent2Count << "\n";
           
         barycentricVertices.conservativeResize(3, ent2Count + ent1Count +
                                                       ent0Count);
@@ -327,7 +323,6 @@ public:
             
             // Get the middle point if one of the angles is large
             if(sides(0) - sides(1) - sides(2)>=0){ //   angle(0) > PI/2
-                std::cout << "case 1 \n";
                 beta = (2.0/3.0) * sin(angle(1)) * sin(angle(2)) / cos(angle(1) - angle(2));
                 normal = crossProduct(corners.col(1) - corners.col(0), corners.col(2) - corners.col(0));
                 normal_size = sqrt(dotProduct(normal, normal));
@@ -337,7 +332,6 @@ public:
                 barycentricVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(0) + beta * (corners.col(1) - corners.col(0)) + t * res;
             }
             else if(sides(1) - sides(0) - sides(2)>=0){ //  angle(1) > PI/2
-                std::cout << "case2 \n";
                 beta = (2.0/3.0) * sin(angle(2)) * sin(angle(0)) / cos(angle(2) - angle(0));
                 normal = crossProduct(corners.col(0) - corners.col(1), corners.col(2) - corners.col(1));
                 normal_size = sqrt(dotProduct(normal, normal));
@@ -347,7 +341,6 @@ public:
                 barycentricVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(1) + beta *(corners.col(2) - corners.col(1)) + t * res;
             }
             else if(sides(2) - sides(0) - sides(1) >=0){ //   angle(2) > PI/2
-                std::cout << "case3 \n";
                 beta = (2.0/3.0) * sin(angle(0)) * sin(angle(1)) / cos(angle(0) - angle(1));
                 normal = crossProduct(corners.col(0) - corners.col(2), corners.col(1) - corners.col(2));
                 normal_size = sqrt(dotProduct(normal, normal));
@@ -357,12 +350,10 @@ public:
                 barycentricVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(2) + beta * (corners.col(0) - corners.col(2)) + t * res;
             }
             else {//If none of the angles reaches pi/2, use the barycenter. The factor 2/3 has been chosen to make the transition continuous
-                std::cout << "Barycenter \n";
                 barycentricVertices.col(ent2Count + ent1Count + ent0Number) = (corners.col(0) + corners.col(1) + corners.col(2)) /3;
             }
 		
         }
-          std::cout << barycentricVertices << "\n";
 
           
           Vector<Vector<int>> edgeToFaceMap;
