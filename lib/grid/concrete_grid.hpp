@@ -456,11 +456,12 @@ public:
                       center1ToNewCenter1 = sqrt(dotProduct(center1 - newCenter1, center1 - newCenter1));
                       center1ToNewCenter2 = sqrt(dotProduct(center1 - newCenter2, center1 - newCenter2));
                       
-                      if (center1ToNewCenter1< center1ToNewCenter2) {
+                      if (center1ToNewCenter1 < center1ToNewCenter2) {
                           newCenter = newCenter2;
                       }
-                      else if(center1ToNewCenter1 > center1ToNewCenter2){
+                      else if (center1ToNewCenter1 > center1ToNewCenter2){
                           newCenter = newCenter1;
+                          std::cout << "Minus sign \n";
                       }
                       else{
                           std::cout << "Why are the centers the same distance?";
