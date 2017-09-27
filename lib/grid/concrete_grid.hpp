@@ -335,7 +335,6 @@ public:
                 res = crossProduct(normal, corners.col(1) - corners.col(0));
                 t = -beta * dotProduct(corners.col(1) - corners.col(2), corners.col(2) - corners.col(0)) / dotProduct(res, corners.col(2) - corners.col(0));
                 barycentricVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(0) + beta * (corners.col(1) - corners.col(0)) + t * res;
-//                std::cout << barycentricVertices.col(ent2Count + ent1Count + ent0Number)<< "\n";
             }
             else if(sides(1) - sides(0) - sides(2)>=0){ //  angle(1) > PI/2
                 std::cout << "case2 \n";
@@ -346,7 +345,6 @@ public:
                 res = crossProduct(normal, corners.col(2) - corners.col(1));
                 t = -beta * dotProduct(corners.col(2) - corners.col(0), corners.col(0) - corners.col(1)) / dotProduct(res, corners.col(0) - corners.col(1));
                 barycentricVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(1) + beta *(corners.col(2) - corners.col(1)) + t * res;
-//                std::cout << barycentricVertices.col(ent2Count + ent1Count + ent0Number)<< "\n";
             }
             else if(sides(2) - sides(0) - sides(1) >=0){ //   angle(2) > PI/2
                 std::cout << "case3 \n";
@@ -357,12 +355,10 @@ public:
                 res = crossProduct(normal, corners.col(0) - corners.col(2));
                 t = -beta * dotProduct(corners.col(0) - corners.col(1), corners.col(1) - corners.col(2)) / dotProduct(res, corners.col(1) - corners.col(2));
                 barycentricVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(2) + beta * (corners.col(0) - corners.col(2)) + t * res;
-//                std::cout << barycentricVertices.col(ent2Count + ent1Count + ent0Number)<< "\n";
             }
             else {//If none of the angles reaches pi/2, use the barycenter. The factor 2/3 has been chosen to make the transition continuous
                 std::cout << "Barycenter \n";
                 barycentricVertices.col(ent2Count + ent1Count + ent0Number) = (corners.col(0) + corners.col(1) + corners.col(2)) /3;
-//                std::cout << barycentricVertices.col(ent2Count + ent1Count + ent0Number)<< "\n";
             }
 		
         }
@@ -386,7 +382,6 @@ public:
                   const int edgeNumber = index.subEntityIndex(entity,i,1);
                   if(edgeToFaceMap[edgeNumber][0]==-1) edgeToFaceMap[edgeNumber][0] = ent0Number;
                   else edgeToFaceMap[edgeNumber][1] = ent0Number;
-                  std::cout << "edgeToFaceMap[" << edgeNumber << "]: \n" << edgeToFaceMap[edgeNumber] << "\n";
               }
           }
           
@@ -402,19 +397,16 @@ public:
               
               //use edgeToFaceMap to find centers of associated triangles
               if(edgeToFaceMap[ent1Number][0] == -1){
-                  std::cout << ent1Number << " lies on the boundary \n";
                   faceNumber = edgeToFaceMap[ent1Number][1];
                   barycentricVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
                   //if the edge is only associated with one triangle then pick the midpoint
               }
               else if(edgeToFaceMap[ent1Number][1] == -1){
-                  std::cout << ent1Number << " lies on the boundary \n";
                   faceNumber = edgeToFaceMap[ent1Number][0];
                   barycentricVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
                   //if the edge is only associated with one triangle then pick the midpoint
               }
               else{
-                  std::cout << ent1Number << " doesn't lie on the boundary \n";
                   Vector<double> center1(3);
                   Vector<double> center2(3);
                   faceNumber = edgeToFaceMap[ent1Number][0];
@@ -432,7 +424,6 @@ public:
                   
                   //check if both triangles lie on the same plane
                   if (dotProduct(normalToPlane, center2) - dotProduct(normalToPlane, center1) == 0) {
-                      std::cout << "same plane \n";
                       Vector<double> directionNodes(3);
                       Vector<double> directionCenters(3);
                       double t;
@@ -445,7 +436,6 @@ public:
                       barycentricVertices.col(ent2Count + ent1Number) = corners.col(1) + t * directionNodes;
                   }
                   else{
-                      std::cout << "not same plane \n";
                       Vector<double> directionNodes(3);
                       Vector<double> sideLengths(3);
                       Vector<double> perpdirectionNodes(3);
@@ -492,12 +482,6 @@ public:
                       t = dotProduct(crossProduct(normalToPlane, newCenter - corners.col(1)), directionCenters) / dotProduct(crossProduct(normalToPlane, directionNodes),directionCenters);
                       
                       barycentricVertices.col(ent2Count + ent1Number) = corners.col(1) + t * directionNodes;
-                      
-//                        barycentricVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
-
-                      
-                      std::cout << dotProduct(barycentricVertices.col(ent2Count + ent1Number) - corners.col(0), barycentricVertices.col(ent2Count + ent1Number) - corners.col(0))<< "\n";
-                      std::cout << dotProduct(barycentricVertices.col(ent2Count + ent1Number) - corners.col(1), barycentricVertices.col(ent2Count + ent1Number) - corners.col(1)) << "\n";
                   }
               }
           }
