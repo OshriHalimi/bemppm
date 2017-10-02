@@ -53,18 +53,6 @@ double sideLength(Vector<double> v0, Vector<double> v1){
     return sqrt(out);
     }
     
-double triangleArea(Vector<double> v0, Vector<double> v1, Vector<double> v2){
-    //calculates the area of the triangle given the three vertices
-    Vector<double> lengths(3);
-    double s;
-    double out;
-    lengths(0) = sideLength(v1, v2);
-    lengths(1) = sideLength(v0, v2);
-    lengths(2) = sideLength(v0, v1);
-    s = (lengths(0) + lengths(1) + lengths(2))/2;
-    out = sqrt(s * (s-lengths(0)) * (s-lengths(1)) * (s-lengths(2)) );
-    return out;
-    }
 namespace {
 
 template <typename BasisFunctionType>
@@ -234,16 +222,19 @@ void BuffaChristiansenVectorSpace<BasisFunctionType>::assignDofsImpl() {
 
   std::vector<int> lowestIndicesOfElementsAdjacentToFineEdges(
       edgeCountFineGrid, std::numeric_limits<int>::max());
+    
+    std::vector<int> areaTriangle(edgeCountFineGrid, -1);
 
   for (std::unique_ptr<EntityIterator<0>> it = m_view->entityIterator<0>();
        !it->finished(); it->next()) {
-    for (int i = 0; i != 3; ++i) {
-      const Entity<0> &entity = it->entity();
-      const int ent0Number = bindex.subEntityIndex(entity, 0, 0);
-      int &lowestIndex =
-          lowestIndicesOfElementsAdjacentToFineEdges[bindex.subEntityIndex(
-              entity, i, 1)];
-      lowestIndex = std::min(ent0Number, lowestIndex);
+      for (int i = 0; i != 3; ++i) {
+          const Entity<0> &entity = it->entity();
+          const int ent0Number = bindex.subEntityIndex(entity, 0, 0);
+          int &lowestIndex =
+              lowestIndicesOfElementsAdjacentToFineEdges[bindex.subEntityIndex(entity, i, 1)];
+          lowestIndex = std::min(ent0Number, lowestIndex);
+          areaTriangle[ent0Number] = entity.volume(); //gives area of each small triangle
+          std::cout << "area of triangle: " << areaTriangle[ent0Number] < "\n";
     }
   }
 
@@ -434,6 +425,7 @@ void BuffaChristiansenVectorSpace<BasisFunctionType>::assignDofsImpl() {
   m_elementShapesets.resize(elementCount);
 
   // Set up coefficients for shapesets
+    // Note that coefficients need to be adjusted for a combination of RT functions instead of RWG
   for (std::unique_ptr<EntityIterator<1>> it = coarseView->entityIterator<1>();
        !it->finished(); it->next()) {
     const Entity<1> &entity = it->entity();
@@ -470,8 +462,6 @@ void BuffaChristiansenVectorSpace<BasisFunctionType>::assignDofsImpl() {
       }
       // Go around loop
       for (int i = N - 1; faceNum != fineFacesonEdge(ent1Number, 0); --i) {
-          std::cout << corners.col(0) << ", " << corners.col(1) << "\n";
-        std::cout << "side length: " << sideLength(corners.col(0), corners.col(1)) << "\n";
         if (i < -N * 3) {
           throw std::runtime_error("Error probably caused by a bad mesh. "
                                    "Please check your normal orientations");
