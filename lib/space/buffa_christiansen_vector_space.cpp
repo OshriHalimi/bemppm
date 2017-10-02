@@ -45,6 +45,26 @@
 
 namespace Bempp {
 
+double sideLength(Vector<double> v0, Vector<double> v1){
+    //calculates the distance between two points
+    double out = 0;
+    for(int i = 0; i<3; ++i)
+        out += (v0(i)-v1(i))*(v0(i)-v1(i));
+    return sqrt(out);
+    }
+    
+double triangleArea(Vector<double> v0, Vector<double> v1, Vector<double> v2){
+    //calculates the area of the triangle given the three vertices
+    Vector<double> lengths(3);
+    double s;
+    double out;
+    lengths(0) = sideLength(v1, v2);
+    lengths(1) = sideLength(v0, v2);
+    lengths(2) = sideLength(v0, v1);
+    s = (lengths(0) + lengths(1) + lengths(2))/2;
+    out = sqrt(s * (s-lengths(0)) * (s-lengths(1)) * (s-lengths(2)) );
+    return out;
+    }
 namespace {
 
 template <typename BasisFunctionType>
@@ -418,7 +438,11 @@ void BuffaChristiansenVectorSpace<BasisFunctionType>::assignDofsImpl() {
        !it->finished(); it->next()) {
     const Entity<1> &entity = it->entity();
     const int ent1Number = index.entityIndex(entity);
-
+  
+      Matrix<double> corners;
+      entity.geometry().getCorners(corners);
+      
+      
     const int glDof = globalDofsOfEdges[ent1Number];
     if (glDof != -1) {
       // Matrix<CoordinateType> vertices;
@@ -446,6 +470,8 @@ void BuffaChristiansenVectorSpace<BasisFunctionType>::assignDofsImpl() {
       }
       // Go around loop
       for (int i = N - 1; faceNum != fineFacesonEdge(ent1Number, 0); --i) {
+          std::cout << corners.col(0) << ", " << corners.col(1) << "\n";
+        std::cout << "side length: " << sideLength(corners.col(0), corners.col(1)) << "\n";
         if (i < -N * 3) {
           throw std::runtime_error("Error probably caused by a bad mesh. "
                                    "Please check your normal orientations");
