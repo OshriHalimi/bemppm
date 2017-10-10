@@ -53,18 +53,30 @@ double sideLength(Vector<double> v0, Vector<double> v1){
     return sqrt(out);
     }
     
+double triangleArea(Vector<double> v0, Vector<double> v1, Vector<double> v2){
+    //calculates the area of the triangle given the three vertices
+    Vector<double> lengths(3);
+    double s;
+    double out;
+    lengths(0) = sideLength(v1, v2);
+    lengths(1) = sideLength(v0, v2);
+    lengths(2) = sideLength(v0, v1);
+    s = (lengths(0) + lengths(1) + lengths(2))/2;
+    out = sqrt(s * (s-lengths(0)) * (s-lengths(1)) * (s-lengths(2)) );
+    return out;
+    }
 namespace {
 
 template <typename BasisFunctionType>
 class BuffaChristiansenSpaceFactory : public SpaceFactory<BasisFunctionType> {
 public:
-  shared_ptr<Space<BasisFunctionType>>
-  create(const shared_ptr<const Grid> &grid,
+    shared_ptr<Space<BasisFunctionType>>
+    create(const shared_ptr<const Grid> &grid,
          const GridSegment &segment) const override {
 
     return shared_ptr<Space<BasisFunctionType>>(
         new BuffaChristiansenVectorSpace<BasisFunctionType>(grid, segment));
-  }
+    }
 };
 }
 
@@ -116,17 +128,17 @@ bool BuffaChristiansenVectorSpace<BasisFunctionType>::spaceIsCompatible(
 
 template <typename BasisFunctionType>
 void BuffaChristiansenVectorSpace<BasisFunctionType>::initialize() {
-  if (this->grid()->dim() != 2 || this->grid()->dimWorld() != 3)
-    throw std::invalid_argument("BuffaChristiansenVectorSpace::initialize(): "
+    if (this->grid()->dim() != 2 || this->grid()->dimWorld() != 3)
+        throw std::invalid_argument("BuffaChristiansenVectorSpace::initialize(): "
                                 "grid must be 2-dimensional and embedded "
                                 "in 3-dimensional space");
-  if (m_putDofsOnBoundaries)
-    throw std::invalid_argument(
+    if (m_putDofsOnBoundaries)
+        throw std::invalid_argument(
         "BuffaChristiansenVectorSpace::initialize(): "
         "Buffa-Christian spaces do not yet support DOFs "
         "on boundaries");
-  m_view = this->grid()->leafView();
-  assignDofsImpl();
+    m_view = this->grid()->leafView();
+    assignDofsImpl();
 }
 
 template <typename BasisFunctionType>
@@ -137,19 +149,18 @@ template <typename BasisFunctionType>
 shared_ptr<const Space<BasisFunctionType>>
 BuffaChristiansenVectorSpace<BasisFunctionType>::discontinuousSpace(
     const shared_ptr<const Space<BasisFunctionType>> &self) const {
-  if (!m_discontinuousSpace) {
-    tbb::mutex::scoped_lock lock(m_discontinuousSpaceMutex);
-    typedef PiecewiseLinearDiscontinuousScalarSpace<BasisFunctionType>
-        DiscontinuousSpace;
-    if (!m_discontinuousSpace)
-      m_discontinuousSpace.reset(new DiscontinuousSpace(this->grid()));
-  }
-  return m_discontinuousSpace;
+    if (!m_discontinuousSpace) {
+        tbb::mutex::scoped_lock lock(m_discontinuousSpaceMutex);
+        typedef PiecewiseLinearDiscontinuousScalarSpace<BasisFunctionType> DiscontinuousSpace;
+        if (!m_discontinuousSpace)
+            m_discontinuousSpace.reset(new DiscontinuousSpace(this->grid()));
+    }
+    return m_discontinuousSpace;
 }
 
 template <typename BasisFunctionType>
 bool BuffaChristiansenVectorSpace<BasisFunctionType>::isDiscontinuous() const {
-  return false;
+    return false;
 }
 
 template <typename BasisFunctionType>
@@ -157,29 +168,28 @@ const typename BuffaChristiansenVectorSpace<
     BasisFunctionType>::CollectionOfShapesetTransformations &
 BuffaChristiansenVectorSpace<BasisFunctionType>::basisFunctionValue() const {
 
-  return m_impl->transformations;
+    return m_impl->transformations;
 }
 
 template <typename BasisFunctionType>
 int BuffaChristiansenVectorSpace<BasisFunctionType>::domainDimension() const {
-  return 2;
+    return 2;
 }
 
 template <typename BasisFunctionType>
 int BuffaChristiansenVectorSpace<BasisFunctionType>::codomainDimension() const {
-  return 3;
+    return 3;
 }
 
 template <typename BasisFunctionType>
-ElementVariant BuffaChristiansenVectorSpace<BasisFunctionType>::elementVariant(
-    const Entity<0> &element) const {
-  GeometryType type = element.type();
-  if (type.isTriangle())
-    return 3;
-  else if (type.isQuadrilateral())
-    return 4;
-  else
-    throw std::runtime_error("BuffaChristiansenVectorSpace::"
+ElementVariant BuffaChristiansenVectorSpace<BasisFunctionType>::elementVariant(const Entity<0> &element) const {
+    GeometryType type = element.type();
+    if (type.isTriangle())
+        return 3;
+    else if (type.isQuadrilateral())
+        return 4;
+    else
+        throw std::runtime_error("BuffaChristiansenVectorSpace::"
                              "elementVariant(): invalid geometry type, "
                              "this shouldn't happen!");
 }
@@ -195,428 +205,473 @@ void BuffaChristiansenVectorSpace<BasisFunctionType>::setElementVariant(
 
 template <typename BasisFunctionType>
 void BuffaChristiansenVectorSpace<BasisFunctionType>::assignDofsImpl() {
-  // Set up useful numbers, maps, etc.
-  int edgeCountCoarseGrid = m_originalGrid->leafView()->entityCount(1);
-  int vertexCountCoarseGrid = m_originalGrid->leafView()->entityCount(2);
-  int edgeCountFineGrid = m_view->entityCount(1);
-  int faceCountFineGrid = m_view->entityCount(0);
-  int elementCount = m_view->entityCount(0);
-  std::unique_ptr<GridView> coarseView = m_originalGrid->leafView();
-  const IndexSet &index = coarseView->indexSet();
-  const IndexSet &bindex = m_view->indexSet();
+    // Set up useful numbers, maps, etc.
+    int edgeCountCoarseGrid = m_originalGrid->leafView()->entityCount(1);
+    int vertexCountCoarseGrid = m_originalGrid->leafView()->entityCount(2);
+    int edgeCountFineGrid = m_view->entityCount(1);
+    int faceCountFineGrid = m_view->entityCount(0);
+    int elementCount = m_view->entityCount(0);
+    std::unique_ptr<GridView> coarseView = m_originalGrid->leafView();
+    const IndexSet &index = coarseView->indexSet();
+    const IndexSet &bindex = m_view->indexSet();
 
-  std::vector<int> lowestIndicesOfElementsAdjacentToEdges(
+    std::vector<int> lowestIndicesOfElementsAdjacentToEdges(
       edgeCountCoarseGrid, std::numeric_limits<int>::max());
 
-  for (std::unique_ptr<EntityIterator<0>> it = coarseView->entityIterator<0>();
+    for (std::unique_ptr<EntityIterator<0>> it = coarseView->entityIterator<0>();
        !it->finished(); it->next()) {
-    for (int i = 0; i != 3; ++i) {
-      const Entity<0> &entity = it->entity();
-      const int ent0Number = index.subEntityIndex(entity, 0, 0);
-      int &lowestIndex =
-          lowestIndicesOfElementsAdjacentToEdges[index.subEntityIndex(entity, i,
+        for (int i = 0; i != 3; ++i) {
+            const Entity<0> &entity = it->entity();
+            const int ent0Number = index.subEntityIndex(entity, 0, 0);
+            int &lowestIndex =
+            lowestIndicesOfElementsAdjacentToEdges[index.subEntityIndex(entity, i,
                                                                       1)];
-      lowestIndex = std::min(ent0Number, lowestIndex);
+            lowestIndex = std::min(ent0Number, lowestIndex);
+        }
     }
-  }
 
-  std::vector<int> lowestIndicesOfElementsAdjacentToFineEdges(
+    std::vector<int> lowestIndicesOfElementsAdjacentToFineEdges(
       edgeCountFineGrid, std::numeric_limits<int>::max());
     
-    std::vector<int> areaTriangle(edgeCountFineGrid, -1);
+    std::vector<double> areaT(edgeCountFineGrid, -1);
 
-  for (std::unique_ptr<EntityIterator<0>> it = m_view->entityIterator<0>();
+    for (std::unique_ptr<EntityIterator<0>> it = m_view->entityIterator<0>();
        !it->finished(); it->next()) {
-      for (int i = 0; i != 3; ++i) {
-          const Entity<0> &entity = it->entity();
-          const int ent0Number = bindex.subEntityIndex(entity, 0, 0);
-          int &lowestIndex =
-              lowestIndicesOfElementsAdjacentToFineEdges[bindex.subEntityIndex(entity, i, 1)];
-          lowestIndex = std::min(ent0Number, lowestIndex);
-          areaTriangle[ent0Number] = entity.volume(); //gives area of each small triangle
-          std::cout << "area of triangle: " << areaTriangle[ent0Number] < "\n";
-    }
-  }
-
-  Matrix<int> fineEdgeMap;
-  fineEdgeMap.conservativeResize(faceCountFineGrid, 3);
-  for (std::unique_ptr<EntityIterator<0>> it = m_view->entityIterator<0>();
-       !it->finished(); it->next()) {
-    int j = 0;
-    for (std::unique_ptr<EntityIterator<1>> subIt =
-             it->entity().subEntityIterator<1>();
-         !subIt->finished(); subIt->next()) {
-      fineEdgeMap(bindex.entityIndex(it->entity()), j++) =
-          bindex.entityIndex(subIt->entity());
-    }
-  }
-
-  const int verticesAdjacentToEdges[3][2] = {{0, 1}, {0, 2}, {1, 2}};
-
-  std::vector<int> edgeCountNextToCoarseVertex;
-  edgeCountNextToCoarseVertex.resize(vertexCountCoarseGrid);
-
-  std::vector<int> faceCountNextToCoarseEdge;
-  faceCountNextToCoarseEdge.resize(edgeCountCoarseGrid, 0);
-
-  std::vector<int> faceCountNextToFineEdge;
-  faceCountNextToFineEdge.resize(edgeCountFineGrid, 0);
-
-  Matrix<int> facesAdjacentToCoarseEdges;
-  facesAdjacentToCoarseEdges.conservativeResize(edgeCountCoarseGrid, 2);
-
-  Matrix<int> fineFacesonEdge;
-  fineFacesonEdge.conservativeResize(edgeCountCoarseGrid, 2);
-
-  Matrix<int> coarseVerticesonEdge;
-  coarseVerticesonEdge.conservativeResize(edgeCountCoarseGrid, 2);
-
-  for (std::unique_ptr<EntityIterator<0>> it = m_view->entityIterator<0>();
-       !it->finished(); it->next()) {
-    const Entity<0> &entity = it->entity();
-    const int ent0Number = bindex.subEntityIndex(entity, 0, 0);
-    ++faceCountNextToFineEdge[bindex.subEntityIndex(entity, 0, 1)];
-    ++faceCountNextToFineEdge[bindex.subEntityIndex(entity, 1, 1)];
-    ++faceCountNextToFineEdge[bindex.subEntityIndex(entity, 2, 1)];
-  }
-  for (std::unique_ptr<EntityIterator<0>> it = coarseView->entityIterator<0>();
-       !it->finished(); it->next()) {
-    const Entity<0> &entity = it->entity();
-    const int ent0Number = index.subEntityIndex(entity, 0, 0);
-    ++faceCountNextToCoarseEdge[index.subEntityIndex(entity, 0, 1)];
-    ++faceCountNextToCoarseEdge[index.subEntityIndex(entity, 1, 1)];
-    ++faceCountNextToCoarseEdge[index.subEntityIndex(entity, 2, 1)];
-    for (int i = 0; i != 3; ++i) {
-      int ent2Number = index.subEntityIndex(entity, i, 2);
-      ++edgeCountNextToCoarseVertex[ent2Number];
-    }
-    for (int i = 0; i != 3; ++i) {
-      int ent1Number = index.subEntityIndex(entity, i, 1);
-      if (lowestIndicesOfElementsAdjacentToEdges[ent1Number] == ent0Number) {
-        facesAdjacentToCoarseEdges(ent1Number, 0) = ent0Number;
-        if (i == 0) {
-          fineFacesonEdge(ent1Number, 0) = m_sonMap(ent0Number, 2);
-          coarseVerticesonEdge(ent1Number, 0) =
-              index.subEntityIndex(entity, 1, 2);
-          coarseVerticesonEdge(ent1Number, 1) =
-              index.subEntityIndex(entity, 0, 2);
-        } else if (i == 1) {
-          fineFacesonEdge(ent1Number, 0) = m_sonMap(ent0Number, 0);
-          coarseVerticesonEdge(ent1Number, 0) =
-              index.subEntityIndex(entity, 0, 2);
-          coarseVerticesonEdge(ent1Number, 1) =
-              index.subEntityIndex(entity, 2, 2);
-        } else {
-          fineFacesonEdge(ent1Number, 0) = m_sonMap(ent0Number, 4);
-          coarseVerticesonEdge(ent1Number, 0) =
-              index.subEntityIndex(entity, 2, 2);
-          coarseVerticesonEdge(ent1Number, 1) =
-              index.subEntityIndex(entity, 1, 2);
+        for (int i = 0; i != 3; ++i) {
+            const Entity<0> &entity = it->entity();
+            Matrix<double> corners;
+            entity.geometry().getCorners(corners);
+            const int ent0Number = bindex.subEntityIndex(entity, 0, 0);
+            int &lowestIndex =
+                  lowestIndicesOfElementsAdjacentToFineEdges[bindex.subEntityIndex(entity, i, 1)];
+            lowestIndex = std::min(ent0Number, lowestIndex);
+            areaT[ent0Number] = triangleArea(corners.col(0), corners.col(1), corners.col(2));  //gives area of each small triangle
         }
-      } else {
-        if (i == 0)
-          fineFacesonEdge(ent1Number, 1) = m_sonMap(ent0Number, 2);
-        else if (i == 1)
-          fineFacesonEdge(ent1Number, 1) = m_sonMap(ent0Number, 0);
-        else
-          fineFacesonEdge(ent1Number, 1) = m_sonMap(ent0Number, 4);
-        facesAdjacentToCoarseEdges(ent1Number, 1) = ent0Number;
-      }
     }
-  }
 
-  std::vector<bool> vertexOnBoundary;
-  vertexOnBoundary.resize(vertexCountCoarseGrid, false);
-
-  for (std::unique_ptr<EntityIterator<1>> it = coarseView->entityIterator<1>();
-       !it->finished(); it->next()) {
-    const Entity<1> &entity = it->entity();
-    const int ent1Number = index.entityIndex(entity);
-    if (faceCountNextToCoarseEdge[ent1Number] == 1)
-      for (int j = 0; j != 2; ++j)
-        if (!vertexOnBoundary[coarseVerticesonEdge(ent1Number, j)])
-          vertexOnBoundary[coarseVerticesonEdge(ent1Number, j)] = true;
-  }
-
-  std::vector<int> anticlockwiseEdgesToFaces;
-  anticlockwiseEdgesToFaces.resize(edgeCountFineGrid, -1);
-  std::vector<int> anticlockwiseFacesToEdges;
-  anticlockwiseFacesToEdges.resize(faceCountFineGrid, -1);
-  std::vector<int> anticlockwiseBoundaryEdgesToVertices;
-  anticlockwiseBoundaryEdgesToVertices.resize(edgeCountFineGrid, -1);
-  std::vector<int> anticlockwiseVerticesToBoundaryEdges;
-  anticlockwiseVerticesToBoundaryEdges.resize(faceCountFineGrid, -1);
-
-  for (std::unique_ptr<EntityIterator<0>> it = m_view->entityIterator<0>();
-       !it->finished(); it->next()) {
-    const Entity<0> &entity = it->entity();
-    anticlockwiseEdgesToFaces[bindex.subEntityIndex(entity, 0, 1)] =
-        bindex.subEntityIndex(entity, 0, 0);
-    anticlockwiseFacesToEdges[bindex.subEntityIndex(entity, 0, 0)] =
-        bindex.subEntityIndex(entity, 1, 1);
-
-    if (faceCountNextToFineEdge[bindex.subEntityIndex(entity, 0, 1)] == 1) {
-      anticlockwiseBoundaryEdgesToVertices[bindex.subEntityIndex(
-          entity, 0, 1)] = bindex.subEntityIndex(entity, 1, 2);
-      anticlockwiseVerticesToBoundaryEdges[bindex.subEntityIndex(
-          entity, 0, 2)] = bindex.subEntityIndex(entity, 0, 1);
+    Matrix<int> fineEdgeMap;
+    fineEdgeMap.conservativeResize(faceCountFineGrid, 3);
+	for (std::unique_ptr<EntityIterator<0>> it = m_view->entityIterator<0>();
+         !it->finished(); it->next()) {
+        int j = 0;
+        for (std::unique_ptr<EntityIterator<1>> subIt =
+                 it->entity().subEntityIterator<1>();
+             !subIt->finished(); subIt->next()) {
+            fineEdgeMap(bindex.entityIndex(it->entity()), j++) =
+            bindex.entityIndex(subIt->entity());
+        }
     }
-    if (faceCountNextToFineEdge[bindex.subEntityIndex(entity, 1, 1)] == 1) {
-      anticlockwiseBoundaryEdgesToVertices[bindex.subEntityIndex(
-          entity, 1, 1)] = bindex.subEntityIndex(entity, 0, 2);
-      anticlockwiseVerticesToBoundaryEdges[bindex.subEntityIndex(
-          entity, 2, 2)] = bindex.subEntityIndex(entity, 1, 1);
-    }
-    if (faceCountNextToFineEdge[bindex.subEntityIndex(entity, 2, 1)] == 1) {
-      anticlockwiseBoundaryEdgesToVertices[bindex.subEntityIndex(
-          entity, 2, 1)] = bindex.subEntityIndex(entity, 2, 2);
-      anticlockwiseVerticesToBoundaryEdges[bindex.subEntityIndex(
-          entity, 1, 2)] = bindex.subEntityIndex(entity, 2, 1);
-    }
-  }
 
-  std::vector<int> nextFaceAnticlockwise;
-  nextFaceAnticlockwise.resize(faceCountFineGrid);
-  for (int i = 0; i != faceCountFineGrid; ++i) {
-    nextFaceAnticlockwise[i] =
-        anticlockwiseEdgesToFaces[anticlockwiseFacesToEdges[i]];
-    if (nextFaceAnticlockwise[i] == -1)
-      nextFaceAnticlockwise[i] =
-          anticlockwiseEdgesToFaces[anticlockwiseVerticesToBoundaryEdges
+    const int verticesAdjacentToEdges[3][2] = {{0, 1}, {0, 2}, {1, 2}};
+
+    std::vector<int> edgeCountNextToCoarseVertex;
+    edgeCountNextToCoarseVertex.resize(vertexCountCoarseGrid);
+
+    std::vector<int> faceCountNextToCoarseEdge;
+    faceCountNextToCoarseEdge.resize(edgeCountCoarseGrid, 0);
+
+    std::vector<int> faceCountNextToFineEdge;
+    faceCountNextToFineEdge.resize(edgeCountFineGrid, 0);
+
+    Matrix<int> facesAdjacentToCoarseEdges;
+    facesAdjacentToCoarseEdges.conservativeResize(edgeCountCoarseGrid, 2);
+
+    Matrix<int> fineFacesonEdge;
+    fineFacesonEdge.conservativeResize(edgeCountCoarseGrid, 2);
+
+    Matrix<int> coarseVerticesonEdge;
+    coarseVerticesonEdge.conservativeResize(edgeCountCoarseGrid, 2);
+
+    for (std::unique_ptr<EntityIterator<0>> it = m_view->entityIterator<0>();
+         !it->finished(); it->next()) {
+        const Entity<0> &entity = it->entity();
+        const int ent0Number = bindex.subEntityIndex(entity, 0, 0);
+        ++faceCountNextToFineEdge[bindex.subEntityIndex(entity, 0, 1)];
+        ++faceCountNextToFineEdge[bindex.subEntityIndex(entity, 1, 1)];
+        ++faceCountNextToFineEdge[bindex.subEntityIndex(entity, 2, 1)];
+    }
+  
+    for (std::unique_ptr<EntityIterator<0>> it = coarseView->entityIterator<0>();
+         !it->finished(); it->next()) {
+        const Entity<0> &entity = it->entity();
+        const int ent0Number = index.subEntityIndex(entity, 0, 0);
+        ++faceCountNextToCoarseEdge[index.subEntityIndex(entity, 0, 1)];
+        ++faceCountNextToCoarseEdge[index.subEntityIndex(entity, 1, 1)];
+        ++faceCountNextToCoarseEdge[index.subEntityIndex(entity, 2, 1)];
+        for (int i = 0; i != 3; ++i) {
+            int ent2Number = index.subEntityIndex(entity, i, 2);
+            ++edgeCountNextToCoarseVertex[ent2Number];
+        }
+        for (int i = 0; i != 3; ++i) {
+            int ent1Number = index.subEntityIndex(entity, i, 1);
+            if (lowestIndicesOfElementsAdjacentToEdges[ent1Number] == ent0Number) {
+                facesAdjacentToCoarseEdges(ent1Number, 0) = ent0Number;
+                if (i == 0) {
+                    fineFacesonEdge(ent1Number, 0) = m_sonMap(ent0Number, 2);
+                    coarseVerticesonEdge(ent1Number, 0) = index.subEntityIndex(entity, 1, 2);
+                    coarseVerticesonEdge(ent1Number, 1) = index.subEntityIndex(entity, 0, 2);
+                }
+                else if (i == 1) {
+                    fineFacesonEdge(ent1Number, 0) = m_sonMap(ent0Number, 0);
+                    coarseVerticesonEdge(ent1Number, 0) = index.subEntityIndex(entity, 0, 2);
+                    coarseVerticesonEdge(ent1Number, 1) = index.subEntityIndex(entity, 2, 2);
+                }
+                else {
+                    fineFacesonEdge(ent1Number, 0) = m_sonMap(ent0Number, 4);
+                    coarseVerticesonEdge(ent1Number, 0) = index.subEntityIndex(entity, 2, 2);
+                    coarseVerticesonEdge(ent1Number, 1) = index.subEntityIndex(entity, 1, 2);
+                }
+            }
+            else {
+                if (i == 0){
+                    fineFacesonEdge(ent1Number, 1) = m_sonMap(ent0Number, 2);
+                }
+                else if (i == 1){
+                    fineFacesonEdge(ent1Number, 1) = m_sonMap(ent0Number, 0);
+                }
+                else{
+                    fineFacesonEdge(ent1Number, 1) = m_sonMap(ent0Number, 4);
+                }
+                facesAdjacentToCoarseEdges(ent1Number, 1) = ent0Number;
+            }
+        }
+    }
+
+    std::vector<bool> vertexOnBoundary;
+    vertexOnBoundary.resize(vertexCountCoarseGrid, false);
+
+    for (std::unique_ptr<EntityIterator<1>> it = coarseView->entityIterator<1>(); !it->finished(); it->next()) {
+        const Entity<1> &entity = it->entity();
+        const int ent1Number = index.entityIndex(entity);
+        if (faceCountNextToCoarseEdge[ent1Number] == 1)
+            for (int j = 0; j != 2; ++j)
+                if (!vertexOnBoundary[coarseVerticesonEdge(ent1Number, j)])
+                    vertexOnBoundary[coarseVerticesonEdge(ent1Number, j)] = true;
+    }
+    
+    std::vector<int> anticlockwiseEdgesToFaces;
+    anticlockwiseEdgesToFaces.resize(edgeCountFineGrid, -1);
+    std::vector<int> anticlockwiseFacesToEdges;
+    anticlockwiseFacesToEdges.resize(faceCountFineGrid, -1);
+    std::vector<int> anticlockwiseBoundaryEdgesToVertices;
+    anticlockwiseBoundaryEdgesToVertices.resize(edgeCountFineGrid, -1);
+    std::vector<int> anticlockwiseVerticesToBoundaryEdges;
+    anticlockwiseVerticesToBoundaryEdges.resize(faceCountFineGrid, -1);
+
+    for (std::unique_ptr<EntityIterator<0>> it = m_view->entityIterator<0>();!it->finished(); it->next()) {
+        const Entity<0> &entity = it->entity();
+        anticlockwiseEdgesToFaces[bindex.subEntityIndex(entity, 0, 1)] = bindex.subEntityIndex(entity, 0, 0);
+        anticlockwiseFacesToEdges[bindex.subEntityIndex(entity, 0, 0)] = bindex.subEntityIndex(entity, 1, 1);
+
+        if (faceCountNextToFineEdge[bindex.subEntityIndex(entity, 0, 1)] == 1) {
+            anticlockwiseBoundaryEdgesToVertices[bindex.subEntityIndex(entity, 0, 1)] = bindex.subEntityIndex(entity, 1, 2);
+            anticlockwiseVerticesToBoundaryEdges[bindex.subEntityIndex(entity, 0, 2)] = bindex.subEntityIndex(entity, 0, 1);
+        }
+        if (faceCountNextToFineEdge[bindex.subEntityIndex(entity, 1, 1)] == 1) {
+            anticlockwiseBoundaryEdgesToVertices[bindex.subEntityIndex(entity, 1, 1)] = bindex.subEntityIndex(entity, 0, 2);
+            anticlockwiseVerticesToBoundaryEdges[bindex.subEntityIndex(entity, 2, 2)] = bindex.subEntityIndex(entity, 1, 1);
+        }
+        if (faceCountNextToFineEdge[bindex.subEntityIndex(entity, 2, 1)] == 1) {
+            anticlockwiseBoundaryEdgesToVertices[bindex.subEntityIndex(entity, 2, 1)] = bindex.subEntityIndex(entity, 2, 2);
+            anticlockwiseVerticesToBoundaryEdges[bindex.subEntityIndex(entity, 1, 2)] = bindex.subEntityIndex(entity, 2, 1);
+        }
+    }
+
+    std::vector<int> nextFaceAnticlockwise;
+    nextFaceAnticlockwise.resize(faceCountFineGrid);
+    for (int i = 0; i != faceCountFineGrid; ++i) {
+        nextFaceAnticlockwise[i] =anticlockwiseEdgesToFaces[anticlockwiseFacesToEdges[i]];
+        if (nextFaceAnticlockwise[i] == -1)
+            nextFaceAnticlockwise[i] =
+            anticlockwiseEdgesToFaces[anticlockwiseVerticesToBoundaryEdges
                                         [anticlockwiseBoundaryEdgesToVertices
                                              [anticlockwiseFacesToEdges[i]]]];
-  }
+    }
 
-  // Assign Dofs to Edges
-  std::vector<int> globalDofsOfEdges;
-  globalDofsOfEdges.resize(edgeCountCoarseGrid);
-  int globalDofCount_ = 0;
-  for (int i = 0; i != edgeCountCoarseGrid; ++i) {
-    // TODO: What happens here if m_putDofsOnBoundaries is true (answer:
-    // exception is thrown above in initialize()!
-    int &globalDofOfEdge = acc(globalDofsOfEdges, i);
-    if (m_putDofsOnBoundaries || faceCountNextToCoarseEdge[i] == 1)
-      globalDofOfEdge = -1;
-    else
-      globalDofOfEdge = globalDofCount_++;
+    // Assign Dofs to Edges
+    std::vector<int> globalDofsOfEdges;
+    globalDofsOfEdges.resize(edgeCountCoarseGrid);
+    int globalDofCount_ = 0;
+    for (int i = 0; i != edgeCountCoarseGrid; ++i) {
+        // TODO: What happens here if m_putDofsOnBoundaries is true (answer:
+        // exception is thrown above in initialize()!
+        int &globalDofOfEdge = acc(globalDofsOfEdges, i);
+        if (m_putDofsOnBoundaries || faceCountNextToCoarseEdge[i] == 1)
+            globalDofOfEdge = -1;
+        else
+            globalDofOfEdge = globalDofCount_++;
     //       globalDofOfEdge = -1;
-  }
+    }
 
-  // (Re)initialise DOF maps
-  m_local2globalDofs.clear();
-  m_local2globalDofs.resize(elementCount);
-  m_local2globalDofWeights.clear();
-  m_local2globalDofWeights.resize(elementCount);
-  m_global2localDofs.clear();
-  m_global2localDofs.resize(globalDofCount_);
-  m_fineFaceCoeffs.clear();
-  m_fineFaceCoeffs.resize(faceCountFineGrid);
-  size_t flatLocalDofCount_ = 0;
+    // (Re)initialise DOF maps
+    m_local2globalDofs.clear();
+    m_local2globalDofs.resize(elementCount);
+    m_local2globalDofWeights.clear();
+    m_local2globalDofWeights.resize(elementCount);
+    m_global2localDofs.clear();
+    m_global2localDofs.resize(globalDofCount_);
+    m_fineFaceCoeffs.clear();
+    m_fineFaceCoeffs.resize(faceCountFineGrid);
+    size_t flatLocalDofCount_ = 0;
 
-  // Initialise bounding-box caches
-  BoundingBox<CoordinateType> model;
-  model.lbound.x = std::numeric_limits<CoordinateType>::max();
-  model.lbound.y = std::numeric_limits<CoordinateType>::max();
-  model.lbound.z = std::numeric_limits<CoordinateType>::max();
-  model.ubound.x = -std::numeric_limits<CoordinateType>::max();
-  model.ubound.y = -std::numeric_limits<CoordinateType>::max();
-  model.ubound.z = -std::numeric_limits<CoordinateType>::max();
-  m_globalDofBoundingBoxes.resize(globalDofCount_, model);
-  m_elementShapesets.resize(elementCount);
+    // Initialise bounding-box caches
+    BoundingBox<CoordinateType> model;
+    model.lbound.x = std::numeric_limits<CoordinateType>::max();
+    model.lbound.y = std::numeric_limits<CoordinateType>::max();
+    model.lbound.z = std::numeric_limits<CoordinateType>::max();
+    model.ubound.x = -std::numeric_limits<CoordinateType>::max();
+    model.ubound.y = -std::numeric_limits<CoordinateType>::max();
+    model.ubound.z = -std::numeric_limits<CoordinateType>::max();
+    m_globalDofBoundingBoxes.resize(globalDofCount_, model);
+    m_elementShapesets.resize(elementCount);
 
-  // Set up coefficients for shapesets
+    // Set up coefficients for shapesets
     // Note that coefficients need to be adjusted for a combination of RT functions instead of RWG
-  for (std::unique_ptr<EntityIterator<1>> it = coarseView->entityIterator<1>();
-       !it->finished(); it->next()) {
-    const Entity<1> &entity = it->entity();
-    const int ent1Number = index.entityIndex(entity);
-  
-      Matrix<double> corners;
-      entity.geometry().getCorners(corners);
-      
-      
-    const int glDof = globalDofsOfEdges[ent1Number];
-    if (glDof != -1) {
-      // Matrix<CoordinateType> vertices;
-      // const Geometry &geo = entity.geometry();
-      // geo.getCorners(vertices);
-      // BOUNDING BOXES ARE NOT RIGHT!
-      // extendBoundingBox(acc(m_globalDofBoundingBoxes, glDof), vertices);
-      // setBoundingBoxReference<CoordinateType>(acc(m_globalDofBoundingBoxes,
-      // glDof), 0.5 * (vertices.col(0)+vertices.col(1)));
+    for (std::unique_ptr<EntityIterator<1>> it = coarseView->entityIterator<1>();!it->finished(); it->next()) {
+        const Entity<1> &entity = it->entity();
+        const int ent1Number = index.entityIndex(entity);
 
-      int faceNum = fineFacesonEdge(ent1Number, 0);
-      int N = edgeCountNextToCoarseVertex[coarseVerticesonEdge(ent1Number, 0)];
+        Matrix<double> corners;
+        entity.geometry().getCorners(corners);
+        double polygonAreaLeft = 0;
+        double polygonAreaRight = 0;
+        
 
-      faceNum = nextFaceAnticlockwise[faceNum];
-      bool pastBoundary = false;
-      { // First edge bottom
-        Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[faceNum];
-        ffCoeff.conservativeResize(3, ffCoeff.cols() + 1);
-        if (vertexOnBoundary[coarseVerticesonEdge(ent1Number, 0)])
-          ffCoeff(0, ffCoeff.cols() - 1) = -(N - 2.) / (2 * N);
-        else
-          ffCoeff(0, ffCoeff.cols() - 1) = 0;
-        ffCoeff(1, ffCoeff.cols() - 1) = 0;
-        ffCoeff(2, ffCoeff.cols() - 1) = 1. / 2;
-      }
-      // Go around loop
-      for (int i = N - 1; faceNum != fineFacesonEdge(ent1Number, 0); --i) {
-        if (i < -N * 3) {
-          throw std::runtime_error("Error probably caused by a bad mesh. "
-                                   "Please check your normal orientations");
-        }
-        { // Before
-          Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[faceNum];
-          if (vertexOnBoundary[coarseVerticesonEdge(ent1Number, 0)])
-            if (pastBoundary)
-              ffCoeff(1, ffCoeff.cols() - 1) = (N - 1.) / N;
-            else {
-              ffCoeff(1, ffCoeff.cols() - 1) = -1. / N;
-              if (anticlockwiseEdgesToFaces
-                      [anticlockwiseFacesToEdges[faceNum]] == -1)
-                pastBoundary = true;
+        
+        const int glDof = globalDofsOfEdges[ent1Number];
+        
+        //find polygon areas
+        if (glDof != -1){
+            int faceNum = fineFacesonEdge(ent1Number, 0);
+            int N = edgeCountNextToCoarseVertex[coarseVerticesonEdge(ent1Number, 0)];
+            
+            faceNum = nextFaceAnticlockwise[faceNum];
+            bool pastBoundary = false;
+            
+            polygonAreaLeft += areaT[faceNum];
+            for (int i = N-1; faceNum!= fineFacesonEdge(ent1Number, 0); --i){
+                faceNum = nextFaceAnticlockwise[faceNum];
+                polygonAreaLeft += areaT[faceNum];
             }
-          else
-            ffCoeff(1, ffCoeff.cols() - 1) = -i * 1. / (2 * N);
-          m_local2globalDofs[faceNum].push_back(glDof);
-          m_local2globalDofWeights[faceNum].push_back(1.);
-          m_global2localDofs[glDof].push_back(
-              LocalDof(faceNum, ffCoeff.cols() - 1));
-          ++flatLocalDofCount_;
-        }
-
-        faceNum = nextFaceAnticlockwise[faceNum];
-        { // After
-          Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[faceNum];
-          ffCoeff.conservativeResize(3, ffCoeff.cols() + 1);
-          if (vertexOnBoundary[coarseVerticesonEdge(ent1Number, 0)])
-            if (pastBoundary)
-              ffCoeff(0, ffCoeff.cols() - 1) = -(N - 1.) / N;
-            else
-              ffCoeff(0, ffCoeff.cols() - 1) = 1. / N;
-          else
-            ffCoeff(0, ffCoeff.cols() - 1) = i * 1. / (2 * N);
-          ffCoeff(1, ffCoeff.cols() - 1) = 0;
-          ffCoeff(2, ffCoeff.cols() - 1) = 0;
-        }
-      }
-      { // First edge top
-        Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[faceNum];
-        if (vertexOnBoundary[coarseVerticesonEdge(ent1Number, 0)])
-          ffCoeff(1, ffCoeff.cols() - 1) = (N - 2.) / (2 * N);
-        ffCoeff(2, ffCoeff.cols() - 1) = 1. / 2;
-        m_local2globalDofs[faceNum].push_back(glDof);
-        m_local2globalDofWeights[faceNum].push_back(1.);
-        m_global2localDofs[glDof].push_back(
-            LocalDof(faceNum, ffCoeff.cols() - 1));
-        ++flatLocalDofCount_;
-      }
-
-      faceNum = fineFacesonEdge(ent1Number, 1);
-      N = edgeCountNextToCoarseVertex[coarseVerticesonEdge(ent1Number, 1)];
-      faceNum = nextFaceAnticlockwise[faceNum];
-      pastBoundary = false;
-      { // Second edge bottom
-        Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[faceNum];
-        ffCoeff.conservativeResize(3, ffCoeff.cols() + 1);
-        if (vertexOnBoundary[coarseVerticesonEdge(ent1Number, 1)])
-          ffCoeff(0, ffCoeff.cols() - 1) = -(N - 2.) / (N * 2);
-        else
-          ffCoeff(0, ffCoeff.cols() - 1) = 0;
-        ffCoeff(1, ffCoeff.cols() - 1) = 0;
-        ffCoeff(2, ffCoeff.cols() - 1) = 1. / 2;
-      }
-      // Go around loop
-      for (int i = N - 1; faceNum != fineFacesonEdge(ent1Number, 1); --i) {
-        if (i < -N * 3) {
-          throw std::runtime_error("Error probably caused by a bad mesh. "
-                                   "Please check your normal orientations");
-        }
-        { // Before
-          Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[faceNum];
-          if (vertexOnBoundary[coarseVerticesonEdge(ent1Number, 1)])
-            if (pastBoundary)
-              ffCoeff(1, ffCoeff.cols() - 1) = (N - 1.) / N;
-            else {
-              ffCoeff(1, ffCoeff.cols() - 1) = -1. / N;
-              if (anticlockwiseEdgesToFaces
-                      [anticlockwiseFacesToEdges[faceNum]] == -1)
-                pastBoundary = true;
+            
+            
+            faceNum = fineFacesonEdge(ent1Number, 1);
+            N = edgeCountNextToCoarseVertex[coarseVerticesonEdge(ent1Number, 1)];
+            faceNum = nextFaceAnticlockwise[faceNum];
+            pastBoundary = false;
+            
+            polygonAreaRight += areaT[faceNum];
+            for (int i = N - 1; faceNum != fineFacesonEdge(ent1Number, 1); --i){
+                faceNum = nextFaceAnticlockwise[faceNum];
+                polygonAreaRight += areaT[faceNum];
             }
-          else
-            ffCoeff(1, ffCoeff.cols() - 1) = -i * 1. / (2 * N);
-          m_local2globalDofs[faceNum].push_back(glDof);
-          m_local2globalDofWeights[faceNum].push_back(-1.);
-          m_global2localDofs[glDof].push_back(
-              LocalDof(faceNum, ffCoeff.cols() - 1));
-          ++flatLocalDofCount_;
         }
+        
+        double qLeft = - 1./polygonAreaLeft; //need to change
+        double qRight = 1./polygonAreaRight; //need to change
+        
+        //set up coefficients
+        if (glDof != -1) {
+            int faceNum = fineFacesonEdge(ent1Number, 0);
+            int N = edgeCountNextToCoarseVertex[coarseVerticesonEdge(ent1Number, 0)];
+            faceNum = nextFaceAnticlockwise[faceNum];
+            bool pastBoundary = false;
+            
+            
+            double auxCoeff;
+            { // First edge bottom
+                Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[faceNum];
+                ffCoeff.conservativeResize(3, ffCoeff.cols() + 1);
+                ffCoeff(0, ffCoeff.cols() - 1) = 0.;
+                ffCoeff(1, ffCoeff.cols() - 1) = 0.;
+                auxCoeff = 1.; //needs to be changed to length of l0minus
+                ffCoeff(2, ffCoeff.cols() - 1) = auxCoeff;
+                
+            }
+            
+            // Go around loop
+            for (int i = N - 1; faceNum != fineFacesonEdge(ent1Number, 0); --i) {
+                if (i < -N * 3) {
+                    throw std::runtime_error("Error probably caused by a bad mesh. "
+                                   "Please check your normal orientations");
+                }
+        
+                { // Before
+                    Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[faceNum];
+                    if (vertexOnBoundary[coarseVerticesonEdge(ent1Number, 0)]){
+                        if (pastBoundary){
+                            std::cout << "past boundary \n";
+                            throw std::runtime_error("Currently not implemented for open structures");
+                        }
+                        else {
+                            auxCoeff = auxCoeff + qLeft * areaT[nextFaceAnticlockwise[faceNum]] ;
+                            ffCoeff(1, ffCoeff.cols() - 1) = auxCoeff;
+                            if (anticlockwiseEdgesToFaces[anticlockwiseFacesToEdges[faceNum]] == -1)
+                                pastBoundary = true;
+                        }
+                    }
+                    else{
+                        auxCoeff = auxCoeff + qLeft * areaT[nextFaceAnticlockwise[faceNum]] ;
+                        ffCoeff(1, ffCoeff.cols() - 1) = auxCoeff;
+                    }
+                    
+                    m_local2globalDofs[faceNum].push_back(glDof);
+                    m_local2globalDofWeights[faceNum].push_back(1.);
+                    m_global2localDofs[glDof].push_back(LocalDof(faceNum, ffCoeff.cols() - 1));
+                    ++flatLocalDofCount_;
+                    
+                }
+                
+                faceNum = nextFaceAnticlockwise[faceNum];
+                
+                { // After
+                    Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[faceNum];
+                    ffCoeff.conservativeResize(3, ffCoeff.cols() + 1);
+                    if (vertexOnBoundary[coarseVerticesonEdge(ent1Number, 0)]){
+                        if (pastBoundary){
+                            std::cout << "past boundary \n";
+                            throw std::runtime_error("Currently not implemented for open structures");
+                        }
+                        else{
+                            auxCoeff = -1 * auxCoeff;
+                            ffCoeff(0, ffCoeff.cols() - 1) = auxCoeff;
+                        }
+                    }
+                    else{
+                        auxCoeff = -1 * auxCoeff;
+                        ffCoeff(0, ffCoeff.cols() - 1) = auxCoeff;
+                    }
+                    ffCoeff(1, ffCoeff.cols() - 1) = 0;
+                    ffCoeff(2, ffCoeff.cols() - 1) = 0;
+                }
+            }
+            
+            { // First edge top
+                Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[faceNum];
+                ffCoeff(1, ffCoeff.cols() - 1) = 0.;
+                ffCoeff(2, ffCoeff.cols() - 1) = 1. ; //change to length
+                m_local2globalDofs[faceNum].push_back(glDof);
+                m_local2globalDofWeights[faceNum].push_back(1.);
+                m_global2localDofs[glDof].push_back(LocalDof(faceNum, ffCoeff.cols() - 1));
+                ++flatLocalDofCount_;
+            }
+            
 
-        faceNum = nextFaceAnticlockwise[faceNum];
-        { // After
-          Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[faceNum];
-          ffCoeff.conservativeResize(3, ffCoeff.cols() + 1);
-          if (vertexOnBoundary[coarseVerticesonEdge(ent1Number, 1)])
-            if (pastBoundary)
-              ffCoeff(0, ffCoeff.cols() - 1) = -(N - 1.) / N;
-            else
-              ffCoeff(0, ffCoeff.cols() - 1) = 1. / N;
-          else
-            ffCoeff(0, ffCoeff.cols() - 1) = i * 1. / (2 * N);
-          ffCoeff(1, ffCoeff.cols() - 1) = 0;
-          ffCoeff(2, ffCoeff.cols() - 1) = 0;
+            faceNum = fineFacesonEdge(ent1Number, 1);
+            N = edgeCountNextToCoarseVertex[coarseVerticesonEdge(ent1Number, 1)];
+            faceNum = nextFaceAnticlockwise[faceNum];
+            pastBoundary = false;
+      
+            { // Second edge bottom
+                Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[faceNum];
+                ffCoeff.conservativeResize(3, ffCoeff.cols() + 1);
+                ffCoeff(0, ffCoeff.cols() - 1) = 0; //check
+                ffCoeff(1, ffCoeff.cols() - 1) = 0;
+                auxCoeff = 1.; //change to length
+                ffCoeff(2, ffCoeff.cols() - 1) = auxCoeff;
+            }
+      
+            // Go around loop
+            for (int i = N - 1; faceNum != fineFacesonEdge(ent1Number, 1); --i) {
+                if (i < -N * 3) {
+                    throw std::runtime_error("Error probably caused by a bad mesh. "
+                                   "Please check your normal orientations");
+                }
+
+                { // Before
+                    Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[faceNum];
+                    if (vertexOnBoundary[coarseVerticesonEdge(ent1Number, 1)]){
+                        if (pastBoundary){
+                            throw std::runtime_error("Currently not implemented for open structures");
+                        }
+                        else {
+                            auxCoeff = auxCoeff + qRight * areaT[nextFaceAnticlockwise[faceNum]];
+                            ffCoeff(1, ffCoeff.cols() - 1) = auxCoeff;
+                            if (anticlockwiseEdgesToFaces[anticlockwiseFacesToEdges[faceNum]] == -1)
+                                pastBoundary = true;
+                        }
+                    }
+                    else{
+                        auxCoeff = auxCoeff + qRight * areaT[nextFaceAnticlockwise[faceNum]];
+                        ffCoeff(1, ffCoeff.cols() - 1) = auxCoeff;
+                    }
+                    
+                    m_local2globalDofs[faceNum].push_back(glDof);
+                    m_local2globalDofWeights[faceNum].push_back(-1.);
+                    m_global2localDofs[glDof].push_back(LocalDof(faceNum, ffCoeff.cols() - 1));
+                    ++flatLocalDofCount_;
+                    
+                }
+
+                faceNum = nextFaceAnticlockwise[faceNum];
+                { // After
+                    Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[faceNum];
+                    ffCoeff.conservativeResize(3, ffCoeff.cols() + 1);
+                    if (vertexOnBoundary[coarseVerticesonEdge(ent1Number, 1)]){
+                        if (pastBoundary){
+                            throw std::runtime_error("Currently not implemented for open structures");
+                        }
+                        else{
+                            auxCoeff = -1 * auxCoeff;
+                            ffCoeff(0, ffCoeff.cols() - 1) = auxCoeff;
+                        }
+                    }
+                    else{
+                        auxCoeff = -1 * auxCoeff;
+                        ffCoeff(0, ffCoeff.cols() - 1) = auxCoeff;
+                    }
+                    ffCoeff(1, ffCoeff.cols() - 1) = 0;
+                    ffCoeff(2, ffCoeff.cols() - 1) = 0;
+                    
+                }
+            }
+            { // Second edge top
+                Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[faceNum];
+//                if (vertexOnBoundary[coarseVerticesonEdge(ent1Number, 1)])
+//                    ffCoeff(1, ffCoeff.cols() - 1) = (N - 2.) / (N * 2); //needs to change
+                ffCoeff(1, ffCoeff.cols() - 1) = 0.;
+                ffCoeff(2, ffCoeff.cols() - 1) = 1.; //change to length
+                m_local2globalDofs[faceNum].push_back(glDof);
+                m_local2globalDofWeights[faceNum].push_back(-1.);
+                m_global2localDofs[glDof].push_back(LocalDof(faceNum, ffCoeff.cols() - 1));
+                ++flatLocalDofCount_;
+            }
         }
-      }
-      { // Second edge top
-        Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[faceNum];
-        if (vertexOnBoundary[coarseVerticesonEdge(ent1Number, 1)])
-          ffCoeff(1, ffCoeff.cols() - 1) = (N - 2.) / (N * 2);
-        ffCoeff(2, ffCoeff.cols() - 1) = 1. / 2;
-        m_local2globalDofs[faceNum].push_back(glDof);
-        m_local2globalDofWeights[faceNum].push_back(-1.);
-        m_global2localDofs[glDof].push_back(
-            LocalDof(faceNum, ffCoeff.cols() - 1));
-        ++flatLocalDofCount_;
-      }
     }
-  }
 
-  // Bounding boxes
-  for (std::unique_ptr<EntityIterator<0>> it = m_view->entityIterator<0>();
-       !it->finished(); it->next()) {
-    const Entity<0> &entity = it->entity();
-    const int ent0Number = index.entityIndex(entity);
-    Matrix<CoordinateType> vertices;
-    const Geometry &geo = entity.geometry();
-    geo.getCorners(vertices);
+    // Bounding boxes
+    for (std::unique_ptr<EntityIterator<0>> it = m_view->entityIterator<0>();!it->finished(); it->next()) {
+        const Entity<0> &entity = it->entity();
+        const int ent0Number = index.entityIndex(entity);
+        Matrix<CoordinateType> vertices;
+        const Geometry &geo = entity.geometry();
+        geo.getCorners(vertices);
 
-    for (int j = 0; j < m_local2globalDofs[ent0Number].size(); ++j) {
-      int glDof = m_local2globalDofs[ent0Number][j];
-      extendBoundingBox(acc(m_globalDofBoundingBoxes, glDof), vertices);
-      setBoundingBoxReference<CoordinateType>(
-          acc(m_globalDofBoundingBoxes, glDof),
-          0.5 * (vertices.col(0) + vertices.col(1)));
+        for (int j = 0; j < m_local2globalDofs[ent0Number].size(); ++j) {
+            int glDof = m_local2globalDofs[ent0Number][j];
+            extendBoundingBox(acc(m_globalDofBoundingBoxes, glDof), vertices);
+            setBoundingBoxReference<CoordinateType>(acc(m_globalDofBoundingBoxes, glDof),
+                                                    0.5 * (vertices.col(0) + vertices.col(1)));
+        }
     }
-  }
 
-  for (std::unique_ptr<EntityIterator<0>> it = m_view->entityIterator<0>();
-       !it->finished(); it->next()) {
-    const Entity<0> &entity = it->entity();
-    int ent0Number = bindex.entityIndex(entity);
-    Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[ent0Number];
-    if (ffCoeff.cols() == 0) {
-      m_local2globalDofs[ent0Number].push_back(-1);
-      m_local2globalDofWeights[ent0Number].push_back(1.);
-      ffCoeff.conservativeResize(3, 1);
-      ffCoeff(0, 0) = 0;
-      ffCoeff(1, 0) = 0;
-      ffCoeff(2, 0) = 0;
+    for (std::unique_ptr<EntityIterator<0>> it = m_view->entityIterator<0>();!it->finished(); it->next()) {
+        const Entity<0> &entity = it->entity();
+        int ent0Number = bindex.entityIndex(entity);
+        Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[ent0Number];
+        if (ffCoeff.cols() == 0) {
+            m_local2globalDofs[ent0Number].push_back(-1);
+            m_local2globalDofWeights[ent0Number].push_back(1.);
+            ffCoeff.conservativeResize(3, 1);
+            ffCoeff(0, 0) = 0;
+            ffCoeff(1, 0) = 0;
+            ffCoeff(2, 0) = 0;
+        }
+        m_elementShapesets[ent0Number] = Shapeset(ffCoeff);
     }
-    m_elementShapesets[ent0Number] = Shapeset(ffCoeff);
-  }
-  SpaceHelper<BasisFunctionType>::initializeLocal2FlatLocalDofMap(
+    SpaceHelper<BasisFunctionType>::initializeLocal2FlatLocalDofMap(
       flatLocalDofCount_, m_local2globalDofs, m_flatLocal2localDofs);
+    
 }
 
 template <typename BasisFunctionType>
