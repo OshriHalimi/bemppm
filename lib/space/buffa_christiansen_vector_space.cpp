@@ -234,8 +234,10 @@ void BuffaChristiansenVectorSpace<BasisFunctionType>::assignDofsImpl() {
       edgeCountFineGrid, std::numeric_limits<int>::max());
     
     std::vector<double> areaT(edgeCountFineGrid, -1);
-
-    for (std::unique_ptr<EntityIterator<0>> it = m_view->entityIterator<0>();
+    Matrix<double> verticesFineGrid;
+    const size_t ent0Count = m_view->entityCount(0); //number of faces
+    verticesFineGrid.conservativeResize(3, ent0Count * 3 + 2);
+        for (std::unique_ptr<EntityIterator<0>> it = m_view->entityIterator<0>();
        !it->finished(); it->next()) {
         for (int i = 0; i != 3; ++i) {
             const Entity<0> &entity = it->entity();
@@ -246,7 +248,11 @@ void BuffaChristiansenVectorSpace<BasisFunctionType>::assignDofsImpl() {
                   lowestIndicesOfElementsAdjacentToFineEdges[bindex.subEntityIndex(entity, i, 1)];
             lowestIndex = std::min(ent0Number, lowestIndex);
             areaT[ent0Number] = triangleArea(corners.col(0), corners.col(1), corners.col(2));  //gives area of each small triangle
+            verticesFineGrid.col(ent0Number * 3) = corners.col(0);
+            verticesFineGrid.col(ent0Number * 3 + 1) = corners.col(1);
+            verticesFineGrid.col(ent0Number * 3 + 2) = corners.col(2);
         }
+
     }
 
     Matrix<int> fineEdgeMap;
@@ -433,10 +439,9 @@ void BuffaChristiansenVectorSpace<BasisFunctionType>::assignDofsImpl() {
 
         Matrix<double> corners;
         entity.geometry().getCorners(corners);
+        
         double polygonAreaLeft = 0;
         double polygonAreaRight = 0;
-        
-
         
         const int glDof = globalDofsOfEdges[ent1Number];
         
@@ -467,8 +472,45 @@ void BuffaChristiansenVectorSpace<BasisFunctionType>::assignDofsImpl() {
             }
         }
         
-        double qLeft = - 1./polygonAreaLeft; //need to change
-        double qRight = 1./polygonAreaRight; //need to change
+        double length_top;
+        double length_bottom;
+        
+        //find length of top and bottom
+        if (glDof != -1) {
+            int faceNum = fineFacesonEdge(ent1Number, 0);
+            faceNum = nextFaceAnticlockwise[faceNum];
+            
+            if (corners.col(0) == verticesFineGrid.col(3 * faceNum) || corners.col(1) == verticesFineGrid.col(3 * faceNum)) {
+                length_top = sideLength(verticesFineGrid.col(3 * faceNum + 1), verticesFineGrid.col(3 * faceNum + 2));
+            }
+            else if (corners.col(0) == verticesFineGrid.col(3 * faceNum +1) || corners.col(1) == verticesFineGrid.col(3 * faceNum +1) ){
+                length_top = sideLength(verticesFineGrid.col(3 * faceNum), verticesFineGrid.col(3 * faceNum + 2));
+            }
+            else if (corners.col(0) == verticesFineGrid.col(3 * faceNum +2) || corners.col(1) == verticesFineGrid.col(3 * faceNum +2) ){
+                length_top = sideLength(verticesFineGrid.col(3 * faceNum), verticesFineGrid.col(3 * faceNum + 1));
+            }
+            else
+                std::cout << "something's wrong!";
+            
+            
+            faceNum = fineFacesonEdge(ent1Number, 1);
+            faceNum = nextFaceAnticlockwise[faceNum];
+            
+            if (corners.col(0) == verticesFineGrid.col(3 * faceNum) || corners.col(1) == verticesFineGrid.col(3 * faceNum)) {
+                length_bottom = sideLength(verticesFineGrid.col(3 * faceNum + 1), verticesFineGrid.col(3 * faceNum + 2));
+            }
+            else if (corners.col(0) == verticesFineGrid.col(3 * faceNum +1) || corners.col(1) == verticesFineGrid.col(3 * faceNum +1) ){
+                length_bottom = sideLength(verticesFineGrid.col(3 * faceNum), verticesFineGrid.col(3 * faceNum + 2));
+            }
+            else if (corners.col(0) == verticesFineGrid.col(3 * faceNum +2) || corners.col(1) == verticesFineGrid.col(3 * faceNum +2) ){
+                length_bottom = sideLength(verticesFineGrid.col(3 * faceNum), verticesFineGrid.col(3 * faceNum + 1));
+            }
+            else
+                std::cout << "something's wrong!";
+        }
+        
+        double qLeft = - (length_bottom * length_bottom + length_top * length_top)/polygonAreaLeft; //need to change
+        double qRight = (length_bottom * length_bottom + length_top * length_top)/polygonAreaRight; //need to change
         
         //set up coefficients
         if (glDof != -1) {
@@ -477,16 +519,14 @@ void BuffaChristiansenVectorSpace<BasisFunctionType>::assignDofsImpl() {
             faceNum = nextFaceAnticlockwise[faceNum];
             bool pastBoundary = false;
             
-            
             double auxCoeff;
             { // First edge bottom
                 Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[faceNum];
                 ffCoeff.conservativeResize(3, ffCoeff.cols() + 1);
                 ffCoeff(0, ffCoeff.cols() - 1) = 0.;
                 ffCoeff(1, ffCoeff.cols() - 1) = 0.;
-                auxCoeff = 1.; //needs to be changed to length of l0minus
+                auxCoeff = length_top; //needs to be changed to length of l0minus
                 ffCoeff(2, ffCoeff.cols() - 1) = auxCoeff;
-                
             }
             
             // Go around loop
@@ -549,7 +589,7 @@ void BuffaChristiansenVectorSpace<BasisFunctionType>::assignDofsImpl() {
             { // First edge top
                 Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[faceNum];
                 ffCoeff(1, ffCoeff.cols() - 1) = 0.;
-                ffCoeff(2, ffCoeff.cols() - 1) = 1. ; //change to length
+                ffCoeff(2, ffCoeff.cols() - 1) = length_bottom; //change to length
                 m_local2globalDofs[faceNum].push_back(glDof);
                 m_local2globalDofWeights[faceNum].push_back(1.);
                 m_global2localDofs[glDof].push_back(LocalDof(faceNum, ffCoeff.cols() - 1));
@@ -567,7 +607,7 @@ void BuffaChristiansenVectorSpace<BasisFunctionType>::assignDofsImpl() {
                 ffCoeff.conservativeResize(3, ffCoeff.cols() + 1);
                 ffCoeff(0, ffCoeff.cols() - 1) = 0; //check
                 ffCoeff(1, ffCoeff.cols() - 1) = 0;
-                auxCoeff = 1.; //change to length
+                auxCoeff = length_bottom; //change to length
                 ffCoeff(2, ffCoeff.cols() - 1) = auxCoeff;
             }
       
@@ -630,7 +670,7 @@ void BuffaChristiansenVectorSpace<BasisFunctionType>::assignDofsImpl() {
 //                if (vertexOnBoundary[coarseVerticesonEdge(ent1Number, 1)])
 //                    ffCoeff(1, ffCoeff.cols() - 1) = (N - 2.) / (N * 2); //needs to change
                 ffCoeff(1, ffCoeff.cols() - 1) = 0.;
-                ffCoeff(2, ffCoeff.cols() - 1) = 1.; //change to length
+                ffCoeff(2, ffCoeff.cols() - 1) = length_top; //change to length
                 m_local2globalDofs[faceNum].push_back(glDof);
                 m_local2globalDofWeights[faceNum].push_back(-1.);
                 m_global2localDofs[glDof].push_back(LocalDof(faceNum, ffCoeff.cols() - 1));
