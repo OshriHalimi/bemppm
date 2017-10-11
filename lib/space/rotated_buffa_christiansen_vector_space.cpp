@@ -34,10 +34,7 @@ namespace Bempp {
             shared_ptr<Space<BasisFunctionType>>
             create(const shared_ptr<const Grid> &grid,
                    const GridSegment &segment) const override {
-                
-                return shared_ptr<Space<BasisFunctionType>>(
-                                                            new RotatedBuffaChristiansenVectorSpace<BasisFunctionType>(grid,
-                                                                                                                       segment));
+                return shared_ptr<Space<BasisFunctionType>>(new RotatedBuffaChristiansenVectorSpace<BasisFunctionType>(grid,segment));
             }
         };
     }
