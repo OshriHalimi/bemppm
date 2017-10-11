@@ -237,8 +237,8 @@ void BuffaChristiansenVectorSpace<BasisFunctionType>::assignDofsImpl() {
     Matrix<double> verticesFineGrid;
     const size_t ent0Count = m_view->entityCount(0); //number of faces
     verticesFineGrid.conservativeResize(3, ent0Count * 3 + 2);
-        for (std::unique_ptr<EntityIterator<0>> it = m_view->entityIterator<0>();
-       !it->finished(); it->next()) {
+    
+    for (std::unique_ptr<EntityIterator<0>> it = m_view->entityIterator<0>();!it->finished(); it->next()) {
         for (int i = 0; i != 3; ++i) {
             const Entity<0> &entity = it->entity();
             Matrix<double> corners;
@@ -252,7 +252,6 @@ void BuffaChristiansenVectorSpace<BasisFunctionType>::assignDofsImpl() {
             verticesFineGrid.col(ent0Number * 3 + 1) = corners.col(1);
             verticesFineGrid.col(ent0Number * 3 + 2) = corners.col(2);
         }
-
     }
 
     Matrix<int> fineEdgeMap;
@@ -432,7 +431,7 @@ void BuffaChristiansenVectorSpace<BasisFunctionType>::assignDofsImpl() {
     m_elementShapesets.resize(elementCount);
 
     // Set up coefficients for shapesets
-    // Note that coefficients need to be adjusted for a combination of RT functions instead of RWG
+    // Note that coefficients have been adjusted for a combination of RT functions instead of RWG
     for (std::unique_ptr<EntityIterator<1>> it = coarseView->entityIterator<1>();!it->finished(); it->next()) {
         const Entity<1> &entity = it->entity();
         const int ent1Number = index.entityIndex(entity);
@@ -509,8 +508,8 @@ void BuffaChristiansenVectorSpace<BasisFunctionType>::assignDofsImpl() {
                 std::cout << "something's wrong!";
         }
         
-        double qLeft = - (length_bottom * length_bottom + length_top * length_top)/polygonAreaLeft; //need to change
-        double qRight = (length_bottom * length_bottom + length_top * length_top)/polygonAreaRight; //need to change
+        double qLeft = - (length_bottom * length_bottom + length_top * length_top)/polygonAreaLeft;
+        double qRight = (length_bottom * length_bottom + length_top * length_top)/polygonAreaRight;
         
         //set up coefficients
         if (glDof != -1) {
@@ -525,7 +524,7 @@ void BuffaChristiansenVectorSpace<BasisFunctionType>::assignDofsImpl() {
                 ffCoeff.conservativeResize(3, ffCoeff.cols() + 1);
                 ffCoeff(0, ffCoeff.cols() - 1) = 0.;
                 ffCoeff(1, ffCoeff.cols() - 1) = 0.;
-                auxCoeff = length_top; //needs to be changed to length of l0minus
+                auxCoeff = length_top;
                 ffCoeff(2, ffCoeff.cols() - 1) = auxCoeff;
             }
             
@@ -678,7 +677,6 @@ void BuffaChristiansenVectorSpace<BasisFunctionType>::assignDofsImpl() {
             }
         }
     }
-
     // Bounding boxes
     for (std::unique_ptr<EntityIterator<0>> it = m_view->entityIterator<0>();!it->finished(); it->next()) {
         const Entity<0> &entity = it->entity();
