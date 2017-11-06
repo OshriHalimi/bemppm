@@ -241,6 +241,8 @@ def function_space(Grid grid, kind, order, domains=None, cbool closed=True, cboo
             "DUAL": Dual space on dual grid (only implemented for constants).
             "BC": Buffa-Christian Vector space.
             "RBC": Rotated Buffa-Christiansen Vector space.
+            "CW": Chen-Wilton Vector space
+            "RCW": Rotated Chen-Wilton Vector space
 
     order : int
         The order of the space, e.g. 0 for piecewise const, 1 for
@@ -427,6 +429,22 @@ def function_space(Grid grid, kind, order, domains=None, cbool closed=True, cboo
         else:
             s.impl_.assign(reverse_const_pointer_cast(
                     shared_ptr[c_Space[double]](adaptiveRotatedBuffaChristiansenVectorSpace[double](grid.impl_))))
+    elif kind=="CW":
+        if order!=0:
+            raise ValueError("Only order 0 Chen-Wilton spaces are implemented.")
+        if domains is not None:
+            raise ValueError("Spaces on subdomains are not supported for Chen-Wilton spaces.")
+        else:
+            s.impl_.assign(reverse_const_pointer_cast(
+                shared_ptr[c_Space[double]](adaptiveChenWiltonVectorSpace[double](grid.impl_))))
+    elif kind=="RCW":
+        if order!=0:
+            raise ValueError("Only order 0 Chen-Wilton spaces are implemented.")
+        if domains is not None:
+            raise ValueError("Spaces on subdomains are not supported for Chen-Wilton spaces.")
+        else:
+            s.impl_.assign(reverse_const_pointer_cast(
+                    shared_ptr[c_Space[double]](adaptiveRotatedChenWiltonVectorSpace[double](grid.impl_))))
     else:
         raise ValueError("Unknown kind")
 

@@ -684,6 +684,49 @@ class RotatedBuffaChristiansenSpace(Space):
         self._is_barycentric = True
         self._grid = grid.barycentric_grid()
 
+class ChenWiltonSpace(Space):
+    """A space of Chen-Wilton basis functions on a barycentrid grid."""
+
+    def __init__(self, grid, comp_key=None):
+
+        from bempp.core.space.space import function_space as _function_space
+        from bempp.api.assembly.functors import hdiv_function_value_functor
+
+        super(ChenWiltonSpace, self).__init__(_function_space(
+            grid._impl, "CW", 0), comp_key)
+
+        self._order = 0
+        self._has_non_barycentric_space = False
+        self._non_barycentric_space = None
+        self._discontinuous_space = function_space(
+            grid.barycentric_grid(), "DP", 1)
+        self._super_space = function_space(grid.barycentric_grid(), "RWG", 0)
+        self._evaluation_functor = hdiv_function_value_functor()
+        self._is_barycentric = True
+        self._grid = grid.barycentric_grid()
+
+
+class RotatedChenWiltonSpace(Space):
+    """A space of rotated Chen-Wilton curl conforming basis functions."""
+
+    def __init__(self, grid, comp_key=None):
+
+        from bempp.core.space.space import function_space as _function_space
+        from bempp.api.assembly.functors import hcurl_function_value_functor
+
+        super(RotatedChenWiltonSpace, self).__init__(_function_space(
+            grid._impl, "RCW", 0), comp_key)
+
+        self._order = 0
+        self._has_non_barycentric_space = False
+        self._non_barycentric_space = None
+        self._discontinuous_space = function_space(
+            grid.barycentric_grid(), "DP", 1)
+        self._evaluation_functor = hcurl_function_value_functor()
+        self._super_space = function_space(grid.barycentric_grid(), "SNC", 0)
+        self._hdiv_space = ChenWiltonSpace(grid)
+        self._is_barycentric = True
+        self._grid = grid.barycentric_grid()
 
 #pylint: disable=too-many-return-statements
 #pylint: disable=too-many-branches
@@ -726,6 +769,8 @@ def function_space(
             "BC": Buffa-Christian Vector space.
             "RBC": Rotated Buffa-Christian Vector space of curl-conforming
                    functions.
+            "CW": Chen-Wilton Vector space
+            "RCW": Rotated Chen-Wilton Vector space
 
     order : int
         The order of the space, e.g. 0 for piecewise const, 1 for
@@ -868,5 +913,15 @@ def function_space(
             raise ValueError(
                 "Only order zero Buffa-Christiansen functions supported.")
         return RotatedBuffaChristiansenSpace(grid, comp_key)
+    elif kind == "CW":
+    	if order > 0:
+    		raise ValueError(
+    			"Only order zero Chen-Wilton functions supported.")
+    	return ChenWiltonSpace(grid, comp_key)
+    elif kind == "RCW":
+    	if order > 0:
+    		raise ValueError(
+    			"Only order zero Chen-Wilton functions supported.")
+    	return RotatedChenWiltonSpace(grid, comp_key)
     else:
         raise ValueError("Unknown space type.")
