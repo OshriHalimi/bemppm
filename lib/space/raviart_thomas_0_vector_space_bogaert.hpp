@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef bempp_scaled_nedelec_0_vector_space_barycentric_hpp
-#define bempp_scaled_nedelec_0_vector_space_barycentric_hpp
+#ifndef bempp_raviart_thomas_0_vector_space_bogaert_hpp
+#define bempp_raviart_thomas_0_vector_space_bogaert_hpp
 
 #include "../common/common.hpp"
 
@@ -30,8 +30,7 @@
 #include "../grid/grid_segment.hpp"
 #include "../grid/grid_view.hpp"
 #include "../common/types.hpp"
-#include "../fiber/nedelec_0_shapeset_barycentric.hpp"
-#include "../fiber/nedelec_0_shapeset.hpp"
+#include "../fiber/raviart_thomas_0_shapeset_bogaert.hpp"
 
 #include <boost/scoped_ptr.hpp>
 #include <map>
@@ -48,7 +47,7 @@ class Grid;
 /** \ingroup space
  *  \brief Space of continuous, piecewise linear scalar functions. */
 template <typename BasisFunctionType>
-class ScaledNedelec0VectorSpaceBarycentric : public Space<BasisFunctionType> {
+class RaviartThomas0VectorSpaceBogaertRefinement : public Space<BasisFunctionType> {
   typedef Space<BasisFunctionType> Base;
 
 public:
@@ -59,13 +58,13 @@ public:
   typedef typename Base::CollectionOfBasisTransformations
       CollectionOfBasisTransformations;
 
-  explicit ScaledNedelec0VectorSpaceBarycentric(
+  explicit RaviartThomas0VectorSpaceBogaertRefinement(
       const shared_ptr<const Grid> &grid, bool putDofsOnBoundaries = false);
-  ScaledNedelec0VectorSpaceBarycentric(const shared_ptr<const Grid> &grid,
+  RaviartThomas0VectorSpaceBogaertRefinement(const shared_ptr<const Grid> &grid,
                                        const GridSegment &segment,
                                        bool putDofsOnBoundaries = false,
                                        int dofMode = EDGE_ON_SEGMENT);
-  virtual ~ScaledNedelec0VectorSpaceBarycentric();
+  virtual ~RaviartThomas0VectorSpaceBogaertRefinement();
 
   virtual shared_ptr<const Space<BasisFunctionType>> discontinuousSpace(
       const shared_ptr<const Space<BasisFunctionType>> &self) const;
@@ -77,13 +76,13 @@ public:
   virtual int codomainDimension() const;
 
   virtual bool isBarycentric() const { return false; }
-  virtual bool isBogaertRefinement() const {return false; }
+    virtual bool isBogaertRefinement() const {return false; }
 
 
   virtual bool spaceIsCompatible(const Space<BasisFunctionType> &other) const;
 
   virtual SpaceIdentifier spaceIdentifier() const {
-    return SCALED_NEDELEC_0_VECTOR_BARYCENTRIC;
+    return RAVIART_THOMAS_0_VECTOR_BOGAERT;
   }
 
   /** \brief Return the variant of element \p element.
@@ -143,11 +142,11 @@ private:
   struct Impl;
   boost::scoped_ptr<Impl> m_impl;
   GridSegment m_segment;
-  typedef Fiber::Nedelec0ShapesetBarycentric<BasisFunctionType> Shapeset;
+  typedef Fiber::RaviartThomas0ShapesetBogaertRefinement<BasisFunctionType> Shapeset;
   bool m_putDofsOnBoundaries;
   int m_dofMode;
   std::unique_ptr<GridView> m_view;
-  Fiber::Nedelec0Shapeset<3, BasisFunctionType> m_triangleShapeset;
+  Fiber::RaviartThomas0Shapeset<3, BasisFunctionType> m_triangleShapeset;
   std::vector<std::vector<GlobalDofIndex>> m_local2globalDofs;
   std::vector<std::vector<BasisFunctionType>> m_local2globalDofWeights;
   std::vector<std::vector<LocalDof>> m_global2localDofs;
@@ -158,17 +157,17 @@ private:
   std::vector<typename Shapeset::BasisType> m_elementShapesets;
   mutable Matrix<int> m_sonMap;
   mutable shared_ptr<const Grid> m_originalGrid;
-  Shapeset m_NCBasisType1;
-  Shapeset m_NCBasisType2;
+  Shapeset m_RTBasisType1;
+  Shapeset m_RTBasisType2;
 
   /** \endcond */
 };
 
-/** \brief Define a ScaledNedelec0VectorSpaceBarycentric that has an update
+/** \brief Define a RaviartThomas0VectorSpaceBogaertRefinement that has an update
  * method for grid refinement. */
 template <typename BasisFunctionType>
 shared_ptr<Space<BasisFunctionType>>
-adaptiveScaledNedelec0VectorSpaceBarycentric(
+adaptiveRaviartThomas0VectorSpaceBogaertRefinement(
     const shared_ptr<const Grid> &grid);
 
 /** \brief Overload to define a set of domains for the space and whether the
@@ -176,14 +175,14 @@ adaptiveScaledNedelec0VectorSpaceBarycentric(
  (\p open = true) or not. */
 template <typename BasisFunctionType>
 shared_ptr<Space<BasisFunctionType>>
-adaptiveScaledNedelec0VectorSpaceBarycentric(const shared_ptr<const Grid> &grid,
+adaptiveRaviartThomas0VectorSpaceBogaertRefinement(const shared_ptr<const Grid> &grid,
                                              const std::vector<int> &domains,
                                              bool open);
 
 /** \brief Overlad. */
 template <typename BasisFunctionType>
 shared_ptr<Space<BasisFunctionType>>
-adaptiveScaledNedelec0VectorSpaceBarycentric(const shared_ptr<const Grid> &grid,
+adaptiveRaviartThomas0VectorSpaceBogaertRefinement(const shared_ptr<const Grid> &grid,
                                              int domain, bool open);
 
 } // namespace Bempp

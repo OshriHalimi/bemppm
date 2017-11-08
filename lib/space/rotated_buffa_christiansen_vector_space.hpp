@@ -75,7 +75,7 @@ namespace Bempp {
         virtual int domainDimension() const;
         virtual int codomainDimension() const;
         
-        virtual bool isGenericRefinement() const { return false; }
+        virtual bool isBogaertRefinement() const { return false; }
         virtual bool isBarycentric() const {return false; }
         
         virtual bool spaceIsCompatible(const Space<BasisFunctionType> &other) const;

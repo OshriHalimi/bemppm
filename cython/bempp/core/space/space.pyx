@@ -279,7 +279,7 @@ def function_space(Grid grid, kind, order, domains=None, cbool closed=True, cboo
     """
     cdef Space s = Space()
     cdef Grid bary_grid
-    cdef Grid GenRef_grid
+    cdef Grid bog_grid
     cdef int dof_mode = 0
 
     if element_on_segment:
@@ -390,6 +390,14 @@ def function_space(Grid grid, kind, order, domains=None, cbool closed=True, cboo
         else:
             s.impl_.assign(reverse_const_pointer_cast(
                     shared_ptr[c_Space[double]](adaptiveRaviartThomas0VectorSpaceBarycentric[double](grid.impl_))))
+    elif kind=="BG-RT":
+        if order!=0:
+            raise ValueError("Only 0 order Raviart-Thomas spaces on bogaert grids are supported.")
+        if domains is not None:
+            raise ValueError("Spaces on subdomains are not supported on bogaert grids.")
+        else:
+            s.impl_.assign(reverse_const_pointer_cast(
+                    shared_ptr[c_Space[double]](adaptiveRaviartThomas0VectorSpaceBogaertRefinement[double](grid.impl_))))
     elif kind=="B-NC":
         if order!=0:
             raise ValueError("Only 0 order Nedelec spaces on barycentric grids are supported.")
@@ -398,6 +406,14 @@ def function_space(Grid grid, kind, order, domains=None, cbool closed=True, cboo
         else:
             s.impl_.assign(reverse_const_pointer_cast(
                     shared_ptr[c_Space[double]](adaptiveNedelec0VectorSpaceBarycentric[double](grid.impl_))))
+    elif kind=="BG-NC":
+        if order!=0:
+            raise ValueError("Only 0 order Nedelec spaces on bogaert grids are supported.")
+        if domains is not None:
+            raise ValueError("Spaces on subdomains are not supported on bogaert grids.")
+        else:
+            s.impl_.assign(reverse_const_pointer_cast(
+                    shared_ptr[c_Space[double]](adaptiveNedelec0VectorSpaceBogaertRefinement[double](grid.impl_))))
     elif kind=="B-SNC":
         if order!=0:
             raise ValueError("Only 0 order Nedelec spaces on barycentric grids are supported.")
@@ -406,6 +422,14 @@ def function_space(Grid grid, kind, order, domains=None, cbool closed=True, cboo
         else:
             s.impl_.assign(reverse_const_pointer_cast(
                     shared_ptr[c_Space[double]](adaptiveScaledNedelec0VectorSpaceBarycentric[double](grid.impl_))))
+    elif kind=="BG-SNC":
+        if order!=0:
+            raise ValueError("Only 0 order Nedelec spaces on bogaert grids are supported.")
+        if domains is not None:
+            raise ValueError("Spaces on subdomains are not supported on bogaert grids.")
+        else:
+            s.impl_.assign(reverse_const_pointer_cast(
+                    shared_ptr[c_Space[double]](adaptiveScaledNedelec0VectorSpaceBogaertRefinement[double](grid.impl_))))
     elif kind=="B-RWG":
         if order!=0:
             raise ValueError("Only 0 order RWG spaces on barycentric grids are supported.")
@@ -414,6 +438,14 @@ def function_space(Grid grid, kind, order, domains=None, cbool closed=True, cboo
         else:
             s.impl_.assign(reverse_const_pointer_cast(
                     shared_ptr[c_Space[double]](adaptiveRWGVectorSpaceBarycentric[double](grid.impl_))))
+    elif kind == "BG-RWG":
+        if order!=0:
+            raise ValueError("Only 0 order RWG spaces on bogaert grids are supported.")
+        if domains is not None:
+            raise ValueError("Spaces on subdomains are not supported on bogaert grids.")
+        else:
+            s.impl_.assign(reverse_const_pointer_cast(
+                    shared_ptr[c_Space[double]](adaptiveRWGVectorSpaceBogaertRefinement[double](grid.impl_))))
     elif kind=="BC":
         if order!=0:
             raise ValueError("Only order 0 Buffa-Christiansen spaces are implemented.")

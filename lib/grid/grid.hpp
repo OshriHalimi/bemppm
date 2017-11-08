@@ -117,26 +117,26 @@ public:
   virtual bool isBarycentricRepresentationOf(const Grid &other) const;
     
 
-    /** \brief Return a generically refined grid based on the LeafView and the
+    /** \brief Return a Bogaert refined grid based on the LeafView and the
      * son map */
     virtual std::pair<shared_ptr<Grid>, Matrix<int>>
-    GenericRefinementGridSonPair() const = 0;
+    BogaertRefinementGridSonPair() const = 0;
     
-    /** \brief Return a generically refined grid based on the LeafView */
-    virtual shared_ptr<Grid> GenericRefinementGrid() const = 0;
+    /** \brief Return a Bogaert refined grid based on the LeafView */
+    virtual shared_ptr<Grid> BogaertRefinementGrid() const = 0;
     
-    /** \brief Return the son map for the generically refined grid */
-    virtual Matrix<int> GenericRefinementSonMap() const = 0;
+    /** \brief Return the son map for the Bogaert refined grid */
+    virtual Matrix<int> BogaertRefinementSonMap() const = 0;
     
-    /** \brief Return \p true if a generic refinement of this grid has
+    /** \brief Return \p true if a Bogaert refinement of this grid has
      *  been created. */
-    virtual bool hasGenericRefinementGrid() const = 0;
+    virtual bool hasBogaertRefinementGrid() const = 0;
     
-    //  virtual bool isGenericRefinementGrid() const = 0;
+    //  virtual bool isBogaertRefinementGrid() const = 0;
     
-    /** \brief Return \p true if this grid is a generically refined representation of
-     *  \p other, i.e. if this grid was created by \p other.GenericRefinementGrid(). */
-  virtual bool isGenericRefinementRepresentationOf(const Grid &other) const;
+    /** \brief Return \p true if this grid is a Bogaert refined representation of
+     *  \p other, i.e. if this grid was created by \p other.BogaertRefinementGrid(). */
+  virtual bool isBogaertRefinementRepresentationOf(const Grid &other) const;
 
   /** \brief Reference to the grid's global id set. */
   virtual const IdSet &globalIdSet() const = 0;

@@ -75,7 +75,7 @@ public:
   virtual int domainDimension() const;
   virtual int codomainDimension() const;
 
-  virtual bool isGenericRefinement() const { return false; }
+  virtual bool isBogaertRefinement() const { return false; }
     virtual bool isBarycentric() const {return false;}
 
   virtual bool spaceIsCompatible(const Space<BasisFunctionType> &other) const;
@@ -138,7 +138,7 @@ private:
 
 private:
   /** \cond PRIVATE */
-  //  typedef Fiber::RaviartThomas0ShapesetGenericRefinement<BasisFunctionType>
+  //  typedef Fiber::RaviartThomas0ShapesetBogaertRefinement<BasisFunctionType>
   //  Shapeset;
   //  std::vector<typename Shapeset::BasisType> m_RelementShapesets;
 

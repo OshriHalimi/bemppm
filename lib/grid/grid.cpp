@@ -67,11 +67,11 @@ bool Grid::isBarycentricRepresentationOf(const Grid &other) const {
     return (this == other.barycentricGrid().get());
 }
 
-bool Grid::isGenericRefinementRepresentationOf(const Grid &other) const {
-    if (!other.hasGenericRefinementGrid())
+bool Grid::isBogaertRefinementRepresentationOf(const Grid &other) const {
+    if (!other.hasBogaertRefinementGrid())
         return false;
     else
-        return (this == other.GenericRefinementGrid().get());
+        return (this == other.BogaertRefinementGrid().get());
 }
 
 void Grid::getBoundingBox(Vector<double> &lowerBound,

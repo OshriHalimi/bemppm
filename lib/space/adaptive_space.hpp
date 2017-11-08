@@ -89,7 +89,7 @@ public:
   bool isDiscontinuous() const override;
 
   bool isBarycentric() const override;
-    bool isGenericRefinement() const override; // override;
+    bool isBogaertRefinement() const override; // override;
 
   int domainDimension() const override;
 
@@ -104,7 +104,7 @@ public:
   shared_ptr<const Space<BasisFunctionType>> barycentricSpace(
       const shared_ptr<const Space<BasisFunctionType>> &self) const override;
 
-  shared_ptr<const Space<BasisFunctionType>> GenericRefinementSpace(
+  shared_ptr<const Space<BasisFunctionType>> BogaertRefinementSpace(
      const shared_ptr<const Space<BasisFunctionType>> &self) const override;
 
   const CollectionOfShapesetTransformations &

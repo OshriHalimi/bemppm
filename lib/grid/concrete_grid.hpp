@@ -409,14 +409,14 @@ public:
     }
 
 
-  /** \brief Return a generically refined grid based on the Leaf View and
+  /** \brief Return a Bogaert refined grid based on the Leaf View and
    * its son map */
   //
   virtual std::pair<shared_ptr<Grid>, Matrix<int>>
-  GenericRefinementGridSonPair() const override {
-    if (!m_GenericRefinementGrid.get()) {
-      tbb::mutex::scoped_lock lock(m_GenericRefinementSpaceMutex);
-      if (!m_GenericRefinementGrid.get()) {
+  BogaertRefinementGridSonPair() const override {
+    if (!m_BogaertRefinementGrid.get()) {
+      tbb::mutex::scoped_lock lock(m_BogaertRefinementSpaceMutex);
+      if (!m_BogaertRefinementGrid.get()) {
 
         std::unique_ptr<GridView> view = this->leafView();
         const IndexSet &index = view->indexSet();
@@ -424,15 +424,15 @@ public:
         GridParameters params;
         params.topology = GridParameters::TRIANGULAR;
 
-        Matrix<double> GenericRefinementVertices;
-        Matrix<int> GenericRefinementElementCorners;
-        std::vector<int> GenericRefinementDomainIndices;
+        Matrix<double> BogaertRefinementVertices;
+        Matrix<int> BogaertRefinementElementCorners;
+        std::vector<int> BogaertRefinementDomainIndices;
 
         const size_t ent0Count = view->entityCount(0); // faces
         const size_t ent1Count = view->entityCount(1); // edges
         const size_t ent2Count = view->entityCount(2); // vertices
           
-        GenericRefinementVertices.conservativeResize(3, ent2Count + ent1Count +
+        BogaertRefinementVertices.conservativeResize(3, ent2Count + ent1Count +
                                                       ent0Count);
 
 //          iterating through each vertex (node) of the coarse grid
@@ -442,7 +442,7 @@ public:
           const int ent2Number = index.entityIndex(entity);
           Matrix<double> corners;
           entity.geometry().getCorners(corners);
-          GenericRefinementVertices.col(ent2Number) = corners.col(0);
+          BogaertRefinementVertices.col(ent2Number) = corners.col(0);
         }
 
           
@@ -482,7 +482,7 @@ public:
                 normal = normal / normal_size;
                 res = crossProduct(normal, corners.col(1) - corners.col(0));
                 t = -beta * dotProduct(corners.col(1) - corners.col(2), corners.col(2) - corners.col(0)) / dotProduct(res, corners.col(2) - corners.col(0));
-                GenericRefinementVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(0) + beta * (corners.col(1) - corners.col(0)) + t * res;
+                BogaertRefinementVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(0) + beta * (corners.col(1) - corners.col(0)) + t * res;
             }
             else if(sides(1) - sides(0) - sides(2)>=0){ //  angle(1) > PI/2
                 beta = (2.0/3.0) * sin(angle(2)) * sin(angle(0)) / cos(angle(2) - angle(0));
@@ -491,7 +491,7 @@ public:
                 normal = normal / normal_size;
                 res = crossProduct(normal, corners.col(2) - corners.col(1));
                 t = -beta * dotProduct(corners.col(2) - corners.col(0), corners.col(0) - corners.col(1)) / dotProduct(res, corners.col(0) - corners.col(1));
-                GenericRefinementVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(1) + beta *(corners.col(2) - corners.col(1)) + t * res;
+                BogaertRefinementVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(1) + beta *(corners.col(2) - corners.col(1)) + t * res;
             }
             else if(sides(2) - sides(0) - sides(1) >=0){ //   angle(2) > PI/2
                 beta = (2.0/3.0) * sin(angle(0)) * sin(angle(1)) / cos(angle(0) - angle(1));
@@ -500,10 +500,10 @@ public:
                 normal = normal / normal_size;
                 res = crossProduct(normal, corners.col(0) - corners.col(2));
                 t = -beta * dotProduct(corners.col(0) - corners.col(1), corners.col(1) - corners.col(2)) / dotProduct(res, corners.col(1) - corners.col(2));
-                GenericRefinementVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(2) + beta * (corners.col(0) - corners.col(2)) + t * res;
+                BogaertRefinementVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(2) + beta * (corners.col(0) - corners.col(2)) + t * res;
             }
             else {//If none of the angles reaches pi/2, use the barycenter. The factor 2/3 has been chosen to make the transition continuous
-                GenericRefinementVertices.col(ent2Count + ent1Count + ent0Number) = (corners.col(0) + corners.col(1) + corners.col(2)) /3;
+                BogaertRefinementVertices.col(ent2Count + ent1Count + ent0Number) = (corners.col(0) + corners.col(1) + corners.col(2)) /3;
             }
 		
         }
@@ -540,21 +540,21 @@ public:
               //use edgeToFaceMap to find centers of associated triangles
               if(edgeToFaceMap[ent1Number][0] == -1){
                   faceNumber = edgeToFaceMap[ent1Number][1];
-                  GenericRefinementVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
+                  BogaertRefinementVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
                   //if the edge is only associated with one triangle then pick the midpoint
               }
               else if(edgeToFaceMap[ent1Number][1] == -1){
                   faceNumber = edgeToFaceMap[ent1Number][0];
-                  GenericRefinementVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
+                  BogaertRefinementVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
                   //if the edge is only associated with one triangle then pick the midpoint
               }
               else{
                   Vector<double> center1(3);
                   Vector<double> center2(3);
                   faceNumber = edgeToFaceMap[ent1Number][0];
-                  center1 = GenericRefinementVertices.col(ent2Count + ent1Count + faceNumber);
+                  center1 = BogaertRefinementVertices.col(ent2Count + ent1Count + faceNumber);
                   faceNumber = edgeToFaceMap[ent1Number][1];
-                  center2 = GenericRefinementVertices.col(ent2Count + ent1Count + faceNumber);
+                  center2 = BogaertRefinementVertices.col(ent2Count + ent1Count + faceNumber);
                   
                   Vector<double> normalToPlane(3);
                   double normal_size;
@@ -575,7 +575,7 @@ public:
                       
                       t = dotProduct(crossProduct(normalToPlane, center2 - corners.col(1)), directionCenters) / dotProduct(crossProduct(normalToPlane, directionNodes),directionCenters);
                       
-                      GenericRefinementVertices.col(ent2Count + ent1Number) = corners.col(1) + t * directionNodes;
+                      BogaertRefinementVertices.col(ent2Count + ent1Number) = corners.col(1) + t * directionNodes;
                   }
                   else{
                       Vector<double> directionNodes(3);
@@ -622,12 +622,12 @@ public:
                       
                       t = dotProduct(crossProduct(normalToPlane, newCenter - corners.col(1)), directionCenters) / dotProduct(crossProduct(normalToPlane, directionNodes),directionCenters);
                       
-                      GenericRefinementVertices.col(ent2Count + ent1Number) = corners.col(1) + t * directionNodes;
+                      BogaertRefinementVertices.col(ent2Count + ent1Number) = corners.col(1) + t * directionNodes;
                   }
               }
           }
           
-        GenericRefinementElementCorners.conservativeResize(3, 6 * ent0Count);
+        BogaertRefinementElementCorners.conservativeResize(3, 6 * ent0Count);
         Matrix<int> tempSonMap;
         tempSonMap.conservativeResize(6 * ent0Count, 2);
         for (std::unique_ptr<EntityIterator<0>> it = view->entityIterator<0>();
@@ -635,30 +635,30 @@ public:
           const Entity<0> &entity = it->entity();
           const int ent0Number = index.subEntityIndex(entity, 0, 0);
             
-          GenericRefinementElementCorners(0, 6 * ent0Number) = index.subEntityIndex(entity, 0, 2);
-          GenericRefinementElementCorners(1, 6 * ent0Number) = ent2Count + ent1Count + ent0Number;
-          GenericRefinementElementCorners(2, 6 * ent0Number) = ent2Count + index.subEntityIndex(entity, 1, 1);
+          BogaertRefinementElementCorners(0, 6 * ent0Number) = index.subEntityIndex(entity, 0, 2);
+          BogaertRefinementElementCorners(1, 6 * ent0Number) = ent2Count + ent1Count + ent0Number;
+          BogaertRefinementElementCorners(2, 6 * ent0Number) = ent2Count + index.subEntityIndex(entity, 1, 1);
         
 
-          GenericRefinementElementCorners(0, 6 * ent0Number + 1) = index.subEntityIndex(entity, 0, 2);
-          GenericRefinementElementCorners(1, 6 * ent0Number + 1) = ent2Count + index.subEntityIndex(entity, 0, 1);
-          GenericRefinementElementCorners(2, 6 * ent0Number + 1) = ent2Count + ent1Count + ent0Number;
+          BogaertRefinementElementCorners(0, 6 * ent0Number + 1) = index.subEntityIndex(entity, 0, 2);
+          BogaertRefinementElementCorners(1, 6 * ent0Number + 1) = ent2Count + index.subEntityIndex(entity, 0, 1);
+          BogaertRefinementElementCorners(2, 6 * ent0Number + 1) = ent2Count + ent1Count + ent0Number;
 
-          GenericRefinementElementCorners(0, 6 * ent0Number + 2) = index.subEntityIndex(entity, 1, 2);
-          GenericRefinementElementCorners(1, 6 * ent0Number + 2) = ent2Count + ent1Count + ent0Number;
-          GenericRefinementElementCorners(2, 6 * ent0Number + 2) = ent2Count + index.subEntityIndex(entity, 0, 1);
+          BogaertRefinementElementCorners(0, 6 * ent0Number + 2) = index.subEntityIndex(entity, 1, 2);
+          BogaertRefinementElementCorners(1, 6 * ent0Number + 2) = ent2Count + ent1Count + ent0Number;
+          BogaertRefinementElementCorners(2, 6 * ent0Number + 2) = ent2Count + index.subEntityIndex(entity, 0, 1);
 
-          GenericRefinementElementCorners(0, 6 * ent0Number + 3) = index.subEntityIndex(entity, 1, 2);
-          GenericRefinementElementCorners(1, 6 * ent0Number + 3) = ent2Count + index.subEntityIndex(entity, 2, 1);
-          GenericRefinementElementCorners(2, 6 * ent0Number + 3) = ent2Count + ent1Count + ent0Number;
+          BogaertRefinementElementCorners(0, 6 * ent0Number + 3) = index.subEntityIndex(entity, 1, 2);
+          BogaertRefinementElementCorners(1, 6 * ent0Number + 3) = ent2Count + index.subEntityIndex(entity, 2, 1);
+          BogaertRefinementElementCorners(2, 6 * ent0Number + 3) = ent2Count + ent1Count + ent0Number;
 
-          GenericRefinementElementCorners(0, 6 * ent0Number + 4) = index.subEntityIndex(entity, 2, 2);
-          GenericRefinementElementCorners(1, 6 * ent0Number + 4) = ent2Count + ent1Count + ent0Number;
-          GenericRefinementElementCorners(2, 6 * ent0Number + 4) = ent2Count + index.subEntityIndex(entity, 2, 1);
+          BogaertRefinementElementCorners(0, 6 * ent0Number + 4) = index.subEntityIndex(entity, 2, 2);
+          BogaertRefinementElementCorners(1, 6 * ent0Number + 4) = ent2Count + ent1Count + ent0Number;
+          BogaertRefinementElementCorners(2, 6 * ent0Number + 4) = ent2Count + index.subEntityIndex(entity, 2, 1);
 
-          GenericRefinementElementCorners(0, 6 * ent0Number + 5) = index.subEntityIndex(entity, 2, 2);
-          GenericRefinementElementCorners(1, 6 * ent0Number + 5) = ent2Count + index.subEntityIndex(entity, 1, 1);
-          GenericRefinementElementCorners(2, 6 * ent0Number + 5) = ent2Count + ent1Count + ent0Number;
+          BogaertRefinementElementCorners(0, 6 * ent0Number + 5) = index.subEntityIndex(entity, 2, 2);
+          BogaertRefinementElementCorners(1, 6 * ent0Number + 5) = ent2Count + index.subEntityIndex(entity, 1, 1);
+          BogaertRefinementElementCorners(2, 6 * ent0Number + 5) = ent2Count + ent1Count + ent0Number;
 
           tempSonMap(6 * ent0Number, 0) = ent0Number;
           tempSonMap(6 * ent0Number + 1, 0) = ent0Number;
@@ -676,58 +676,58 @@ public:
           
         shared_ptr<Grid> newGrid =
             GridFactory::createGridFromConnectivityArrays(
-                params, GenericRefinementVertices, GenericRefinementElementCorners,
-                GenericRefinementDomainIndices);
+                params, BogaertRefinementVertices, BogaertRefinementElementCorners,
+                BogaertRefinementDomainIndices);
 
-        m_GenericRefinementGrid = newGrid;
+        m_BogaertRefinementGrid = newGrid;
 
-        m_GenericRefinementSonMap.conservativeResize(ent0Count, 6);
+        m_BogaertRefinementSonMap.conservativeResize(ent0Count, 6);
 
-        std::unique_ptr<GridView> GenRefView = m_GenericRefinementGrid->leafView();
-        const IndexSet &GenRefIndex = GenRefView->indexSet();
+        std::unique_ptr<GridView> BogaertRefView = m_BogaertRefinementGrid->leafView();
+        const IndexSet &BogaertRefIndex = BogaertRefView->indexSet();
         int dummy = 0;
         for (std::unique_ptr<EntityIterator<0>> it =
-                 GenRefView->entityIterator<0>();
+                 BogaertRefView->entityIterator<0>();
              !it->finished(); it->next()) {
           const Entity<0> &entity = it->entity();
-          int ent0Number = GenRefIndex.subEntityIndex(entity, 0, 0);
-          int insInd = m_GenericRefinementGrid->elementInsertionIndex(entity);
-          m_GenericRefinementSonMap(tempSonMap(insInd, 0), tempSonMap(insInd, 1)) =
+          int ent0Number = BogaertRefIndex.subEntityIndex(entity, 0, 0);
+          int insInd = m_BogaertRefinementGrid->elementInsertionIndex(entity);
+          m_BogaertRefinementSonMap(tempSonMap(insInd, 0), tempSonMap(insInd, 1)) =
               ent0Number;
         }
       }
     }
-    return std::pair<shared_ptr<Grid>, Matrix<int>>(m_GenericRefinementGrid,
-                                                    m_GenericRefinementSonMap);
+    return std::pair<shared_ptr<Grid>, Matrix<int>>(m_BogaertRefinementGrid,
+                                                    m_BogaertRefinementSonMap);
   }
 
-  /** \brief Return a generically refined grid based on the Leaf View */
-  virtual shared_ptr<Grid> GenericRefinementGrid() const override {
-    std::pair<shared_ptr<Grid>, Matrix<int>> GenRefPair =
-        this->GenericRefinementGridSonPair();
-    return std::get<0>(GenRefPair);
+  /** \brief Return a Bogaert refined grid based on the Leaf View */
+  virtual shared_ptr<Grid> BogaertRefinementGrid() const override {
+    std::pair<shared_ptr<Grid>, Matrix<int>> BogaertRefPair =
+        this->BogaertRefinementGridSonPair();
+    return std::get<0>(BogaertRefPair);
   }
 
-  /** \brief Return the son map for the GenericRefinementally refined grid */
-  virtual Matrix<int> GenericRefinementSonMap() const override {
-    std::pair<shared_ptr<Grid>, Matrix<int>> GenRefPair =
-        this->GenericRefinementGridSonPair();
-    return std::get<1>(GenRefPair);
+  /** \brief Return the son map for the BogaertRefinementally refined grid */
+  virtual Matrix<int> BogaertRefinementSonMap() const override {
+    std::pair<shared_ptr<Grid>, Matrix<int>> BogaertRefPair =
+        this->BogaertRefinementGridSonPair();
+    return std::get<1>(BogaertRefPair);
   }
 
-  /** \brief Return \p true if a GenericRefinement refinement of this grid has
+  /** \brief Return \p true if a BogaertRefinement refinement of this grid has
    *  been created. */
-  virtual bool hasGenericRefinementGrid() const override {
-    if (!m_GenericRefinementGrid.get())
+  virtual bool hasBogaertRefinementGrid() const override {
+    if (!m_BogaertRefinementGrid.get())
       return false;
     else
       return true;
   }
 
-  //  /** \brief Return \p true if this is a GenericRefinement refinement of another
+  //  /** \brief Return \p true if this is a BogaertRefinement refinement of another
   //  grid. */
-  //  virtual bool isGenericRefinementGrid() const {
-  //    return isGenRef;
+  //  virtual bool isBogaertRefinementGrid() const {
+  //    return isBogaertRef;
   //  }
 
   /** \brief Get insertion index of an element. */
@@ -776,7 +776,7 @@ public:
 
   bool adapt() override {
 
-    m_GenericRefinementGrid.reset();
+    m_BogaertRefinementGrid.reset();
     m_barycentricGrid.reset();
     return m_dune_grid->adapt();
   }
@@ -789,7 +789,7 @@ public:
 
   void globalRefine(int refCount) override {
 
-    m_GenericRefinementGrid.reset();
+    m_BogaertRefinementGrid.reset();
     m_barycentricGrid.reset();
     m_dune_grid->globalRefine(refCount);
   }
@@ -804,16 +804,16 @@ public:
         static_cast<const entity_t &>(element).duneEntity());
   }
 
-  //  /** \brief set father of GenericRefinement refinement */
-  //  virtual void setGenericRefinementFather(shared_ptr<Grid> fatherGrid){
-  //    isGenRef=true;
-  //    m_GenericRefinementFatherGrid = fatherGrid;
+  //  /** \brief set father of BogaertRefinement refinement */
+  //  virtual void setBogaertRefinementFather(shared_ptr<Grid> fatherGrid){
+  //    isBogaertRef=true;
+  //    m_BogaertRefinementFatherGrid = fatherGrid;
   //  }
 
-  //  /** \brief get father of GenericRefinement refinement */
-  //  virtual shared_ptr<Grid> getGenericRefinementFather(){
-  //    if(this->isGenericRefinementGrid()) {return m_GenericRefinementFatherGrid;}
-  //    else{throw std::runtime_error("Grid is not a GenericRefinement grid.");}
+  //  /** \brief get father of BogaertRefinement refinement */
+  //  virtual shared_ptr<Grid> getBogaertRefinementFather(){
+  //    if(this->isBogaertRefinementGrid()) {return m_BogaertRefinementFatherGrid;}
+  //    else{throw std::runtime_error("Grid is not a BogaertRefinement grid.");}
   //  }
 
   /** @}
@@ -823,16 +823,16 @@ private:
   // (unclear what to do with the pointer to the grid)
   ConcreteGrid(const ConcreteGrid &);
   ConcreteGrid &operator=(const ConcreteGrid &);
-  mutable Matrix<int> m_GenericRefinementSonMap;
-  mutable shared_ptr<Grid> m_GenericRefinementGrid;
-  mutable tbb::mutex m_GenericRefinementSpaceMutex;
+  mutable Matrix<int> m_BogaertRefinementSonMap;
+  mutable shared_ptr<Grid> m_BogaertRefinementGrid;
+  mutable tbb::mutex m_BogaertRefinementSpaceMutex;
   mutable Matrix<int> m_barycentricSonMap;
   mutable shared_ptr<Grid> m_barycentricGrid;
   mutable tbb::mutex m_barycentricSpaceMutex;
   //  bool isBary=false;
   //  mutable <shared_ptr<Grid> m_barycentricFatherGrid;
-  //  bool isGenRef=false;
-  //  mutable <shared_ptr<Grid> m_GenericRefinementFatherGrid;
+  //  bool isBogaertRef=false;
+  //  mutable <shared_ptr<Grid> m_BogaertRefinementFatherGrid;
 };
 
 } // namespace Bempp

@@ -209,19 +209,19 @@ class Space(object):
         return self._non_barycentric_space
     
     @property
-    def has_non_generic_refinement_space(self):
-        """True if space has an equivalent non-generic refinement space."""
-        return self._has_non_generic_refinement_space
+    def has_non_bogaert_space(self):
+        """True if space has an equivalent non-bogaert  space."""
+        return self._has_non_bogaert_space
     
     @property
-    def is_generic_refinement(self):
-        """ True if the space is defined over a generic refinement."""
-        return self._is_generic_refinement
+    def is_bogaert(self):
+        """ True if the space is defined over a bogaert refinement."""
+        return self._is_bogaert
     
     @property
-    def non_generic_refinement_space(self):
-        """The associated non-generically redined space if it exists."""
-        return self._non_generic_refinement_space
+    def non_bogaert_space(self):
+        """The associated non-bogaert  space if it exists."""
+        return self._non_bogaert_space
     
     
 
@@ -280,14 +280,14 @@ class DiscontinuousPolynomialSpace(Space):
 
         self._order = order
         self._has_non_barycentric_space = True
-        self._has_non_generic_refinement_space = True
+        self._has_non_bogaert_space = True
         self._non_barycentric_space = self
-        self._has_non_generic_refinement_space = self
+        self._non_bogaert_space = self
         self._discontinuous_space = self
         self._super_space = self
         self._evaluation_functor = scalar_function_value_functor()
         self._is_barycentric = False
-        self._is_generic_refinement = False
+        self._is_bogaert = False
         self._grid = grid
 
 
@@ -310,7 +310,7 @@ class BarycentricDiscontinuousPolynomialSpace(Space):
         self._super_space = self._discontinuous_space
         self._evaluation_functor = scalar_function_value_functor()
         self._is_barycentric = True
-        self._is_generic_refinement = False
+        self._is_bogaert = False
         self._grid = grid.barycentric_grid()
 
 
@@ -346,9 +346,9 @@ class ContinuousPolynomialSpace(Space):
 
         self._order = order
         self._has_non_barycentric_space = True
-        self._has_non_generic_refinement_space = True
+        self._has_non_bogaert_space = True
         self._non_barycentric_space = self
-        self._non_generic_refinement_space = self
+        self._non_bogaert_space = self
         if not closed:
             self._discontinuous_space = function_space(
                 grid,
@@ -371,7 +371,7 @@ class ContinuousPolynomialSpace(Space):
         self._super_space = self._discontinuous_space
         self._evaluation_functor = scalar_function_value_functor()
         self._is_barycentric = False
-        self._is_generic_refinement = False
+        self._is_bogaert = False
         self._grid = grid
 
 
@@ -394,7 +394,7 @@ class BarycentricContinuousPolynomialSpace(Space):
         self._super_space = self._discontinuous_space
         self._evaluation_functor = scalar_function_value_functor()
         self._is_barycentric = True
-        self._is_generic_refinement = False
+        self._is_bogaert = False
         self._grid = grid.barycentric_grid()
 
 
@@ -417,7 +417,7 @@ class DualSpace(Space):
         self._super_space = self._discontinuous_space
         self._evaluation_functor = scalar_function_value_functor()
         self._is_barycentric = True
-        self._is_generic_refinement = False
+        self._is_bogaert = False
         self._grid = grid.barycentric_grid()
 
 
@@ -456,7 +456,7 @@ class RTSpace(Space):
         self._super_space = self
         self._evaluation_functor = hdiv_function_value_functor()
         self._is_barycentric = False
-        self._is_generic_refinement = False
+        self._is_bogaert = False
         self._grid = grid
 
 
@@ -497,7 +497,7 @@ class NCSpace(Space):
         self._hdiv_space = function_space(
             grid, "RT", 0, domains=domains, closed=closed)
         self._is_barycentric = False
-        self._is_generic_refinement = False
+        self._is_bogaert = False
         self._grid = grid
 
 
@@ -536,7 +536,7 @@ class RWGSpace(Space):
         self._super_space = self
         self._evaluation_functor = hdiv_function_value_functor()
         self._is_barycentric = False
-        self._is_generic_refinement = False
+        self._is_bogaert = False
         self._grid = grid
 
 
@@ -576,7 +576,7 @@ class SNCSpace(Space):
         self._super_space = self
         self._hdiv_space = function_space(grid, "RWG", 0, domains, closed)
         self._is_barycentric = False
-        self._is_generic_refinement = False
+        self._is_bogaert = False
         self._grid = grid
 
 
@@ -599,8 +599,30 @@ class BarycentricRTSpace(Space):
         self._super_space = function_space(grid.barycentric_grid(), "RT", 0)
         self._evaluation_functor = hdiv_function_value_functor()
         self._is_barycentric = True
-        self._is_generic_refinement = False
+        self._is_bogaert = False
         self._grid = grid.barycentric_grid()
+
+class BogaertRTSpace(Space):
+    """A space of Raviart-Thomas functions on a bogaert grid."""
+
+    def __init__(self, grid, comp_key=None):
+
+        from bempp.core.space.space import function_space as _function_space
+        from bempp.api.assembly.functors import hdiv_function_value_functor
+
+        super(BogaertRTSpace, self).__init__(
+            _function_space(grid._impl, "BG-RT", 0), comp_key)
+
+        self._order = 0
+        self._has_non_bogaert_space = True
+        self._non_bogaert_space = function_space(grid, "RT", 0)
+        self._discontinuous_space = function_space(
+            grid.bogaert_refinement_grid(), "DP", 1)
+        self._super_space = function_space(grid.bogaert_refinement_grid(), "RT", 0)
+        self._evaluation_functor = hdiv_function_value_functor()
+        self._is_barycentric = False
+        self._is_bogaert = True
+        self._grid = grid.bogaert_refinement_grid()
 
 
 class BarycentricNCSpace(Space):
@@ -623,8 +645,31 @@ class BarycentricNCSpace(Space):
         self._super_space = function_space(grid.barycentric_grid(), "NC", 0)
         self._hdiv_space = function_space(grid, "B-RT", 0)
         self._is_barycentric = True
-        self._is_generic_refinement = False
+        self._is_bogaert = False
         self._grid = grid.barycentric_grid()
+
+class BogaertNCSpace(Space):
+    """A space of Nedelec functions on a bogaert grid."""
+
+    def __init__(self, grid, comp_key=None):
+
+        from bempp.core.space.space import function_space as _function_space
+        from bempp.api.assembly.functors import hcurl_function_value_functor
+
+        super(BogaertNCSpace, self).__init__(
+            _function_space(grid._impl, "BG-NC", 0), comp_key)
+
+        self._order = 0
+        self._has_non_bogaert_space = True
+        self._non_bogaert_space = function_space(grid, "NC", 0)
+        self._discontinuous_space = function_space(
+            grid.bogaert_refinement_grid(), "DP", 1)
+        self._evaluation_functor = hcurl_function_value_functor()
+        self._super_space = function_space(grid.bogaert_refinement_grid(), "NC", 0)
+        self._hdiv_space = function_space(grid, "BG-RT", 0)
+        self._is_bogaert= True
+        self._is_barycentric = False
+        self._grid = grid.bogaert_refinement_grid()
 
 
 class BarycentricRWGSpace(Space):
@@ -646,9 +691,30 @@ class BarycentricRWGSpace(Space):
         self._super_space = function_space(grid.barycentric_grid(), "RWG", 0)
         self._evaluation_functor = hdiv_function_value_functor()
         self._is_barycentric = True
-        self._is_generic_refinement = False
+        self._is_bogaert = False
         self._grid = grid.barycentric_grid()
 
+class BogaertRWGSpace(Space):
+    """A space of RWG functions on a bogaert  grid."""
+
+    def __init__(self, grid, comp_key=None):
+
+        from bempp.core.space.space import function_space as _function_space
+        from bempp.api.assembly.functors import hdiv_function_value_functor
+
+        super(BogaertRWGSpace, self).__init__(
+            _function_space(grid._impl, "BG-RWG", 0), comp_key)
+
+        self._order = 0
+        self._has_non_bogaert_space = True
+        self._non_bogaert_space = function_space(grid,"RWG", 0)
+        self._discontinuous_space = function_space(
+            grid.bogaert_refinement_grid(), "DP", 1)
+        self._super_space = function_space(grid.bogaert_refinement_grid(), "RWG", 0)
+        self._evaluation_functor = hdiv_function_value_functor()
+        self._is_barycentric = False
+        self._is_bogaert = True
+        self._grid = grid.bogaert_refinement_grid()
 
 class BarycentricSNCSpace(Space):
     """A space of scaled Nedelec functions on a barycentric grid."""
@@ -670,8 +736,31 @@ class BarycentricSNCSpace(Space):
         self._super_space = function_space(grid.barycentric_grid(), "SNC", 0)
         self._hdiv_space = function_space(grid, "B-RWG", 0)
         self._is_barycentric = True
-        self._is_generic_refinement = False
+        self._is_bogaert = False
         self._grid = grid.barycentric_grid()
+
+class BogaertSNCSpace(Space):
+    """A space of scaled Nedelec functions on a bogaert grid."""
+
+    def __init__(self, grid, comp_key=None):
+
+        from bempp.core.space.space import function_space as _function_space
+        from bempp.api.assembly.functors import hcurl_function_value_functor
+
+        super(BogaertSNCSpace, self).__init__(
+            _function_space(grid._impl, "BG-SNC", 0), comp_key)
+
+        self._order = 0
+        self._has_non_bogaert_space = True
+        self._non_bogaert_space = function_space(grid, "SNC", 0)
+        self._discontinuous_space = function_space(
+            grid.bogaert_refinement_grid(), "DP", 1)
+        self._evaluation_functor = hcurl_function_value_functor()
+        self._super_space = function_space(grid.bogaert_refinement_grid(), "SNC", 0)
+        self._hdiv_space = function_space(grid, "BG-RWG", 0)
+        self._is_barycentric = False
+        self._is_bogaert = True
+        self._grid = grid.bogaert_refinement_grid()
 
 
 class BuffaChristiansenSpace(Space):
@@ -693,7 +782,7 @@ class BuffaChristiansenSpace(Space):
         self._super_space = function_space(grid.barycentric_grid(), "RWG", 0)
         self._evaluation_functor = hdiv_function_value_functor()
         self._is_barycentric = True
-        self._is_generic_refinement = False
+        self._is_bogaert = False
         self._grid = grid.barycentric_grid()
 
 
@@ -717,11 +806,11 @@ class RotatedBuffaChristiansenSpace(Space):
         self._super_space = function_space(grid.barycentric_grid(), "SNC", 0)
         self._hdiv_space = BuffaChristiansenSpace(grid)
         self._is_barycentric = True
-        self._is_generic_refinement = False
+        self._is_bogaert = False
         self._grid = grid.barycentric_grid()
 
 class ChenWiltonSpace(Space):
-    """A space of Chen-Wilton basis functions on a generically refined grid."""
+    """A space of Chen-Wilton basis functions on a bogaert grid."""
 
     def __init__(self, grid, comp_key=None):
 
@@ -733,16 +822,16 @@ class ChenWiltonSpace(Space):
 
         self._order = 0
         self._has_non_barycentric_space = False
-        self._has_non_generic_refinement_space = False
+        self._has_non_bogaert_space = False
         self._non_barycentric_space = None
-        self._non_generic_refinement_space = None
+        self._non_bogaert_space = None
         self._discontinuous_space = function_space(
-            grid.generic_refinement_grid(), "DP", 1)
-        self._super_space = function_space(grid.generic_refinement_grid(), "RWG", 0)
+            grid.bogaert_refinement_grid(), "DP", 1)
+        self._super_space = function_space(grid.bogaert_refinement_grid(), "RWG", 0)
         self._evaluation_functor = hdiv_function_value_functor()
         self._is_barycentric = False
-        self._is_generic_refinement = True
-        self._grid = grid.generic_refinement_grid()
+        self._is_bogaert_refinement = True
+        self._grid = grid.bogaert_refinement_grid()
 
 
 class RotatedChenWiltonSpace(Space):
@@ -758,17 +847,17 @@ class RotatedChenWiltonSpace(Space):
 
         self._order = 0
         self._has_non_barycentric_space = False
-        self._has_non_generic_refinement_space = False
+        self._has_non_bogaert_space = False
         self._non_barycentric_space = None
-        self._non_generic_refinement_space = None
+        self._non_bogaert_space = None
         self._discontinuous_space = function_space(
-            grid.generic_refinement_grid(), "DP", 1)
+            grid.bogaert_refinement_grid(), "DP", 1)
         self._evaluation_functor = hcurl_function_value_functor()
-        self._super_space = function_space(grid.generic_refinement_grid(), "SNC", 0)
+        self._super_space = function_space(grid.bogaert_refinement_grid(), "SNC", 0)
         self._hdiv_space = ChenWiltonSpace(grid)
         self._is_barycentric = False
-        self._is_generic_refinement = True
-        self._grid = grid.generic_refinement_grid()
+        self._is_bogaert = True
+        self._grid = grid.bogaert_refinement_grid()
 
 #pylint: disable=too-many-return-statements
 #pylint: disable=too-many-branches
@@ -965,5 +1054,24 @@ def function_space(
     		raise ValueError(
     			"Only order zero Chen-Wilton functions supported.")
     	return RotatedChenWiltonSpace(grid, comp_key)
+    elif kind == "BG-RT":
+        if order > 0:
+            raise ValueError(
+                "Only order zero Raviart-Thomas functions supported.")
+        return BogaertRTSpace(grid, comp_key)
+    elif kind == "BG-RWG":
+        if order > 0:
+            raise ValueError("Only order zero RWG functions supported.")
+        return BogaertRWGSpace(grid, comp_key)
+    elif kind == "BG-NC":
+        if order > 0:
+            raise ValueError(
+                "Only order zero Nedelec functions supported.")
+        return BogaertNCSpace(grid, comp_key)
+    elif kind == "BG-SNC":
+        if order > 0:
+            raise ValueError(
+                "Only order zero Nedelec functions supported.")
+        return BogaertSNCSpace(grid, comp_key)
     else:
         raise ValueError("Unknown space type.")

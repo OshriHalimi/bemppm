@@ -85,7 +85,7 @@ public:
   virtual bool isDiscontinuous() const;
 
   virtual bool isBarycentric() const { return false; }
-        virtual bool isGenericRefinement() const {return false; }
+        virtual bool isBogaertRefinement() const {return false; }
 
   //  virtual shared_ptr<const Space<BasisFunctionType>> barycentricSpace(
   //      const shared_ptr<const Space<BasisFunctionType>> &self) const;

@@ -92,9 +92,9 @@ struct RotatedChenWiltonVectorSpace<BasisFunctionType>::Impl {
 /** \endcond */
     
 template <typename BasisFunctionType>
-RotatedChenWiltonVectorSpace<BasisFunctionType>::RotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid, bool putDofsOnBoundaries): Base(grid->GenericRefinementGrid()), m_impl(new Impl),
+RotatedChenWiltonVectorSpace<BasisFunctionType>::RotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid, bool putDofsOnBoundaries): Base(grid->BogaertRefinementGrid()), m_impl(new Impl),
     m_segment(GridSegment::wholeGrid(*grid)),m_putDofsOnBoundaries(putDofsOnBoundaries), m_dofMode(EDGE_ON_SEGMENT),
-    m_originalGrid(grid), m_sonMap(grid->GenericRefinementSonMap()) {
+    m_originalGrid(grid), m_sonMap(grid->BogaertRefinementSonMap()) {
         initialize();
     }
     
@@ -103,9 +103,9 @@ RotatedChenWiltonVectorSpace<BasisFunctionType>::
 RotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid,
                                         const GridSegment &segment,
                                         bool putDofsOnBoundaries, int dofMode)
-    : Base(grid->GenericRefinementGrid()), m_impl(new Impl), m_segment(segment),
+    : Base(grid->BogaertRefinementGrid()), m_impl(new Impl), m_segment(segment),
     m_putDofsOnBoundaries(putDofsOnBoundaries), m_dofMode(dofMode),
-    m_originalGrid(grid), m_sonMap(grid->GenericRefinementSonMap()) {
+    m_originalGrid(grid), m_sonMap(grid->BogaertRefinementSonMap()) {
         if (!(dofMode & (EDGE_ON_SEGMENT | ELEMENT_ON_SEGMENT)))
             throw std::invalid_argument("RotatedChenWiltonVectorSpace::"
                                         "RotatedChenWiltonVectorSpace(): "

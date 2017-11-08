@@ -85,8 +85,8 @@ bool AdaptiveSpace<BasisFunctionType_>::isBarycentric() const {
 }
     
 template <typename BasisFunctionType_>
-bool AdaptiveSpace<BasisFunctionType_>::isGenericRefinement() const {
-    return currentSpace().isGenericRefinement();
+bool AdaptiveSpace<BasisFunctionType_>::isBogaertRefinement() const {
+    return currentSpace().isBogaertRefinement();
 }
 
 template <typename BasisFunctionType_>
@@ -138,9 +138,9 @@ AdaptiveSpace<BasisFunctionType_>::barycentricSpace(
 
 template <typename BasisFunctionType_>
 shared_ptr<const Space<BasisFunctionType_>>
-AdaptiveSpace<BasisFunctionType_>::GenericRefinementSpace(
+AdaptiveSpace<BasisFunctionType_>::BogaertRefinementSpace(
     const shared_ptr<const Space<BasisFunctionType>> &self) const {
-    return currentSpace().GenericRefinementSpace(m_space);
+    return currentSpace().BogaertRefinementSpace(m_space);
 }
 
 template <typename BasisFunctionType_>

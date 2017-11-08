@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef bempp_scaled_nedelec_0_vector_space_barycentric_hpp
-#define bempp_scaled_nedelec_0_vector_space_barycentric_hpp
+#ifndef bempp_nedelec_0_vector_space_bogaert_hpp
+#define bempp_nedelec_0_vector_space_bogaert_hpp
 
 #include "../common/common.hpp"
 
@@ -30,7 +30,7 @@
 #include "../grid/grid_segment.hpp"
 #include "../grid/grid_view.hpp"
 #include "../common/types.hpp"
-#include "../fiber/nedelec_0_shapeset_barycentric.hpp"
+#include "../fiber/nedelec_0_shapeset_bogaert.hpp"
 #include "../fiber/nedelec_0_shapeset.hpp"
 
 #include <boost/scoped_ptr.hpp>
@@ -48,7 +48,7 @@ class Grid;
 /** \ingroup space
  *  \brief Space of continuous, piecewise linear scalar functions. */
 template <typename BasisFunctionType>
-class ScaledNedelec0VectorSpaceBarycentric : public Space<BasisFunctionType> {
+class Nedelec0VectorSpaceBogaertRefinement : public Space<BasisFunctionType> {
   typedef Space<BasisFunctionType> Base;
 
 public:
@@ -59,13 +59,13 @@ public:
   typedef typename Base::CollectionOfBasisTransformations
       CollectionOfBasisTransformations;
 
-  explicit ScaledNedelec0VectorSpaceBarycentric(
-      const shared_ptr<const Grid> &grid, bool putDofsOnBoundaries = false);
-  ScaledNedelec0VectorSpaceBarycentric(const shared_ptr<const Grid> &grid,
-                                       const GridSegment &segment,
-                                       bool putDofsOnBoundaries = false,
-                                       int dofMode = EDGE_ON_SEGMENT);
-  virtual ~ScaledNedelec0VectorSpaceBarycentric();
+  explicit Nedelec0VectorSpaceBogaertRefinement(const shared_ptr<const Grid> &grid,
+                                          bool putDofsOnBoundaries = false);
+  Nedelec0VectorSpaceBogaertRefinement(const shared_ptr<const Grid> &grid,
+                                 const GridSegment &segment,
+                                 bool putDofsOnBoundaries = false,
+                                 int dofMode = EDGE_ON_SEGMENT);
+  virtual ~Nedelec0VectorSpaceBogaertRefinement();
 
   virtual shared_ptr<const Space<BasisFunctionType>> discontinuousSpace(
       const shared_ptr<const Space<BasisFunctionType>> &self) const;
@@ -77,13 +77,12 @@ public:
   virtual int codomainDimension() const;
 
   virtual bool isBarycentric() const { return false; }
-  virtual bool isBogaertRefinement() const {return false; }
-
+  virtual bool isBogaertRefinement() const {return false;}
 
   virtual bool spaceIsCompatible(const Space<BasisFunctionType> &other) const;
 
   virtual SpaceIdentifier spaceIdentifier() const {
-    return SCALED_NEDELEC_0_VECTOR_BARYCENTRIC;
+    return NEDELEC_0_VECTOR_BOGAERT;
   }
 
   /** \brief Return the variant of element \p element.
@@ -143,7 +142,7 @@ private:
   struct Impl;
   boost::scoped_ptr<Impl> m_impl;
   GridSegment m_segment;
-  typedef Fiber::Nedelec0ShapesetBarycentric<BasisFunctionType> Shapeset;
+  typedef Fiber::Nedelec0ShapesetBogaertRefinement<BasisFunctionType> Shapeset;
   bool m_putDofsOnBoundaries;
   int m_dofMode;
   std::unique_ptr<GridView> m_view;
@@ -164,27 +163,26 @@ private:
   /** \endcond */
 };
 
-/** \brief Define a ScaledNedelec0VectorSpaceBarycentric that has an update
- * method for grid refinement. */
+/** \brief Define a Nedelec0VectorSpaceBogaertRefinement that has an update method for
+ * grid refinement. */
 template <typename BasisFunctionType>
 shared_ptr<Space<BasisFunctionType>>
-adaptiveScaledNedelec0VectorSpaceBarycentric(
-    const shared_ptr<const Grid> &grid);
+adaptiveNedelec0VectorSpaceBogaertRefinement(const shared_ptr<const Grid> &grid);
 
 /** \brief Overload to define a set of domains for the space and whether the
  space contains boundary entities
  (\p open = true) or not. */
 template <typename BasisFunctionType>
 shared_ptr<Space<BasisFunctionType>>
-adaptiveScaledNedelec0VectorSpaceBarycentric(const shared_ptr<const Grid> &grid,
-                                             const std::vector<int> &domains,
-                                             bool open);
+adaptiveNedelec0VectorSpaceBogaertRefinement(const shared_ptr<const Grid> &grid,
+                                       const std::vector<int> &domains,
+                                       bool open);
 
 /** \brief Overlad. */
 template <typename BasisFunctionType>
 shared_ptr<Space<BasisFunctionType>>
-adaptiveScaledNedelec0VectorSpaceBarycentric(const shared_ptr<const Grid> &grid,
-                                             int domain, bool open);
+adaptiveNedelec0VectorSpaceBogaertRefinement(const shared_ptr<const Grid> &grid,
+                                       int domain, bool open);
 
 } // namespace Bempp
 

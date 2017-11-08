@@ -176,17 +176,17 @@ cdef class Grid:
 
         return eigen_matrix_to_np_int(deref(self.impl_).barycentricSonMap())
 
-    def generic_refinement_grid(self):
-        """Return a generically refined grid."""
+    def bogaert_refinement_grid(self):
+        """Return a bogaert grid."""
 
         cdef Grid grid = Grid()
-        grid.impl_.assign(deref(self.impl_).GenericRefinementGrid())
+        grid.impl_.assign(deref(self.impl_).BogaertRefinementGrid())
         return grid
 
-    def generic_refinement_descendents_map(self):
-        """Return the map between elements in the original grid and its generic refinement."""
+    def bogaert_refinement_descendents_map(self):
+        """Return the map between elements in the original grid and its bogaert refinement."""
 
-        return eigen_matrix_to_np_int(deref(self.impl_).GenericRefinementSonMap()) 
+        return eigen_matrix_to_np_int(deref(self.impl_).BogaertRefinementSonMap()) 
 
     property dim:
         """" Dimension of the grid. """
