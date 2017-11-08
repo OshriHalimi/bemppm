@@ -38,6 +38,7 @@ class Grid(object):
         """Constructor. Not to be called diretly."""
         self._impl = impl
         self._barycentric_grid = None
+        self._generic_refinement_grid = None 
         self._view = None
 
     def plot(self):
@@ -96,6 +97,26 @@ class Grid(object):
 
         """
         return self._impl.barycentric_descendents_map()
+
+    def generic_refinement_grid(self):
+        """Return a generically refined grid."""
+        if self._generic_refinement_grid is None:
+            self._generic_refinement_grid = Grid(self._impl.generic_refinement_grid())
+        return self._generic_refinement_grid
+
+    def generic_refinement_descendents_map(self):
+        """
+        Index map between a grid and its generic refinement.
+
+        Return a matrix that provides a map between elements in the original
+        grid and the generic refinement.
+
+        This function returns a (nelements x 6) matrix where the row i contains
+        the indices of all elements in the generically refined grid that are
+        descendents of the element with index i in the original grid.
+
+        """
+        return self._impl.generic_refinement_descendents_map()
 
     @property
     def dim(self):

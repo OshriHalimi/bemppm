@@ -30,7 +30,6 @@
 #include "../grid/grid_segment.hpp"
 #include "../grid/grid_view.hpp"
 #include "../common/types.hpp"
-//#include "../fiber/raviart_thomas_0_shapeset_barycentric.hpp"
 #include "../fiber/rotated_chen_wilton_shapeset.hpp"
 
 #include <boost/scoped_ptr.hpp>
@@ -77,6 +76,7 @@ public:
   virtual int codomainDimension() const;
 
   virtual bool isBarycentric() const { return false; }
+  virtual bool isGenericRefinement() const {return false;}
 
   virtual bool spaceIsCompatible(const Space<BasisFunctionType> &other) const;
 

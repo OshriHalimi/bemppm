@@ -173,9 +173,13 @@ template <typename BasisFunctionType>
 bool Space<BasisFunctionType>::gridIsIdentical(
     const Space<BasisFunctionType> &other) const {
   if (this->isBarycentric() != other.isBarycentric()) {
-    return false;
-  } else {
-    return m_grid == other.m_grid;
+      return false;
+  }
+  else if (this->isGenericRefinement() != other.isGenericRefinement()) {
+      return false;
+  }
+  else {
+      return m_grid == other.m_grid;
   }
 }
 
@@ -186,6 +190,16 @@ Space<BasisFunctionType>::barycentricSpace(
   throw std::runtime_error(
       "Space::barycentricSpace():"
       "This method is not implemented for this Space type.");
+}
+
+    
+template <typename BasisFunctionType>
+shared_ptr<const Space<BasisFunctionType>>
+Space<BasisFunctionType>::GenericRefinementSpace(
+    const shared_ptr<const Space<BasisFunctionType>> &self) const {
+    throw std::runtime_error(
+        "Space::GenericRefinementSpace():"
+        "This method is not implemented for this Space type.");
 }
 
 template <typename BasisFunctionType>

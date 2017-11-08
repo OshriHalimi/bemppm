@@ -78,7 +78,9 @@ public:
   virtual int domainDimension() const;
   virtual int codomainDimension() const;
 
-  virtual bool isBarycentric() const { return true; }
+  virtual bool isBarycentric() const { return true;}
+  virtual bool isGenericRefinement() const {return false; }
+
 
   shared_ptr<const Space<BasisFunctionType>> barycentricSpace(
       const shared_ptr<const Space<BasisFunctionType>> &self) const;

@@ -81,7 +81,12 @@ AdaptiveSpace<BasisFunctionType_>::discontinuousSpace(
 template <typename BasisFunctionType_>
 bool AdaptiveSpace<BasisFunctionType_>::isBarycentric() const {
 
-  return currentSpace().isBarycentric();
+    return currentSpace().isBarycentric();
+}
+    
+template <typename BasisFunctionType_>
+bool AdaptiveSpace<BasisFunctionType_>::isGenericRefinement() const {
+    return currentSpace().isGenericRefinement();
 }
 
 template <typename BasisFunctionType_>
@@ -129,6 +134,13 @@ AdaptiveSpace<BasisFunctionType_>::barycentricSpace(
     const shared_ptr<const Space<BasisFunctionType>> &self) const {
 
   return currentSpace().barycentricSpace(m_space);
+}
+
+template <typename BasisFunctionType_>
+shared_ptr<const Space<BasisFunctionType_>>
+AdaptiveSpace<BasisFunctionType_>::GenericRefinementSpace(
+    const shared_ptr<const Space<BasisFunctionType>> &self) const {
+    return currentSpace().GenericRefinementSpace(m_space);
 }
 
 template <typename BasisFunctionType_>

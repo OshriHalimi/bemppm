@@ -28,6 +28,8 @@ cdef extern from "bempp/grid/grid.hpp" namespace "Bempp" nogil:
         c_IdSet& globalIdSet() const
         shared_ptr[c_Grid] barycentricGrid() const
         Matrix[int] barycentricSonMap() const
+        shared_ptr[c_Grid] GenericRefinementGrid() const
+        Matrix[int] GenericRefinementSonMap() const
 
 
     cdef enum Topology "Bempp::GridParameters::Topology":

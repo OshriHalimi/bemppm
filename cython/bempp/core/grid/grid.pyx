@@ -174,7 +174,19 @@ cdef class Grid:
     def barycentric_descendents_map(self):
         """Return the map between elements in the original grid and its barycentric refinement."""
 
-        return eigen_matrix_to_np_int(deref(self.impl_).barycentricSonMap()) 
+        return eigen_matrix_to_np_int(deref(self.impl_).barycentricSonMap())
+
+    def generic_refinement_grid(self):
+        """Return a generically refined grid."""
+
+        cdef Grid grid = Grid()
+        grid.impl_.assign(deref(self.impl_).GenericRefinementGrid())
+        return grid
+
+    def generic_refinement_descendents_map(self):
+        """Return the map between elements in the original grid and its generic refinement."""
+
+        return eigen_matrix_to_np_int(deref(self.impl_).GenericRefinementSonMap()) 
 
     property dim:
         """" Dimension of the grid. """

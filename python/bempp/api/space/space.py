@@ -207,6 +207,23 @@ class Space(object):
     def non_barycentric_space(self):
         """The associated non-barycentric space if it exists."""
         return self._non_barycentric_space
+    
+    @property
+    def has_non_generic_refinement_space(self):
+        """True if space has an equivalent non-generic refinement space."""
+        return self._has_non_generic_refinement_space
+    
+    @property
+    def is_generic_refinement(self):
+        """ True if the space is defined over a generic refinement."""
+        return self._is_generic_refinement
+    
+    @property
+    def non_generic_refinement_space(self):
+        """The associated non-generically redined space if it exists."""
+        return self._non_generic_refinement_space
+    
+    
 
     @property
     def order(self):
@@ -263,11 +280,14 @@ class DiscontinuousPolynomialSpace(Space):
 
         self._order = order
         self._has_non_barycentric_space = True
+        self._has_non_generic_refinement_space = True
         self._non_barycentric_space = self
+        self._has_non_generic_refinement_space = self
         self._discontinuous_space = self
         self._super_space = self
         self._evaluation_functor = scalar_function_value_functor()
         self._is_barycentric = False
+        self._is_generic_refinement = False
         self._grid = grid
 
 
@@ -290,6 +310,7 @@ class BarycentricDiscontinuousPolynomialSpace(Space):
         self._super_space = self._discontinuous_space
         self._evaluation_functor = scalar_function_value_functor()
         self._is_barycentric = True
+        self._is_generic_refinement = False
         self._grid = grid.barycentric_grid()
 
 
@@ -325,7 +346,9 @@ class ContinuousPolynomialSpace(Space):
 
         self._order = order
         self._has_non_barycentric_space = True
+        self._has_non_generic_refinement_space = True
         self._non_barycentric_space = self
+        self._non_generic_refinement_space = self
         if not closed:
             self._discontinuous_space = function_space(
                 grid,
@@ -348,6 +371,7 @@ class ContinuousPolynomialSpace(Space):
         self._super_space = self._discontinuous_space
         self._evaluation_functor = scalar_function_value_functor()
         self._is_barycentric = False
+        self._is_generic_refinement = False
         self._grid = grid
 
 
@@ -370,6 +394,7 @@ class BarycentricContinuousPolynomialSpace(Space):
         self._super_space = self._discontinuous_space
         self._evaluation_functor = scalar_function_value_functor()
         self._is_barycentric = True
+        self._is_generic_refinement = False
         self._grid = grid.barycentric_grid()
 
 
@@ -392,6 +417,7 @@ class DualSpace(Space):
         self._super_space = self._discontinuous_space
         self._evaluation_functor = scalar_function_value_functor()
         self._is_barycentric = True
+        self._is_generic_refinement = False
         self._grid = grid.barycentric_grid()
 
 
@@ -430,6 +456,7 @@ class RTSpace(Space):
         self._super_space = self
         self._evaluation_functor = hdiv_function_value_functor()
         self._is_barycentric = False
+        self._is_generic_refinement = False
         self._grid = grid
 
 
@@ -470,6 +497,7 @@ class NCSpace(Space):
         self._hdiv_space = function_space(
             grid, "RT", 0, domains=domains, closed=closed)
         self._is_barycentric = False
+        self._is_generic_refinement = False
         self._grid = grid
 
 
@@ -508,6 +536,7 @@ class RWGSpace(Space):
         self._super_space = self
         self._evaluation_functor = hdiv_function_value_functor()
         self._is_barycentric = False
+        self._is_generic_refinement = False
         self._grid = grid
 
 
@@ -547,6 +576,7 @@ class SNCSpace(Space):
         self._super_space = self
         self._hdiv_space = function_space(grid, "RWG", 0, domains, closed)
         self._is_barycentric = False
+        self._is_generic_refinement = False
         self._grid = grid
 
 
@@ -569,6 +599,7 @@ class BarycentricRTSpace(Space):
         self._super_space = function_space(grid.barycentric_grid(), "RT", 0)
         self._evaluation_functor = hdiv_function_value_functor()
         self._is_barycentric = True
+        self._is_generic_refinement = False
         self._grid = grid.barycentric_grid()
 
 
@@ -592,6 +623,7 @@ class BarycentricNCSpace(Space):
         self._super_space = function_space(grid.barycentric_grid(), "NC", 0)
         self._hdiv_space = function_space(grid, "B-RT", 0)
         self._is_barycentric = True
+        self._is_generic_refinement = False
         self._grid = grid.barycentric_grid()
 
 
@@ -614,6 +646,7 @@ class BarycentricRWGSpace(Space):
         self._super_space = function_space(grid.barycentric_grid(), "RWG", 0)
         self._evaluation_functor = hdiv_function_value_functor()
         self._is_barycentric = True
+        self._is_generic_refinement = False
         self._grid = grid.barycentric_grid()
 
 
@@ -637,6 +670,7 @@ class BarycentricSNCSpace(Space):
         self._super_space = function_space(grid.barycentric_grid(), "SNC", 0)
         self._hdiv_space = function_space(grid, "B-RWG", 0)
         self._is_barycentric = True
+        self._is_generic_refinement = False
         self._grid = grid.barycentric_grid()
 
 
@@ -659,6 +693,7 @@ class BuffaChristiansenSpace(Space):
         self._super_space = function_space(grid.barycentric_grid(), "RWG", 0)
         self._evaluation_functor = hdiv_function_value_functor()
         self._is_barycentric = True
+        self._is_generic_refinement = False
         self._grid = grid.barycentric_grid()
 
 
@@ -682,10 +717,11 @@ class RotatedBuffaChristiansenSpace(Space):
         self._super_space = function_space(grid.barycentric_grid(), "SNC", 0)
         self._hdiv_space = BuffaChristiansenSpace(grid)
         self._is_barycentric = True
+        self._is_generic_refinement = False
         self._grid = grid.barycentric_grid()
 
 class ChenWiltonSpace(Space):
-    """A space of Chen-Wilton basis functions on a barycentrid grid."""
+    """A space of Chen-Wilton basis functions on a generically refined grid."""
 
     def __init__(self, grid, comp_key=None):
 
@@ -697,13 +733,16 @@ class ChenWiltonSpace(Space):
 
         self._order = 0
         self._has_non_barycentric_space = False
+        self._has_non_generic_refinement_space = False
         self._non_barycentric_space = None
+        self._non_generic_refinement_space = None
         self._discontinuous_space = function_space(
-            grid.barycentric_grid(), "DP", 1)
-        self._super_space = function_space(grid.barycentric_grid(), "RWG", 0)
+            grid.generic_refinement_grid(), "DP", 1)
+        self._super_space = function_space(grid.generic_refinement_grid(), "RWG", 0)
         self._evaluation_functor = hdiv_function_value_functor()
-        self._is_barycentric = True
-        self._grid = grid.barycentric_grid()
+        self._is_barycentric = False
+        self._is_generic_refinement = True
+        self._grid = grid.generic_refinement_grid()
 
 
 class RotatedChenWiltonSpace(Space):
@@ -719,14 +758,17 @@ class RotatedChenWiltonSpace(Space):
 
         self._order = 0
         self._has_non_barycentric_space = False
+        self._has_non_generic_refinement_space = False
         self._non_barycentric_space = None
+        self._non_generic_refinement_space = None
         self._discontinuous_space = function_space(
-            grid.barycentric_grid(), "DP", 1)
+            grid.generic_refinement_grid(), "DP", 1)
         self._evaluation_functor = hcurl_function_value_functor()
-        self._super_space = function_space(grid.barycentric_grid(), "SNC", 0)
+        self._super_space = function_space(grid.generic_refinement_grid(), "SNC", 0)
         self._hdiv_space = ChenWiltonSpace(grid)
-        self._is_barycentric = True
-        self._grid = grid.barycentric_grid()
+        self._is_barycentric = False
+        self._is_generic_refinement = True
+        self._grid = grid.generic_refinement_grid()
 
 #pylint: disable=too-many-return-statements
 #pylint: disable=too-many-branches

@@ -1,3 +1,23 @@
+// Copyright (C) 2011-2012 by the BEM++ Authors
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #include "rotated_chen_wilton_vector_space.hpp"
 #include "adaptive_space.hpp"
 
@@ -72,9 +92,9 @@ struct RotatedChenWiltonVectorSpace<BasisFunctionType>::Impl {
 /** \endcond */
     
 template <typename BasisFunctionType>
-RotatedChenWiltonVectorSpace<BasisFunctionType>::RotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid, bool putDofsOnBoundaries): Base(grid->barycentricGrid()), m_impl(new Impl),
+RotatedChenWiltonVectorSpace<BasisFunctionType>::RotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid, bool putDofsOnBoundaries): Base(grid->GenericRefinementGrid()), m_impl(new Impl),
     m_segment(GridSegment::wholeGrid(*grid)),m_putDofsOnBoundaries(putDofsOnBoundaries), m_dofMode(EDGE_ON_SEGMENT),
-    m_originalGrid(grid), m_sonMap(grid->barycentricSonMap()) {
+    m_originalGrid(grid), m_sonMap(grid->GenericRefinementSonMap()) {
         initialize();
     }
     
@@ -83,9 +103,9 @@ RotatedChenWiltonVectorSpace<BasisFunctionType>::
 RotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid,
                                         const GridSegment &segment,
                                         bool putDofsOnBoundaries, int dofMode)
-    : Base(grid->barycentricGrid()), m_impl(new Impl), m_segment(segment),
+    : Base(grid->GenericRefinementGrid()), m_impl(new Impl), m_segment(segment),
     m_putDofsOnBoundaries(putDofsOnBoundaries), m_dofMode(dofMode),
-    m_originalGrid(grid), m_sonMap(grid->barycentricSonMap()) {
+    m_originalGrid(grid), m_sonMap(grid->GenericRefinementSonMap()) {
         if (!(dofMode & (EDGE_ON_SEGMENT | ELEMENT_ON_SEGMENT)))
             throw std::invalid_argument("RotatedChenWiltonVectorSpace::"
                                         "RotatedChenWiltonVectorSpace(): "

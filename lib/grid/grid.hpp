@@ -115,6 +115,28 @@ public:
   /** \brief Return \p true if this grid is a barycentric representation of
    *  \p other, i.e. if this grid was created by \p other.barycentricGrid(). */
   virtual bool isBarycentricRepresentationOf(const Grid &other) const;
+    
+
+    /** \brief Return a generically refined grid based on the LeafView and the
+     * son map */
+    virtual std::pair<shared_ptr<Grid>, Matrix<int>>
+    GenericRefinementGridSonPair() const = 0;
+    
+    /** \brief Return a generically refined grid based on the LeafView */
+    virtual shared_ptr<Grid> GenericRefinementGrid() const = 0;
+    
+    /** \brief Return the son map for the generically refined grid */
+    virtual Matrix<int> GenericRefinementSonMap() const = 0;
+    
+    /** \brief Return \p true if a generic refinement of this grid has
+     *  been created. */
+    virtual bool hasGenericRefinementGrid() const = 0;
+    
+    //  virtual bool isGenericRefinementGrid() const = 0;
+    
+    /** \brief Return \p true if this grid is a generically refined representation of
+     *  \p other, i.e. if this grid was created by \p other.GenericRefinementGrid(). */
+  virtual bool isGenericRefinementRepresentationOf(const Grid &other) const;
 
   /** \brief Reference to the grid's global id set. */
   virtual const IdSet &globalIdSet() const = 0;

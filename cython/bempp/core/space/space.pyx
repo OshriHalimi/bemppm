@@ -279,6 +279,7 @@ def function_space(Grid grid, kind, order, domains=None, cbool closed=True, cboo
     """
     cdef Space s = Space()
     cdef Grid bary_grid
+    cdef Grid GenRef_grid
     cdef int dof_mode = 0
 
     if element_on_segment:

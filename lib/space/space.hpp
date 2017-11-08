@@ -166,6 +166,9 @@ public:
   /** \brief Return \p true if space is based on a barycentric refinement */
 
   virtual bool isBarycentric() const = 0;
+    
+ /* \brief Return \p true if space is based on a generic refinement */
+    virtual bool isGenericRefinement() const = 0;
 
   /** \brief Dimension of the grid on which functions from this space are
    *  defined. */
@@ -220,6 +223,12 @@ public:
    *  local dofs on the barycentrically refined grid. */
   virtual shared_ptr<const Space<BasisFunctionType>> barycentricSpace(
       const shared_ptr<const Space<BasisFunctionType>> &self) const;
+
+    /** \brief Return an equivalent space (in terms of global Dofs), but defined
+     * using
+     *  local dofs on the generically refined grid. */
+    virtual shared_ptr<const Space<BasisFunctionType>> GenericRefinementSpace(
+        const shared_ptr<const Space<BasisFunctionType>> &self) const;
 
   /** \brief Return the grid level of the current space */
   virtual unsigned int level() const { return m_level; }

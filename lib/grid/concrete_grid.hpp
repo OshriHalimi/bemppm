@@ -103,6 +103,9 @@ class GridView;
  member variable \p m_owns_dune_grid determines whether this object is
  deleted in destructor.
  */
+
+    
+    
 template <typename DuneGrid> class ConcreteGrid : public Grid {
 private:
     DuneGrid *m_dune_grid;
@@ -226,19 +229,194 @@ public:
   virtual GridParameters::Topology topology() const override {
     return m_topology;
   }
-
+    
   /** @}
   @name Refinement
   @{ */
+    
+    /** \brief Return a barycentrically refined grid based on the Leaf View and
+     * its son map */
+    //
+    virtual std::pair<shared_ptr<Grid>, Matrix<int>>
+    barycentricGridSonPair() const override {
+        if (!m_barycentricGrid.get()) {
+            tbb::mutex::scoped_lock lock(m_barycentricSpaceMutex);
+            if (!m_barycentricGrid.get()) {
+                
+                std::unique_ptr<GridView> view = this->leafView();
+                const IndexSet &index = view->indexSet();
+                
+                GridParameters params;
+                params.topology = GridParameters::TRIANGULAR;
+                
+                Matrix<double> barycentricVertices;
+                Matrix<int> barycentricElementCorners;
+                std::vector<int> barycentricDomainIndices;
+                
+                const size_t ent0Count = view->entityCount(0); // faces
+                const size_t ent1Count = view->entityCount(1); // edges
+                const size_t ent2Count = view->entityCount(2); // vertices
+                
+                barycentricVertices.conservativeResize(3, ent2Count + ent1Count +
+                                                       ent0Count);
+                
+                for (std::unique_ptr<EntityIterator<2>> it = view->entityIterator<2>();
+                     !it->finished(); it->next()) {
+                    const Entity<2> &entity = it->entity();
+                    const int ent2Number = index.entityIndex(entity);
+                    Matrix<double> corners;
+                    entity.geometry().getCorners(corners);
+                    for (int j = 0; j != 3; ++j) {
+                        barycentricVertices(j, ent2Number) = corners(j, 0);
+                    }
+                }
+                
+                for (std::unique_ptr<EntityIterator<1>> it = view->entityIterator<1>();
+                     !it->finished(); it->next()) {
+                    const Entity<1> &entity = it->entity();
+                    const int ent1Number = index.entityIndex(entity);
+                    Matrix<double> corners;
+                    entity.geometry().getCorners(corners);
+                    for (int j = 0; j != 3; ++j) {
+                        barycentricVertices(j, ent2Count + ent1Number) =
+                        (corners(j, 0) + corners(j, 1)) / 2;
+                    }
+                }
+                
+                for (std::unique_ptr<EntityIterator<0>> it = view->entityIterator<0>();
+                     !it->finished(); it->next()) {
+                    const Entity<0> &entity = it->entity();
+                    const int ent0Number = index.entityIndex(entity);
+                    Matrix<double> corners;
+                    entity.geometry().getCorners(corners);
+                    for (int j = 0; j != 3; ++j) {
+                        barycentricVertices(j, ent2Count + ent1Count + ent0Number) =
+                        (corners(j, 0) + corners(j, 1) + corners(j, 2)) / 3;
+                    }
+                }
+                
+                barycentricElementCorners.conservativeResize(3, 6 * ent0Count);
+                Matrix<int> tempSonMap;
+                tempSonMap.conservativeResize(6 * ent0Count, 2);
+                for (std::unique_ptr<EntityIterator<0>> it = view->entityIterator<0>();
+                     !it->finished(); it->next()) {
+                    const Entity<0> &entity = it->entity();
+                    const int ent0Number = index.subEntityIndex(entity, 0, 0);
+                    barycentricElementCorners(0, 6 * ent0Number) =
+                    index.subEntityIndex(entity, 0, 2);
+                    barycentricElementCorners(1, 6 * ent0Number) =
+                    ent2Count + ent1Count + ent0Number;
+                    barycentricElementCorners(2, 6 * ent0Number) =
+                    ent2Count + index.subEntityIndex(entity, 1, 1);
+                    
+                    barycentricElementCorners(0, 6 * ent0Number + 1) =
+                    index.subEntityIndex(entity, 0, 2);
+                    barycentricElementCorners(1, 6 * ent0Number + 1) =
+                    ent2Count + index.subEntityIndex(entity, 0, 1);
+                    barycentricElementCorners(2, 6 * ent0Number + 1) =
+                    ent2Count + ent1Count + ent0Number;
+                    
+                    barycentricElementCorners(0, 6 * ent0Number + 2) =
+                    index.subEntityIndex(entity, 1, 2);
+                    barycentricElementCorners(1, 6 * ent0Number + 2) =
+                    ent2Count + ent1Count + ent0Number;
+                    barycentricElementCorners(2, 6 * ent0Number + 2) =
+                    ent2Count + index.subEntityIndex(entity, 0, 1);
+                    
+                    barycentricElementCorners(0, 6 * ent0Number + 3) =
+                    index.subEntityIndex(entity, 1, 2);
+                    barycentricElementCorners(1, 6 * ent0Number + 3) =
+                    ent2Count + index.subEntityIndex(entity, 2, 1);
+                    barycentricElementCorners(2, 6 * ent0Number + 3) =
+                    ent2Count + ent1Count + ent0Number;
+                    
+                    barycentricElementCorners(0, 6 * ent0Number + 4) =
+                    index.subEntityIndex(entity, 2, 2);
+                    barycentricElementCorners(1, 6 * ent0Number + 4) =
+                    ent2Count + ent1Count + ent0Number;
+                    barycentricElementCorners(2, 6 * ent0Number + 4) =
+                    ent2Count + index.subEntityIndex(entity, 2, 1);
+                    
+                    barycentricElementCorners(0, 6 * ent0Number + 5) =
+                    index.subEntityIndex(entity, 2, 2);
+                    barycentricElementCorners(1, 6 * ent0Number + 5) =
+                    ent2Count + index.subEntityIndex(entity, 1, 1);
+                    barycentricElementCorners(2, 6 * ent0Number + 5) =
+                    ent2Count + ent1Count + ent0Number;
+                    
+                    tempSonMap(6 * ent0Number, 0) = ent0Number;
+                    tempSonMap(6 * ent0Number + 1, 0) = ent0Number;
+                    tempSonMap(6 * ent0Number + 2, 0) = ent0Number;
+                    tempSonMap(6 * ent0Number + 3, 0) = ent0Number;
+                    tempSonMap(6 * ent0Number + 4, 0) = ent0Number;
+                    tempSonMap(6 * ent0Number + 5, 0) = ent0Number;
+                    tempSonMap(6 * ent0Number, 1) = 0;
+                    tempSonMap(6 * ent0Number + 1, 1) = 1;
+                    tempSonMap(6 * ent0Number + 2, 1) = 2;
+                    tempSonMap(6 * ent0Number + 3, 1) = 3;
+                    tempSonMap(6 * ent0Number + 4, 1) = 4;
+                    tempSonMap(6 * ent0Number + 5, 1) = 5;
+                }
+                
+                shared_ptr<Grid> newGrid =
+                GridFactory::createGridFromConnectivityArrays(
+                                                              params, barycentricVertices, barycentricElementCorners,
+                                                              barycentricDomainIndices);
+                
+                m_barycentricGrid = newGrid;
+                
+                m_barycentricSonMap.conservativeResize(ent0Count, 6);
+                
+                std::unique_ptr<GridView> baryView = m_barycentricGrid->leafView();
+                const IndexSet &baryIndex = baryView->indexSet();
+                int dummy = 0;
+                for (std::unique_ptr<EntityIterator<0>> it =
+                     baryView->entityIterator<0>();
+                     !it->finished(); it->next()) {
+                    const Entity<0> &entity = it->entity();
+                    int ent0Number = baryIndex.subEntityIndex(entity, 0, 0);
+                    int insInd = m_barycentricGrid->elementInsertionIndex(entity);
+                    m_barycentricSonMap(tempSonMap(insInd, 0), tempSonMap(insInd, 1)) =
+                    ent0Number;
+                }
+            }
+        }
+        return std::pair<shared_ptr<Grid>, Matrix<int>>(m_barycentricGrid,
+                                                        m_barycentricSonMap);
+    }
 
-  /** \brief Return a barycentrically refined grid based on the Leaf View and
+    /** \brief Return a barycentrically refined grid based on the Leaf View */
+    virtual shared_ptr<Grid> barycentricGrid() const override {
+        std::pair<shared_ptr<Grid>, Matrix<int>> baryPair =
+        this->barycentricGridSonPair();
+        return std::get<0>(baryPair);
+    }
+    
+    /** \brief Return the son map for the barycentrically refined grid */
+    virtual Matrix<int> barycentricSonMap() const override {
+        std::pair<shared_ptr<Grid>, Matrix<int>> baryPair =
+        this->barycentricGridSonPair();
+        return std::get<1>(baryPair);
+    }
+    
+    /** \brief Return \p true if a barycentric refinement of this grid has
+     *  been created. */
+    virtual bool hasBarycentricGrid() const override {
+        if (!m_barycentricGrid.get())
+            return false;
+        else
+            return true;
+    }
+
+
+  /** \brief Return a generically refined grid based on the Leaf View and
    * its son map */
   //
   virtual std::pair<shared_ptr<Grid>, Matrix<int>>
-  barycentricGridSonPair() const override {
-    if (!m_barycentricGrid.get()) {
-      tbb::mutex::scoped_lock lock(m_barycentricSpaceMutex);
-      if (!m_barycentricGrid.get()) {
+  GenericRefinementGridSonPair() const override {
+    if (!m_GenericRefinementGrid.get()) {
+      tbb::mutex::scoped_lock lock(m_GenericRefinementSpaceMutex);
+      if (!m_GenericRefinementGrid.get()) {
 
         std::unique_ptr<GridView> view = this->leafView();
         const IndexSet &index = view->indexSet();
@@ -246,15 +424,15 @@ public:
         GridParameters params;
         params.topology = GridParameters::TRIANGULAR;
 
-        Matrix<double> barycentricVertices;
-        Matrix<int> barycentricElementCorners;
-        std::vector<int> barycentricDomainIndices;
+        Matrix<double> GenericRefinementVertices;
+        Matrix<int> GenericRefinementElementCorners;
+        std::vector<int> GenericRefinementDomainIndices;
 
         const size_t ent0Count = view->entityCount(0); // faces
         const size_t ent1Count = view->entityCount(1); // edges
         const size_t ent2Count = view->entityCount(2); // vertices
           
-        barycentricVertices.conservativeResize(3, ent2Count + ent1Count +
+        GenericRefinementVertices.conservativeResize(3, ent2Count + ent1Count +
                                                       ent0Count);
 
 //          iterating through each vertex (node) of the coarse grid
@@ -264,22 +442,21 @@ public:
           const int ent2Number = index.entityIndex(entity);
           Matrix<double> corners;
           entity.geometry().getCorners(corners);
-          barycentricVertices.col(ent2Number) = corners.col(0);
+          GenericRefinementVertices.col(ent2Number) = corners.col(0);
         }
 
           
-//          iterating through each face (triangle) to find the center
-        for (std::unique_ptr<EntityIterator<0>> it = view->entityIterator<0>();
-             !it->finished(); it->next()) {
-          const Entity<0> &entity = it->entity();
-          const int ent0Number = index.entityIndex(entity);
-          Matrix<double> corners;
-          entity.geometry().getCorners(corners);
-          Vector<double> sides(3);
-         //note that the sides are actually the squares of each side
-          sides(0) = LengthSquared(corners.col(1),corners.col(2));
-          sides(1) = LengthSquared(corners.col(0),corners.col(2));
-          sides(2) = LengthSquared(corners.col(0),corners.col(1));
+//      iterating through each face (triangle) to find the center
+        for (std::unique_ptr<EntityIterator<0>> it = view->entityIterator<0>();!it->finished(); it->next()) {
+            const Entity<0> &entity = it->entity();
+            const int ent0Number = index.entityIndex(entity);
+            Matrix<double> corners;
+            entity.geometry().getCorners(corners);
+            Vector<double> sides(3);
+            //note that the sides are actually the squares of each side
+            sides(0) = LengthSquared(corners.col(1),corners.col(2));
+            sides(1) = LengthSquared(corners.col(0),corners.col(2));
+            sides(2) = LengthSquared(corners.col(0),corners.col(1));
 
             const double PI = 3.14;
             
@@ -305,7 +482,7 @@ public:
                 normal = normal / normal_size;
                 res = crossProduct(normal, corners.col(1) - corners.col(0));
                 t = -beta * dotProduct(corners.col(1) - corners.col(2), corners.col(2) - corners.col(0)) / dotProduct(res, corners.col(2) - corners.col(0));
-                barycentricVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(0) + beta * (corners.col(1) - corners.col(0)) + t * res;
+                GenericRefinementVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(0) + beta * (corners.col(1) - corners.col(0)) + t * res;
             }
             else if(sides(1) - sides(0) - sides(2)>=0){ //  angle(1) > PI/2
                 beta = (2.0/3.0) * sin(angle(2)) * sin(angle(0)) / cos(angle(2) - angle(0));
@@ -314,7 +491,7 @@ public:
                 normal = normal / normal_size;
                 res = crossProduct(normal, corners.col(2) - corners.col(1));
                 t = -beta * dotProduct(corners.col(2) - corners.col(0), corners.col(0) - corners.col(1)) / dotProduct(res, corners.col(0) - corners.col(1));
-                barycentricVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(1) + beta *(corners.col(2) - corners.col(1)) + t * res;
+                GenericRefinementVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(1) + beta *(corners.col(2) - corners.col(1)) + t * res;
             }
             else if(sides(2) - sides(0) - sides(1) >=0){ //   angle(2) > PI/2
                 beta = (2.0/3.0) * sin(angle(0)) * sin(angle(1)) / cos(angle(0) - angle(1));
@@ -323,26 +500,25 @@ public:
                 normal = normal / normal_size;
                 res = crossProduct(normal, corners.col(0) - corners.col(2));
                 t = -beta * dotProduct(corners.col(0) - corners.col(1), corners.col(1) - corners.col(2)) / dotProduct(res, corners.col(1) - corners.col(2));
-                barycentricVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(2) + beta * (corners.col(0) - corners.col(2)) + t * res;
+                GenericRefinementVertices.col(ent2Count + ent1Count + ent0Number) = corners.col(2) + beta * (corners.col(0) - corners.col(2)) + t * res;
             }
             else {//If none of the angles reaches pi/2, use the barycenter. The factor 2/3 has been chosen to make the transition continuous
-                barycentricVertices.col(ent2Count + ent1Count + ent0Number) = (corners.col(0) + corners.col(1) + corners.col(2)) /3;
+                GenericRefinementVertices.col(ent2Count + ent1Count + ent0Number) = (corners.col(0) + corners.col(1) + corners.col(2)) /3;
             }
 		
         }
 
           
-          Vector<Vector<int>> edgeToFaceMap;
-          edgeToFaceMap.resize(ent1Count);
-          for(int i=0;i<ent1Count;++i){
-              edgeToFaceMap[i].resize(2);
-              edgeToFaceMap[i][0] = -1;
-              edgeToFaceMap[i][1] = -1;
-          }
+        Vector<Vector<int>> edgeToFaceMap;
+        edgeToFaceMap.resize(ent1Count);
+        for(int i=0;i<ent1Count;++i){
+            edgeToFaceMap[i].resize(2);
+            edgeToFaceMap[i][0] = -1;
+            edgeToFaceMap[i][1] = -1;
+        }
           
-//          find associated triangles with each edge. If associated triangle is -1 then the edge lies on the boundary
-          for (std::unique_ptr<EntityIterator<0>> it = view->entityIterator<0>();
-               !it->finished(); it->next()) {
+//        find associated triangles with each edge. If associated triangle is -1 then the edge lies on the boundary
+          for (std::unique_ptr<EntityIterator<0>> it = view->entityIterator<0>(); !it->finished(); it->next()) {
               const Entity<0> &entity = it->entity();
               const int ent0Number = index.subEntityIndex(entity, 0, 0);
               for (int i = 0; i != 3; ++i) {
@@ -352,9 +528,8 @@ public:
               }
           }
           
-//          iterating through each edge to find "midpoint"
-          for (std::unique_ptr<EntityIterator<1>> it = view->entityIterator<1>();
-               !it->finished(); it->next()) {
+//        iterating through each edge to find "midpoint"
+          for (std::unique_ptr<EntityIterator<1>> it = view->entityIterator<1>(); !it->finished(); it->next()) {
               const Entity<1> &entity = it->entity();
               const int ent1Number = index.entityIndex(entity); //number of edge
               int faceNumber;
@@ -365,21 +540,21 @@ public:
               //use edgeToFaceMap to find centers of associated triangles
               if(edgeToFaceMap[ent1Number][0] == -1){
                   faceNumber = edgeToFaceMap[ent1Number][1];
-                  barycentricVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
+                  GenericRefinementVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
                   //if the edge is only associated with one triangle then pick the midpoint
               }
               else if(edgeToFaceMap[ent1Number][1] == -1){
                   faceNumber = edgeToFaceMap[ent1Number][0];
-                  barycentricVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
+                  GenericRefinementVertices.col(ent2Count + ent1Number) = (corners.col(0) + corners.col(1))/2;
                   //if the edge is only associated with one triangle then pick the midpoint
               }
               else{
                   Vector<double> center1(3);
                   Vector<double> center2(3);
                   faceNumber = edgeToFaceMap[ent1Number][0];
-                  center1 = barycentricVertices.col(ent2Count + ent1Count + faceNumber);
+                  center1 = GenericRefinementVertices.col(ent2Count + ent1Count + faceNumber);
                   faceNumber = edgeToFaceMap[ent1Number][1];
-                  center2 = barycentricVertices.col(ent2Count + ent1Count + faceNumber);
+                  center2 = GenericRefinementVertices.col(ent2Count + ent1Count + faceNumber);
                   
                   Vector<double> normalToPlane(3);
                   double normal_size;
@@ -400,7 +575,7 @@ public:
                       
                       t = dotProduct(crossProduct(normalToPlane, center2 - corners.col(1)), directionCenters) / dotProduct(crossProduct(normalToPlane, directionNodes),directionCenters);
                       
-                      barycentricVertices.col(ent2Count + ent1Number) = corners.col(1) + t * directionNodes;
+                      GenericRefinementVertices.col(ent2Count + ent1Number) = corners.col(1) + t * directionNodes;
                   }
                   else{
                       Vector<double> directionNodes(3);
@@ -447,12 +622,12 @@ public:
                       
                       t = dotProduct(crossProduct(normalToPlane, newCenter - corners.col(1)), directionCenters) / dotProduct(crossProduct(normalToPlane, directionNodes),directionCenters);
                       
-                      barycentricVertices.col(ent2Count + ent1Number) = corners.col(1) + t * directionNodes;
+                      GenericRefinementVertices.col(ent2Count + ent1Number) = corners.col(1) + t * directionNodes;
                   }
               }
           }
           
-        barycentricElementCorners.conservativeResize(3, 6 * ent0Count);
+        GenericRefinementElementCorners.conservativeResize(3, 6 * ent0Count);
         Matrix<int> tempSonMap;
         tempSonMap.conservativeResize(6 * ent0Count, 2);
         for (std::unique_ptr<EntityIterator<0>> it = view->entityIterator<0>();
@@ -460,48 +635,30 @@ public:
           const Entity<0> &entity = it->entity();
           const int ent0Number = index.subEntityIndex(entity, 0, 0);
             
-          barycentricElementCorners(0, 6 * ent0Number) =
-              index.subEntityIndex(entity, 0, 2);
-          barycentricElementCorners(1, 6 * ent0Number) =
-              ent2Count + ent1Count + ent0Number;
-          barycentricElementCorners(2, 6 * ent0Number) =
-              ent2Count + index.subEntityIndex(entity, 1, 1);
+          GenericRefinementElementCorners(0, 6 * ent0Number) = index.subEntityIndex(entity, 0, 2);
+          GenericRefinementElementCorners(1, 6 * ent0Number) = ent2Count + ent1Count + ent0Number;
+          GenericRefinementElementCorners(2, 6 * ent0Number) = ent2Count + index.subEntityIndex(entity, 1, 1);
         
 
-          barycentricElementCorners(0, 6 * ent0Number + 1) =
-              index.subEntityIndex(entity, 0, 2);
-          barycentricElementCorners(1, 6 * ent0Number + 1) =
-              ent2Count + index.subEntityIndex(entity, 0, 1);
-          barycentricElementCorners(2, 6 * ent0Number + 1) =
-              ent2Count + ent1Count + ent0Number;
+          GenericRefinementElementCorners(0, 6 * ent0Number + 1) = index.subEntityIndex(entity, 0, 2);
+          GenericRefinementElementCorners(1, 6 * ent0Number + 1) = ent2Count + index.subEntityIndex(entity, 0, 1);
+          GenericRefinementElementCorners(2, 6 * ent0Number + 1) = ent2Count + ent1Count + ent0Number;
 
-          barycentricElementCorners(0, 6 * ent0Number + 2) =
-              index.subEntityIndex(entity, 1, 2);
-          barycentricElementCorners(1, 6 * ent0Number + 2) =
-              ent2Count + ent1Count + ent0Number;
-          barycentricElementCorners(2, 6 * ent0Number + 2) =
-              ent2Count + index.subEntityIndex(entity, 0, 1);
+          GenericRefinementElementCorners(0, 6 * ent0Number + 2) = index.subEntityIndex(entity, 1, 2);
+          GenericRefinementElementCorners(1, 6 * ent0Number + 2) = ent2Count + ent1Count + ent0Number;
+          GenericRefinementElementCorners(2, 6 * ent0Number + 2) = ent2Count + index.subEntityIndex(entity, 0, 1);
 
-          barycentricElementCorners(0, 6 * ent0Number + 3) =
-              index.subEntityIndex(entity, 1, 2);
-          barycentricElementCorners(1, 6 * ent0Number + 3) =
-              ent2Count + index.subEntityIndex(entity, 2, 1);
-          barycentricElementCorners(2, 6 * ent0Number + 3) =
-              ent2Count + ent1Count + ent0Number;
+          GenericRefinementElementCorners(0, 6 * ent0Number + 3) = index.subEntityIndex(entity, 1, 2);
+          GenericRefinementElementCorners(1, 6 * ent0Number + 3) = ent2Count + index.subEntityIndex(entity, 2, 1);
+          GenericRefinementElementCorners(2, 6 * ent0Number + 3) = ent2Count + ent1Count + ent0Number;
 
-          barycentricElementCorners(0, 6 * ent0Number + 4) =
-              index.subEntityIndex(entity, 2, 2);
-          barycentricElementCorners(1, 6 * ent0Number + 4) =
-              ent2Count + ent1Count + ent0Number;
-          barycentricElementCorners(2, 6 * ent0Number + 4) =
-              ent2Count + index.subEntityIndex(entity, 2, 1);
+          GenericRefinementElementCorners(0, 6 * ent0Number + 4) = index.subEntityIndex(entity, 2, 2);
+          GenericRefinementElementCorners(1, 6 * ent0Number + 4) = ent2Count + ent1Count + ent0Number;
+          GenericRefinementElementCorners(2, 6 * ent0Number + 4) = ent2Count + index.subEntityIndex(entity, 2, 1);
 
-          barycentricElementCorners(0, 6 * ent0Number + 5) =
-              index.subEntityIndex(entity, 2, 2);
-          barycentricElementCorners(1, 6 * ent0Number + 5) =
-              ent2Count + index.subEntityIndex(entity, 1, 1);
-          barycentricElementCorners(2, 6 * ent0Number + 5) =
-              ent2Count + ent1Count + ent0Number;
+          GenericRefinementElementCorners(0, 6 * ent0Number + 5) = index.subEntityIndex(entity, 2, 2);
+          GenericRefinementElementCorners(1, 6 * ent0Number + 5) = ent2Count + index.subEntityIndex(entity, 1, 1);
+          GenericRefinementElementCorners(2, 6 * ent0Number + 5) = ent2Count + ent1Count + ent0Number;
 
           tempSonMap(6 * ent0Number, 0) = ent0Number;
           tempSonMap(6 * ent0Number + 1, 0) = ent0Number;
@@ -519,58 +676,58 @@ public:
           
         shared_ptr<Grid> newGrid =
             GridFactory::createGridFromConnectivityArrays(
-                params, barycentricVertices, barycentricElementCorners,
-                barycentricDomainIndices);
+                params, GenericRefinementVertices, GenericRefinementElementCorners,
+                GenericRefinementDomainIndices);
 
-        m_barycentricGrid = newGrid;
+        m_GenericRefinementGrid = newGrid;
 
-        m_barycentricSonMap.conservativeResize(ent0Count, 6);
+        m_GenericRefinementSonMap.conservativeResize(ent0Count, 6);
 
-        std::unique_ptr<GridView> baryView = m_barycentricGrid->leafView();
-        const IndexSet &baryIndex = baryView->indexSet();
+        std::unique_ptr<GridView> GenRefView = m_GenericRefinementGrid->leafView();
+        const IndexSet &GenRefIndex = GenRefView->indexSet();
         int dummy = 0;
         for (std::unique_ptr<EntityIterator<0>> it =
-                 baryView->entityIterator<0>();
+                 GenRefView->entityIterator<0>();
              !it->finished(); it->next()) {
           const Entity<0> &entity = it->entity();
-          int ent0Number = baryIndex.subEntityIndex(entity, 0, 0);
-          int insInd = m_barycentricGrid->elementInsertionIndex(entity);
-          m_barycentricSonMap(tempSonMap(insInd, 0), tempSonMap(insInd, 1)) =
+          int ent0Number = GenRefIndex.subEntityIndex(entity, 0, 0);
+          int insInd = m_GenericRefinementGrid->elementInsertionIndex(entity);
+          m_GenericRefinementSonMap(tempSonMap(insInd, 0), tempSonMap(insInd, 1)) =
               ent0Number;
         }
       }
     }
-    return std::pair<shared_ptr<Grid>, Matrix<int>>(m_barycentricGrid,
-                                                    m_barycentricSonMap);
+    return std::pair<shared_ptr<Grid>, Matrix<int>>(m_GenericRefinementGrid,
+                                                    m_GenericRefinementSonMap);
   }
 
-  /** \brief Return a barycentrically refined grid based on the Leaf View */
-  virtual shared_ptr<Grid> barycentricGrid() const override {
-    std::pair<shared_ptr<Grid>, Matrix<int>> baryPair =
-        this->barycentricGridSonPair();
-    return std::get<0>(baryPair);
+  /** \brief Return a generically refined grid based on the Leaf View */
+  virtual shared_ptr<Grid> GenericRefinementGrid() const override {
+    std::pair<shared_ptr<Grid>, Matrix<int>> GenRefPair =
+        this->GenericRefinementGridSonPair();
+    return std::get<0>(GenRefPair);
   }
 
-  /** \brief Return the son map for the barycentrically refined grid */
-  virtual Matrix<int> barycentricSonMap() const override {
-    std::pair<shared_ptr<Grid>, Matrix<int>> baryPair =
-        this->barycentricGridSonPair();
-    return std::get<1>(baryPair);
+  /** \brief Return the son map for the GenericRefinementally refined grid */
+  virtual Matrix<int> GenericRefinementSonMap() const override {
+    std::pair<shared_ptr<Grid>, Matrix<int>> GenRefPair =
+        this->GenericRefinementGridSonPair();
+    return std::get<1>(GenRefPair);
   }
 
-  /** \brief Return \p true if a barycentric refinement of this grid has
+  /** \brief Return \p true if a GenericRefinement refinement of this grid has
    *  been created. */
-  virtual bool hasBarycentricGrid() const override {
-    if (!m_barycentricGrid.get())
+  virtual bool hasGenericRefinementGrid() const override {
+    if (!m_GenericRefinementGrid.get())
       return false;
     else
       return true;
   }
 
-  //  /** \brief Return \p true if this is a barycentric refinement of another
+  //  /** \brief Return \p true if this is a GenericRefinement refinement of another
   //  grid. */
-  //  virtual bool isBarycentricGrid() const {
-  //    return isBary;
+  //  virtual bool isGenericRefinementGrid() const {
+  //    return isGenRef;
   //  }
 
   /** \brief Get insertion index of an element. */
@@ -619,6 +776,7 @@ public:
 
   bool adapt() override {
 
+    m_GenericRefinementGrid.reset();
     m_barycentricGrid.reset();
     return m_dune_grid->adapt();
   }
@@ -631,6 +789,7 @@ public:
 
   void globalRefine(int refCount) override {
 
+    m_GenericRefinementGrid.reset();
     m_barycentricGrid.reset();
     m_dune_grid->globalRefine(refCount);
   }
@@ -645,16 +804,16 @@ public:
         static_cast<const entity_t &>(element).duneEntity());
   }
 
-  //  /** \brief set father of barycentric refinement */
-  //  virtual void setBarycentricFather(shared_ptr<Grid> fatherGrid){
-  //    isBary=true;
-  //    m_barycentricFatherGrid = fatherGrid;
+  //  /** \brief set father of GenericRefinement refinement */
+  //  virtual void setGenericRefinementFather(shared_ptr<Grid> fatherGrid){
+  //    isGenRef=true;
+  //    m_GenericRefinementFatherGrid = fatherGrid;
   //  }
 
-  //  /** \brief get father of barycentric refinement */
-  //  virtual shared_ptr<Grid> getBarycentricFather(){
-  //    if(this->isBarycentricGrid()) {return m_barycentricFatherGrid;}
-  //    else{throw std::runtime_error("Grid is not a barycentric grid.");}
+  //  /** \brief get father of GenericRefinement refinement */
+  //  virtual shared_ptr<Grid> getGenericRefinementFather(){
+  //    if(this->isGenericRefinementGrid()) {return m_GenericRefinementFatherGrid;}
+  //    else{throw std::runtime_error("Grid is not a GenericRefinement grid.");}
   //  }
 
   /** @}
@@ -664,11 +823,16 @@ private:
   // (unclear what to do with the pointer to the grid)
   ConcreteGrid(const ConcreteGrid &);
   ConcreteGrid &operator=(const ConcreteGrid &);
+  mutable Matrix<int> m_GenericRefinementSonMap;
+  mutable shared_ptr<Grid> m_GenericRefinementGrid;
+  mutable tbb::mutex m_GenericRefinementSpaceMutex;
   mutable Matrix<int> m_barycentricSonMap;
   mutable shared_ptr<Grid> m_barycentricGrid;
   mutable tbb::mutex m_barycentricSpaceMutex;
   //  bool isBary=false;
   //  mutable <shared_ptr<Grid> m_barycentricFatherGrid;
+  //  bool isGenRef=false;
+  //  mutable <shared_ptr<Grid> m_GenericRefinementFatherGrid;
 };
 
 } // namespace Bempp

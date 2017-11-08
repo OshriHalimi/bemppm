@@ -83,6 +83,8 @@ public:
       const shared_ptr<const Space<BasisFunctionType>> &self) const;
 
   virtual bool isBarycentric() const { return false; }
+    virtual bool isGenericRefinement() const {return false; }
+
 
   virtual SpaceIdentifier spaceIdentifier() const {
     return PIECEWISE_LINEAR_CONTINUOUS_SCALAR;

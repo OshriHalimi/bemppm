@@ -67,6 +67,13 @@ bool Grid::isBarycentricRepresentationOf(const Grid &other) const {
     return (this == other.barycentricGrid().get());
 }
 
+bool Grid::isGenericRefinementRepresentationOf(const Grid &other) const {
+    if (!other.hasGenericRefinementGrid())
+        return false;
+    else
+        return (this == other.GenericRefinementGrid().get());
+}
+
 void Grid::getBoundingBox(Vector<double> &lowerBound,
                           Vector<double> &upperBound) const {
   // In this simple implementation we assume that all elements are flat.

@@ -30,7 +30,6 @@
 #include "../grid/grid_segment.hpp"
 #include "../grid/grid_view.hpp"
 #include "../common/types.hpp"
-//#include "../fiber/raviart_thomas_0_shapeset_barycentric.hpp"
 #include "../fiber/chen_wilton_shapeset.hpp"
 
 #include <boost/scoped_ptr.hpp>
@@ -76,7 +75,8 @@ public:
   virtual int domainDimension() const;
   virtual int codomainDimension() const;
 
-  virtual bool isBarycentric() const { return false; }
+  virtual bool isGenericRefinement() const { return false; }
+    virtual bool isBarycentric() const {return false;}
 
   virtual bool spaceIsCompatible(const Space<BasisFunctionType> &other) const;
 
@@ -138,7 +138,7 @@ private:
 
 private:
   /** \cond PRIVATE */
-  //  typedef Fiber::RaviartThomas0ShapesetBarycentric<BasisFunctionType>
+  //  typedef Fiber::RaviartThomas0ShapesetGenericRefinement<BasisFunctionType>
   //  Shapeset;
   //  std::vector<typename Shapeset::BasisType> m_RelementShapesets;
 

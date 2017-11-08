@@ -77,6 +77,7 @@ public:
   virtual int codomainDimension() const;
 
   virtual bool isBarycentric() const { return false; }
+  virtual bool isGenericRefinement() const {return false;}
 
   virtual bool spaceIsCompatible(const Space<BasisFunctionType> &other) const;
 

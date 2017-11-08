@@ -55,7 +55,7 @@ namespace Bempp {
                    const GridSegment &segment) const override {
                 
                 return shared_ptr<Space<BasisFunctionType>>(
-                                                            new BuffaChristiansenVectorSpace<BasisFunctionType>(grid, segment));
+                        new BuffaChristiansenVectorSpace<BasisFunctionType>(grid, segment));
             }
         };
     }
@@ -84,8 +84,7 @@ namespace Bempp {
     
     template <typename BasisFunctionType>
     BuffaChristiansenVectorSpace<BasisFunctionType>::BuffaChristiansenVectorSpace(
-                                                                                  const shared_ptr<const Grid> &grid, const GridSegment &segment,
-                                                                                  bool putDofsOnBoundaries, int dofMode)
+        const shared_ptr<const Grid> &grid, const GridSegment &segment, bool putDofsOnBoundaries, int dofMode)
     : Base(grid->barycentricGrid()), m_impl(new Impl), m_segment(segment),
     m_putDofsOnBoundaries(putDofsOnBoundaries), m_dofMode(dofMode),
     m_originalGrid(grid), m_sonMap(grid->barycentricSonMap()) {
@@ -818,15 +817,13 @@ namespace Bempp {
     
     template <typename BasisFunctionType>
     void BuffaChristiansenVectorSpace<BasisFunctionType>::dumpClusterIds(
-                                                                         const char *fileName,
-                                                                         const std::vector<unsigned int> &clusterIdsOfDofs) const {
+        const char *fileName, const std::vector<unsigned int> &clusterIdsOfDofs) const {
         dumpClusterIdsEx(fileName, clusterIdsOfDofs, GLOBAL_DOFS);
     }
     
     template <typename BasisFunctionType>
     void BuffaChristiansenVectorSpace<BasisFunctionType>::dumpClusterIdsEx(
-                                                                           const char *fileName, const std::vector<unsigned int> &clusterIdsOfDofs,
-                                                                           DofType dofType) const {
+        const char *fileName, const std::vector<unsigned int> &clusterIdsOfDofs,DofType dofType) const {
         throw std::runtime_error("BuffaChristiansenVectorSpace::"
                                  "dumpClusterIdsEx(): Not implemented yet");
     }
@@ -834,35 +831,29 @@ namespace Bempp {
     template <typename BasisFunctionType>
     shared_ptr<Space<BasisFunctionType>>
     adaptiveBuffaChristiansenVectorSpace(const shared_ptr<const Grid> &grid) {
-        
         shared_ptr<SpaceFactory<BasisFunctionType>> factory(
-                                                            new BuffaChristiansenSpaceFactory<BasisFunctionType>());
+            new BuffaChristiansenSpaceFactory<BasisFunctionType>());
         return shared_ptr<Space<BasisFunctionType>>(
-                                                    new AdaptiveSpace<BasisFunctionType>(factory, grid));
+            new AdaptiveSpace<BasisFunctionType>(factory, grid));
     }
     
     template <typename BasisFunctionType>
     shared_ptr<Space<BasisFunctionType>>
-    adaptiveBuffaChristiansenVectorSpace(const shared_ptr<const Grid> &grid,
-                                         const std::vector<int> &domains,
+    adaptiveBuffaChristiansenVectorSpace(const shared_ptr<const Grid> &grid, const std::vector<int> &domains,
                                          bool open) {
-        
         shared_ptr<SpaceFactory<BasisFunctionType>> factory(
-                                                            new BuffaChristiansenSpaceFactory<BasisFunctionType>());
+            new BuffaChristiansenSpaceFactory<BasisFunctionType>());
         return shared_ptr<Space<BasisFunctionType>>(
-                                                    new AdaptiveSpace<BasisFunctionType>(factory, grid, domains, open));
+            new AdaptiveSpace<BasisFunctionType>(factory, grid, domains, open));
     }
     
     template <typename BasisFunctionType>
     shared_ptr<Space<BasisFunctionType>>
-    adaptiveBuffaChristiansenVectorSpace(const shared_ptr<const Grid> &grid,
-                                         int domain, bool open) {
-        
+    adaptiveBuffaChristiansenVectorSpace(const shared_ptr<const Grid> &grid, int domain, bool open) {
         shared_ptr<SpaceFactory<BasisFunctionType>> factory(
-                                                            new BuffaChristiansenSpaceFactory<BasisFunctionType>());
+            new BuffaChristiansenSpaceFactory<BasisFunctionType>());
         return shared_ptr<Space<BasisFunctionType>>(
-                                                    new AdaptiveSpace<BasisFunctionType>(factory, grid,
-                                                                                         std::vector<int>({domain}), open));
+            new AdaptiveSpace<BasisFunctionType>(factory, grid, std::vector<int>({domain}), open));
     }
     
 #define INSTANTIATE_FREE_FUNCTIONS(BASIS)                                      \
