@@ -541,7 +541,7 @@ class ZeroDiscreteBoundaryOperator(DiscreteBoundaryOperator):
             return _np.zeros(self.shape[1], dtype='float64')
 
     def _adjoint(self):
-        raise NotImplementedError()
+        return ZeroDiscreteBoundaryOperator(self.shape[1], self.shape[0])
 
     def _transpose(self):
         raise NotImplementedError()

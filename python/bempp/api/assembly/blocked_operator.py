@@ -65,10 +65,9 @@ class BlockedOperatorBase(object):
 
         if self._range_map is None:
 
-            _range_ops = _np.empty((self.ndims[0], self.ndims[1]), dtype='O')
+            _range_ops = _np.empty((self.ndims[0], self.ndims[0]), dtype='O')
 
             for index in range(self.ndims[0]):
-
                 # This is the most frequent case and we cache the mass
                 # matrix from the space object.
                 if self.range_spaces[index] == \
@@ -806,7 +805,14 @@ class BlockedDiscreteOperatorProduct(BlockedDiscreteOperatorBase):
 
     def _adjoint(self):
         """Implement the product adjoint."""
-        raise NotImplementedError()
+        import bempp.api
+        entries = []
+        for col in range(self.ndims[1]):
+            new_row = []
+            for row in range(self.ndims[0]):
+                new_row.append(self[row,col].adjoint())
+            entries.append(new_row)
+        return bempp.api.BlockedDiscreteOperator(entries)
 
     def _transpose(self):
         """Implement the product transpose."""
