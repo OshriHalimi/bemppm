@@ -27,6 +27,7 @@
 #include "p0_vector_vtk_function.hpp"
 #include "p1_vector_vtk_function.hpp"
 #include "vtk_writer.hpp"
+#include <dune/grid/io/file/vtk/vtkwriter.hh>
 
 #include <memory>
 #include <string>
@@ -94,7 +95,7 @@ private:
                              "of 'data' different from the number of cells");
 
     typedef P0VectorVTKFunction<DuneGridView, Matrix<ValueType>> Function;
-    typedef Dune::shared_ptr<Dune::VTKFunction<DuneGridView>> VTKFunctionPtr;
+    typedef std::shared_ptr<Dune::VTKFunction<DuneGridView>> VTKFunctionPtr;
     VTKFunctionPtr p(new Function(*m_dune_gv, data, name, ncomp));
     m_dune_vtk_writer.addCellData(p);
   }
@@ -121,7 +122,7 @@ private:
                              "of 'data' different from the number of vertices");
 
     typedef P1VectorVTKFunction<DuneGridView, Matrix<ValueType>> Function;
-    typedef Dune::shared_ptr<Dune::VTKFunction<DuneGridView>> VTKFunctionPtr;
+    typedef std::shared_ptr<Dune::VTKFunction<DuneGridView>> VTKFunctionPtr;
     VTKFunctionPtr p(new Function(*m_dune_gv, data, name, ncomp));
     m_dune_vtk_writer.addVertexData(p);
 

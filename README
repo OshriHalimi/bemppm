@@ -7,13 +7,51 @@ www.bempp.org
 
 History
 =======
+3.3.0 (19 Nov 2017)
+--------------------
+* Added new import/export mechanics
+* Import/Export of binary gmsh files
+* Export of VTK files
+* Paraview can be enabled as external viewer
+
+3.2.0 (04 Aug 2017)
+-------------------
+Released version 3.2.0
+
+* Various bug fixes
+* Interactive 3d visualization in IPython Notebooks
+* Domain potentials for electrostatic field computations
+
+3.1.5 (16 May 2017)
+--------------------
+Released version 3.1.5
+
+* Fixed delayed logging messages in Jupyter Notebook
+
+3.1.4 (19 April 2017)
+---------------------
+Released version 3.1.4
+
+* Added mpi-default-dev package to fix MPI loading problem on fresh Ubuntu install
+ 
+3.1.3 (15 April 2017)
+---------------------
+Released version 3.1.3
+
+* Fixed dependency issues on Ubuntu Zesty
+
+3.1.2 (14 April 2017)
+---------------------
+Released version 3.1.2
+
+* Enabled compatibility with Dune 2.5.0
+
 3.1.1 (10 January 2017)
 -----------------------
 Released version 3.1.1
 
- - Small bug fixes
- - Disabled projection mode for dense assembly
-
+* Small bug fixes
+* Disabled projection mode for dense assembly
 
 3.1.0 (4 January 2017)
 ----------------------
@@ -253,7 +291,7 @@ The first official version of the library, including the following features:
 
 - Assembly of H-matrix representations of boundary integral operators via
   adaptive cross approximation (ACA) supported thanks to an interface to
-  M. Bebendorf’s AHMED library.
+  M. Bebendorfï¿½s AHMED library.
 
 - H-matrix-based preconditioners (via AHMED).
 

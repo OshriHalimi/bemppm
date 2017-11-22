@@ -79,6 +79,7 @@ permuteInsertionDomainIndices(const std::vector<int> &domainIndices,
                               const Dune::GridFactory<DuneGrid> &factory,
                               const DuneGrid &grid) {
 
+
     std::vector<int> output(domainIndices.size());
     auto view = grid.leafGridView();
     const auto &indexSet = view.indexSet();

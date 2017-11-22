@@ -156,10 +156,31 @@ class GridFunction(object):
 
         return inv_ident * projections
 
-    def plot(self):
-        """Plot the grid function."""
-        from bempp.api.external.viewers import visualize_with_gmsh
-        visualize_with_gmsh(self)
+    def plot(self, mode='element', transformation='real'):
+        """
+        Plot the grid function.
+        
+        Attributes
+        ----------
+        mode : string
+            One of 'element' or 'node'. If 'element' is chosen
+            the color is determined by the mid-point of the faces
+            of the grid. For 'vertices' the vertex values are
+            chosen (default: 'element')
+        transformation : string or object
+            One of 'real', 'imag', 'abs', 'log_abs' or
+            'abs_squared' or a callable object. 
+            Describes the data transformation
+            before plotting. For functions with vector values
+            only 'abs', 'log_abs' or 'abs_squared' are allowed.
+            If a callable object is given this is applied instead.
+            It is important that the callable returns numpy arrays
+            with the same number of dimensions as before.
+        
+        """
+        import bempp.api
+        from bempp.api.external.viewers import visualize
+        visualize(self, mode, transformation)
 
     def projections(self, dual_space=None):
         """
@@ -207,6 +228,40 @@ class GridFunction(object):
                 np.asarray(weights)
         return self.space.evaluate_local_basis(
             element, local_coordinates, dof_values)
+
+    def evaluate_on_element_centers(self):
+        """Evaluate the grid function on all element centers."""
+        import numpy as np
+
+        grid = self.space.grid
+        local_coordinates = np.array([[1./3],[1./3]])
+        index_set = grid.leaf_view.index_set()
+
+        values = np.zeros((self.component_count, grid.leaf_view.entity_count(0)),
+                dtype=self.dtype)
+        for element in grid.leaf_view.entity_iterator(0):
+            index = index_set.entity_index(element)
+            local_values = self.evaluate(element, local_coordinates)
+            values[:, index] = local_values.flat
+        return values
+
+    def evaluate_on_vertices(self):
+        """Evaluate the grid function on all vertices."""
+        import numpy as np
+
+        grid = self.space.grid
+        local_coordinates = np.array([[0, 1, 0],[0, 0, 1]])
+        index_set = grid.leaf_view.index_set()
+
+        values = np.zeros((self.component_count, grid.leaf_view.entity_count(2)),
+                dtype=self.dtype)
+
+        for element in grid.leaf_view.entity_iterator(0):
+            local_data = self.evaluate(element, local_coordinates)
+            for i in range(3):
+                index = index_set.sub_entity_index(element, i, 2)
+                values[:, index] = local_data[:, i]
+        return values
 
     def evaluate_surface_gradient(self, element, local_coordinates):
         """Evaluate surface gradient of grid function for scalar spaces."""
@@ -481,3 +536,4 @@ class GridFunction(object):
         ndofs = space.global_dof_count
 
         return cls(space, coefficients=zeros(ndofs))
+

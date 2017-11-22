@@ -33,6 +33,24 @@ cdef class _VerbosityParameterList:
 
             self._extended_verbosity = value
 
+cdef class _OutputParameterList:
+
+    def __cinit__(self):
+        pass
+
+    def __init__(self):
+        self._gmsh_use_binary = True
+
+    property gmsh_use_binary:
+
+        def __get__(self):
+
+            return self._gmsh_use_binary
+
+        def __set__(self, cbool value):
+
+            self._gmsh_use_binary = value
+
 cdef class _AssemblyParameterList:
 
     def __cinit__(self, ParameterList base):
@@ -292,6 +310,14 @@ cdef class _HMatParameterList:
             cdef char* s = b"options.hmat.admissibility"
             deref(self.impl_).put_string(s,_convert_to_bytes(value))
 
+    property cutoff:
+        def __get__(self):
+            cdef char* s = b"options.hmat.cutoff"
+            return deref(self.impl_).get_double(s)
+        def __set__(self,double value):
+            cdef char* s = b"options.hmat.cutoff"
+            deref(self.impl_).put_double(s,value)
+
 cdef class ParameterList:
 
     def __cinit__(self):
@@ -300,6 +326,7 @@ cdef class ParameterList:
         self._quadrature = _QuadratureParameterList(self)
         self._hmat = _HMatParameterList(self)
         self._verbosity = _VerbosityParameterList()
+        self._output = _OutputParameterList()
         (<_AssemblyParameterList>self._assembly).impl_ = self.impl_
         (<_QuadratureParameterList>self._quadrature).impl_ = self.impl_
         (<_NearField>self.quadrature.near).impl_ = self.impl_
@@ -332,3 +359,8 @@ cdef class ParameterList:
 
         def __get__(self):
             return self._verbosity
+
+    property output:
+
+        def __get__(self):
+            return self._output

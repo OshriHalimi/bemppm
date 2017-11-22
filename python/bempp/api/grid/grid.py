@@ -43,8 +43,8 @@ class Grid(object):
 
     def plot(self):
         """Plot the grid with Gmsh."""
-        from bempp.api.external.viewers import visualize_with_gmsh
-        visualize_with_gmsh(self)
+        from bempp.api.external.viewers import visualize
+        visualize(self)
 
     def vertex_insertion_index(self, vertex):
         """Return the vertex insertion index of the given vertex."""
@@ -199,7 +199,7 @@ def grid_from_element_data(vertices, elements, domain_indices=None):
     >>> grid = grid_from_element_data(vertices,elements)
 
     """
-    from bempp.api import LOGGER
+    from bempp.api import log
     #pylint: disable=no-name-in-module
     from bempp.core.grid.grid import grid_from_element_data as grid_fun
 
@@ -207,11 +207,11 @@ def grid_from_element_data(vertices, elements, domain_indices=None):
         domain_indices = []
 
     grid = Grid(grid_fun(vertices, elements, domain_indices))
-    LOGGER.info(
-        "Created grid with %i elements, %i nodes and %i edges.",
+    log(
+        "Created grid with %i elements, %i nodes and %i edges." %(
         grid.leaf_view.entity_count(0),
         grid.leaf_view.entity_count(2),
-        grid.leaf_view.entity_count(1))
+        grid.leaf_view.entity_count(1)))
     return grid
 
 

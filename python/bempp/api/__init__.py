@@ -15,6 +15,7 @@ mpi_rank = mpi_comm.Get_rank() #pylint: disable=no-member
 mpi_size = mpi_comm.Get_size() #pylint: disable=no-member
 mpi_name = MPI.Get_processor_name() #pylint: disable=no-member
 
+PLOT_BACKEND = 'gmsh'
 
 # import the version string
 from bempp import config as _config
@@ -24,8 +25,11 @@ __version__ = _config.version
 # Initialize logger
 
 from bempp.api.utils.logging import _init_logger
+from bempp.api.utils.logging import log
 
-LOGGER = _init_logger()
+_console_logging_handler = None
+_LOGGER = _init_logger()
+
 
 try:
     if os.environ['BEMPP_CONSOLE_LOGGING'] == '1':
@@ -41,12 +45,12 @@ try:
     import dolfin as _
 except:
     HAVE_DOLFIN = False
-    LOGGER.info(
-        "Dolfin could not be imported." +
-        "FEM/BEM coupling with FEniCS not available.")
+    log(
+            "Dolfin could not be imported." +
+            "FEM/BEM coupling with FEniCS not available.")
 else:
     HAVE_DOLFIN = True
-    LOGGER.info("Found Dolfin. FEM/BEM coupling with FEniCS enabled.")
+    log("Found Dolfin. FEM/BEM coupling with FEniCS enabled.")
 
 
 # Check if config directory exists. If not create it.
@@ -66,8 +70,8 @@ def _check_create_init_dir():
     except OSError:  # Read only file system try a tmp dir
         import warnings
         warnings.warn("Could not create BEM++ config dir."
-                      "Falling back to a temorary dir."
-                      "Your config will not be stored")
+                "Falling back to a temorary dir."
+                "Your config will not be stored")
         config_path = tempfile.mkdtemp()
 
     tmp_path = tempfile.mkdtemp()
@@ -87,8 +91,8 @@ def _gmsh_path():
     gmp = which("gmsh")
     if gmp is None:
         print(
-            "Could not find Gmsh." +
-            "Interactive plotting and shapes module not available.")
+                "Could not find Gmsh." +
+                "Interactive plotting and shapes module not available.")
     return gmp
 
 
@@ -118,14 +122,17 @@ from bempp.api.assembly import functors
 from bempp.api import shapes
 from bempp.api.file_interfaces import import_grid
 from bempp.api.file_interfaces import export
-from bempp.api.file_interfaces import three_planes_view
+from bempp.api.external.viewers import set_gmsh_viewer
+from bempp.api.external.viewers import set_paraview_viewer
+from bempp.api.external.viewers import set_ipython_notebook_viewer
 from bempp.api import operators
 from bempp.api import linalg
 from bempp.api import hmat
+from bempp.api import _fmm
 from bempp.api.hmat import hmatrix_interface
 
-from bempp.api.utils.logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 from bempp.api.utils.logging import enable_console_logging
+from bempp.api.utils.logging import flush_log
 from bempp.api.utils.logging import enable_file_logging
 from bempp.api.utils.logging import set_logging_level
 from bempp.api.utils.logging import timeit

@@ -1,6 +1,8 @@
-python-bempp (3.1.1-0ubuntu1~yakkety) yakkety; urgency=medium
+python-bempp (3.3.0-0ubuntu1~xenial) xenial; urgency=medium
 
-  * Small bug fixes.
-  * Disabled projection mode for dense assembly
+    * Added new import/export mechanics
+    * Import/Export of binary gmsh files
+    * Export of vtk files
+    * Paraview can be enabled as external viewer
 
- -- Timo Betcke <timo.betcke@gmail.com>  Wed, 10 Jan 2017 22:11:23 +0100
+ -- Timo Betcke <timo.betcke@gmail.com>  Sun, 19 Nov 2017 13:25:00 +0000
