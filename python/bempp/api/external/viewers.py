@@ -140,7 +140,7 @@ def visualize_with_paraview(obj, mode='element', transformation=None):
     if isinstance(obj, Grid):
         export(grid=obj, file_name=outfile.name)
     elif isinstance(obj, GridFunction):
-        export(grid_function=obj, file_name=outfile.name, 
+        export(grid_function=obj, file_name=outfile.name,
                 transformation=transformation, data_type=mode)
     outfile.close()
 
@@ -168,8 +168,9 @@ def visualize_with_ipython_notebook(obj, mode='element', transformation=None):
         else:
             local_coordinates = _np.array([[1./3, 1./3, 1./3],
                 [1./3, 1./3, 1./3]])
-        values = _np.zeros((grid.leaf_view.entity_count(0), 3, 
-                            obj.component_count), dtype=obj.dtype)
+        real_dtype = np.real(np.array((1,),obj.dtype)).dtype
+        values = _np.zeros((grid.leaf_view.entity_count(0), 3,
+                            obj.component_count), dtype=real_dtype)
         for element in grid.leaf_view.entity_iterator(0):
             index = index_set.entity_index(element)
             local_values = transformation(obj.evaluate(element, local_coordinates))
@@ -192,4 +193,3 @@ def set_ipython_notebook_viewer():
     """Change plotting default to IPython"""
     import bempp.api
     bempp.api.PLOT_BACKEND = 'ipython_notebook'
-       
