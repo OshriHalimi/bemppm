@@ -95,10 +95,10 @@ struct ChenWiltonVectorSpace<BasisFunctionType>::Impl {
 template <typename BasisFunctionType>
 ChenWiltonVectorSpace<BasisFunctionType>::ChenWiltonVectorSpace(
     const shared_ptr<const Grid> &grid, bool putDofsOnBoundaries)
-    : Base(grid->BogaertRefinementGrid()), m_impl(new Impl),
+    : Base(grid->barycentricGrid()), m_impl(new Impl),
       m_segment(GridSegment::wholeGrid(*grid)),
       m_putDofsOnBoundaries(putDofsOnBoundaries), m_dofMode(EDGE_ON_SEGMENT),
-      m_originalGrid(grid), m_sonMap(grid->BogaertRefinementSonMap()) {
+      m_originalGrid(grid), m_sonMap(grid->barycentricSonMap()) {
   initialize();
 }
 
@@ -106,9 +106,9 @@ template <typename BasisFunctionType>
 ChenWiltonVectorSpace<BasisFunctionType>::ChenWiltonVectorSpace(
     const shared_ptr<const Grid> &grid, const GridSegment &segment,
     bool putDofsOnBoundaries, int dofMode)
-    : Base(grid->BogaertRefinementGrid()), m_impl(new Impl), m_segment(segment),
+    : Base(grid->barycentricGrid()), m_impl(new Impl), m_segment(segment),
       m_putDofsOnBoundaries(putDofsOnBoundaries), m_dofMode(dofMode),
-      m_originalGrid(grid), m_sonMap(grid->BogaertRefinementSonMap()) {
+      m_originalGrid(grid), m_sonMap(grid->barycentricSonMap()) {
   if (!(dofMode & (EDGE_ON_SEGMENT | ELEMENT_ON_SEGMENT)))
     throw std::invalid_argument("ChenWiltonVectorSpace::"
                                 "ChenWiltonVectorSpace(): "

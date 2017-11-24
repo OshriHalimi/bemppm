@@ -810,7 +810,7 @@ class RotatedBuffaChristiansenSpace(Space):
         self._grid = grid.barycentric_grid()
 
 class ChenWiltonSpace(Space):
-    """A space of Chen-Wilton basis functions on a bogaert grid."""
+    """A space of Chen-Wilton basis functions on a barycentric grid."""
 
     def __init__(self, grid, comp_key=None):
 
@@ -826,16 +826,16 @@ class ChenWiltonSpace(Space):
         self._non_barycentric_space = None
         self._non_bogaert_space = None
         self._discontinuous_space = function_space(
-            grid.bogaert_refinement_grid(), "DP", 1)
-        self._super_space = function_space(grid.bogaert_refinement_grid(), "RWG", 0)
+            grid.barycentric_grid(), "DP", 1)
+        self._super_space = function_space(grid.barycentric_grid(), "RWG", 0)
         self._evaluation_functor = hdiv_function_value_functor()
-        self._is_barycentric = False
-        self._is_bogaert_refinement = True
-        self._grid = grid.bogaert_refinement_grid()
+        self._is_barycentric = True
+        self._is_bogaert_refinement = False
+        self._grid = grid.barycentric_grid()
 
 
 class RotatedChenWiltonSpace(Space):
-    """A space of rotated Chen-Wilton curl conforming basis functions."""
+    """A space of rotated Chen-Wilton basis functions on the barycentric grid."""
 
     def __init__(self, grid, comp_key=None):
 
@@ -851,10 +851,59 @@ class RotatedChenWiltonSpace(Space):
         self._non_barycentric_space = None
         self._non_bogaert_space = None
         self._discontinuous_space = function_space(
+            grid.barycentric_grid(), "DP", 1)
+        self._evaluation_functor = hcurl_function_value_functor()
+        self._super_space = function_space(grid.barycentric_grid(), "SNC", 0)
+        self._hdiv_space = ChenWiltonSpace(grid)
+        self._is_barycentric = True
+        self._is_bogaert = False
+        self._grid = grid.barycentric_grid()
+
+class ModifiedChenWiltonSpace(Space):
+    """A space of Chen-Wilton basis functions on a Bogaert grid."""
+
+    def __init__(self, grid, comp_key=None):
+
+        from bempp.core.space.space import function_space as _function_space
+        from bempp.api.assembly.functors import hdiv_function_value_functor
+
+        super(ModifiedChenWiltonSpace, self).__init__(_function_space(
+            grid._impl, "MCW", 0), comp_key)
+
+        self._order = 0
+        self._has_non_barycentric_space = False
+        self._has_non_bogaert_space = False
+        self._non_barycentric_space = None
+        self._non_bogaert_space = None
+        self._discontinuous_space = function_space(
+            grid.bogaert_refinement_grid(), "DP", 1)
+        self._super_space = function_space(grid.bogaert_refinement_grid(), "RWG", 0)
+        self._evaluation_functor = hdiv_function_value_functor()
+        self._is_barycentric = False
+        self._is_bogaert_refinement = True
+        self._grid = grid.bogaert_refinement_grid()
+
+class ModifiedRotatedChenWiltonSpace(Space):
+    """A space of modified rotated Chen-Wilton basis functions on a Bogaert grid."""
+
+    def __init__(self, grid, comp_key=None):
+
+        from bempp.core.space.space import function_space as _function_space
+        from bempp.api.assembly.functors import hcurl_function_value_functor
+
+        super(ModifiedRotatedChenWiltonSpace, self).__init__(_function_space(
+            grid._impl, "MRCW", 0), comp_key)
+
+        self._order = 0
+        self._has_non_barycentric_space = False
+        self._has_non_bogaert_space = False
+        self._non_barycentric_space = None
+        self._non_bogaert_space = None
+        self._discontinuous_space = function_space(
             grid.bogaert_refinement_grid(), "DP", 1)
         self._evaluation_functor = hcurl_function_value_functor()
         self._super_space = function_space(grid.bogaert_refinement_grid(), "SNC", 0)
-        self._hdiv_space = ChenWiltonSpace(grid)
+        self._hdiv_space = ModifiedChenWiltonSpace(grid)
         self._is_barycentric = False
         self._is_bogaert = True
         self._grid = grid.bogaert_refinement_grid()
@@ -1054,6 +1103,16 @@ def function_space(
     		raise ValueError(
     			"Only order zero Chen-Wilton functions supported.")
     	return RotatedChenWiltonSpace(grid, comp_key)
+    elif kind == "MCW":
+    	if order > 0:
+    		raise ValueError(
+    			"Only order zero Modifed Chen-Wilton functions supported.")
+    	return ModifiedChenWiltonSpace(grid, comp_key)
+    elif kind == "MRCW":
+    	if order > 0:
+    		raise ValueError(
+    			"Only order zero Modified Chen-Wilton functions supported.")
+    	return ModifiedRotatedChenWiltonSpace(grid, comp_key)
     elif kind == "BG-RT":
         if order > 0:
             raise ValueError(

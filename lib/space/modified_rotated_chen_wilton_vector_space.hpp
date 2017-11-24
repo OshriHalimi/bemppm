@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef bempp_chen_wilton_vector_space_hpp
-#define bempp_chen_wilton_vector_space_hpp
+#ifndef bempp_modified_rotated_chen_wilton_vector_space_hpp
+#define bempp_modified_rotated_chen_wilton_vector_space_hpp
 
 #include "../common/common.hpp"
 
@@ -30,7 +30,7 @@
 #include "../grid/grid_segment.hpp"
 #include "../grid/grid_view.hpp"
 #include "../common/types.hpp"
-#include "../fiber/chen_wilton_shapeset.hpp"
+#include "../fiber/modified_rotated_chen_wilton_shapeset.hpp"
 
 #include <boost/scoped_ptr.hpp>
 #include <map>
@@ -47,7 +47,7 @@ class Grid;
 /** \ingroup space
  *  \brief Space of continuous, piecewise linear scalar functions. */
 template <typename BasisFunctionType>
-class ChenWiltonVectorSpace : public Space<BasisFunctionType> {
+class ModifiedRotatedChenWiltonVectorSpace : public Space<BasisFunctionType> {
   typedef Space<BasisFunctionType> Base;
 
 public:
@@ -58,13 +58,13 @@ public:
   typedef typename Base::CollectionOfBasisTransformations
       CollectionOfBasisTransformations;
 
-  explicit ChenWiltonVectorSpace(const shared_ptr<const Grid> &grid,
-                                        bool putDofsOnBoundaries = false);
-  ChenWiltonVectorSpace(const shared_ptr<const Grid> &grid,
-                               const GridSegment &segment,
-                               bool putDofsOnBoundaries = false,
-                               int dofMode = EDGE_ON_SEGMENT);
-  virtual ~ChenWiltonVectorSpace();
+  explicit ModifiedRotatedChenWiltonVectorSpace(
+      const shared_ptr<const Grid> &grid, bool putDofsOnBoundaries = false);
+  ModifiedRotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid,
+                                      const GridSegment &segment,
+                                      bool putDofsOnBoundaries = false,
+                                      int dofMode = EDGE_ON_SEGMENT);
+  virtual ~ModifiedRotatedChenWiltonVectorSpace();
 
   virtual shared_ptr<const Space<BasisFunctionType>> discontinuousSpace(
       const shared_ptr<const Space<BasisFunctionType>> &self) const;
@@ -75,13 +75,13 @@ public:
   virtual int domainDimension() const;
   virtual int codomainDimension() const;
 
-  virtual bool isBogaertRefinement() const { return false; }
-    virtual bool isBarycentric() const {return false;}
+  virtual bool isBarycentric() const { return false; }
+  virtual bool isBogaertRefinement() const {return false;}
 
   virtual bool spaceIsCompatible(const Space<BasisFunctionType> &other) const;
 
   virtual SpaceIdentifier spaceIdentifier() const {
-    return CHEN_WILTON_VECTOR;
+    return MODIFIED_ROTATED_CHEN_WILTON_VECTOR;
   }
 
   /** \brief Return the variant of element \p element.
@@ -145,7 +145,7 @@ private:
   struct Impl;
   boost::scoped_ptr<Impl> m_impl;
   GridSegment m_segment;
-  typedef Fiber::ChenWiltonShapeset<BasisFunctionType> Shapeset;
+  typedef Fiber::ModifiedRotatedChenWiltonShapeset<BasisFunctionType> Shapeset;
   bool m_putDofsOnBoundaries;
   int m_dofMode;
   std::unique_ptr<GridView> m_view;
@@ -167,26 +167,26 @@ private:
   /** \endcond */
 };
 
-/** \brief Define a ChenWiltonVectorSpace that has an update method for
- * grid refinement. */
+/** \brief Define a ModifiedRotatedChenWiltonVectorSpace that has an update
+ * method for grid refinement. */
 template <typename BasisFunctionType>
 shared_ptr<Space<BasisFunctionType>>
-adaptiveChenWiltonVectorSpace(const shared_ptr<const Grid> &grid);
+adaptiveModifiedRotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid);
 
 /** \brief Overload to define a set of domains for the space and whether the
  space contains boundary entities
  (\p open = true) or not. */
 template <typename BasisFunctionType>
 shared_ptr<Space<BasisFunctionType>>
-adaptiveChenWiltonVectorSpace(const shared_ptr<const Grid> &grid,
-                                     const std::vector<int> &domains,
-                                     bool open);
+adaptiveModifiedRotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid,
+                                            const std::vector<int> &domains,
+                                            bool open);
 
 /** \brief Overlad. */
 template <typename BasisFunctionType>
 shared_ptr<Space<BasisFunctionType>>
-adaptiveChenWiltonVectorSpace(const shared_ptr<const Grid> &grid,
-                                     int domain, bool open);
+adaptiveModifiedRotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid,
+                                            int domain, bool open);
 
 } // namespace Bempp
 

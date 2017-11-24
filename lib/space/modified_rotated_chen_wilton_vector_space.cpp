@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "rotated_chen_wilton_vector_space.hpp"
+#include "modified_rotated_chen_wilton_vector_space.hpp"
 #include "adaptive_space.hpp"
 
 #include "piecewise_linear_discontinuous_scalar_space.hpp"
@@ -45,7 +45,7 @@
 
 namespace Bempp {
     
-double sideLLength(Vector<double> v0, Vector<double> v1){
+double SideLLength(Vector<double> v0, Vector<double> v1){
 //calculates the distance between two points
     double out = 0;
     for(int i = 0; i<3; ++i)
@@ -53,14 +53,14 @@ double sideLLength(Vector<double> v0, Vector<double> v1){
     return sqrt(out);
 }
     
-double triangleAArea(Vector<double> v0, Vector<double> v1, Vector<double> v2){
+double TriangleAArea(Vector<double> v0, Vector<double> v1, Vector<double> v2){
     //calculates the area of the triangle given the three vertices
     Vector<double> lengths(3);
     double s;
     double out;
-    lengths(0) = sideLLength(v1, v2);
-    lengths(1) = sideLLength(v0, v2);
-    lengths(2) = sideLLength(v0, v1);
+    lengths(0) = SideLLength(v1, v2);
+    lengths(1) = SideLLength(v0, v2);
+    lengths(2) = SideLLength(v0, v1);
     s = (lengths(0) + lengths(1) + lengths(2))/2;
     out = sqrt(s * (s-lengths(0)) * (s-lengths(1)) * (s-lengths(2)) );
     return out;
@@ -69,20 +69,20 @@ double triangleAArea(Vector<double> v0, Vector<double> v1, Vector<double> v2){
 namespace {
         
 template <typename BasisFunctionType>
-class RotatedChenWiltonSpaceFactory: public SpaceFactory<BasisFunctionType> {
+class ModifiedRotatedChenWiltonSpaceFactory: public SpaceFactory<BasisFunctionType> {
 public:
     shared_ptr<Space<BasisFunctionType>>
     create(const shared_ptr<const Grid> &grid,
            const GridSegment &segment) const override {
         
-    return shared_ptr<Space<BasisFunctionType>>(new RotatedChenWiltonVectorSpace<BasisFunctionType>(grid,segment));
+    return shared_ptr<Space<BasisFunctionType>>(new ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>(grid,segment));
     }
 };
 }
     
 /** \cond PRIVATE */
 template <typename BasisFunctionType>
-struct RotatedChenWiltonVectorSpace<BasisFunctionType>::Impl {
+struct ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::Impl {
     typedef Fiber::HcurlFunctionValueFunctor<CoordinateType>TransformationFunctor;
         
     Impl() : transformations(TransformationFunctor()) {}
@@ -92,29 +92,29 @@ struct RotatedChenWiltonVectorSpace<BasisFunctionType>::Impl {
 /** \endcond */
     
 template <typename BasisFunctionType>
-RotatedChenWiltonVectorSpace<BasisFunctionType>::RotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid, bool putDofsOnBoundaries): Base(grid->barycentricGrid()), m_impl(new Impl),
+ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::ModifiedRotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid, bool putDofsOnBoundaries): Base(grid->BogaertRefinementGrid()), m_impl(new Impl),
     m_segment(GridSegment::wholeGrid(*grid)),m_putDofsOnBoundaries(putDofsOnBoundaries), m_dofMode(EDGE_ON_SEGMENT),
-    m_originalGrid(grid), m_sonMap(grid->barycentricSonMap()) {
+    m_originalGrid(grid), m_sonMap(grid->BogaertRefinementSonMap()) {
         initialize();
     }
     
 template <typename BasisFunctionType>
-RotatedChenWiltonVectorSpace<BasisFunctionType>::
-RotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid,
+ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::
+ModifiedRotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid,
                                         const GridSegment &segment,
                                         bool putDofsOnBoundaries, int dofMode)
-    : Base(grid->barycentricGrid()), m_impl(new Impl), m_segment(segment),
+    : Base(grid->BogaertRefinementGrid()), m_impl(new Impl), m_segment(segment),
     m_putDofsOnBoundaries(putDofsOnBoundaries), m_dofMode(dofMode),
-    m_originalGrid(grid), m_sonMap(grid->barycentricSonMap()) {
+    m_originalGrid(grid), m_sonMap(grid->BogaertRefinementSonMap()) {
         if (!(dofMode & (EDGE_ON_SEGMENT | ELEMENT_ON_SEGMENT)))
-            throw std::invalid_argument("RotatedChenWiltonVectorSpace::"
-                                        "RotatedChenWiltonVectorSpace(): "
+            throw std::invalid_argument("ModifiedRotatedChenWiltonVectorSpace::"
+                                        "ModifiedRotatedChenWiltonVectorSpace(): "
                                         "invalid dofMode");
         initialize();
     }
     
 template <typename BasisFunctionType>
-bool RotatedChenWiltonVectorSpace<BasisFunctionType>::spaceIsCompatible(                                                                                   const Space<BasisFunctionType> &other) const {
+bool ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::spaceIsCompatible(                                                                                   const Space<BasisFunctionType> &other) const {
         if (other.grid().get() == this->grid().get()) {
             return (other.spaceIdentifier() == this->spaceIdentifier());
         } else
@@ -122,15 +122,15 @@ bool RotatedChenWiltonVectorSpace<BasisFunctionType>::spaceIsCompatible(        
     }
     
 template <typename BasisFunctionType>
-void RotatedChenWiltonVectorSpace<BasisFunctionType>::initialize() {
+void ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::initialize() {
     if (this->grid()->dim() != 2 || this->grid()->dimWorld() != 3)
         throw std::invalid_argument(
-                                    "RotatedChenWiltonVectorSpace::initialize(): "
+                                    "ModifiedRotatedChenWiltonVectorSpace::initialize(): "
                                     "grid must be 2-dimensional and embedded "
                                     "in 3-dimensional space");
     if (m_putDofsOnBoundaries)
         throw std::invalid_argument(
-                                    "RotatedChenWiltonVectorSpace::initialize(): "
+                                    "ModifiedRotatedChenWiltonVectorSpace::initialize(): "
                                     "Chen-Wilton spaces do not yet support DOFs "
                                     "on boundaries");
         m_view = this->grid()->leafView();
@@ -138,11 +138,11 @@ void RotatedChenWiltonVectorSpace<BasisFunctionType>::initialize() {
 }
     
 template <typename BasisFunctionType>
-RotatedChenWiltonVectorSpace< BasisFunctionType>::~RotatedChenWiltonVectorSpace() {}
+ModifiedRotatedChenWiltonVectorSpace< BasisFunctionType>::~ModifiedRotatedChenWiltonVectorSpace() {}
     
 template <typename BasisFunctionType>
 shared_ptr<const Space<BasisFunctionType>>
-RotatedChenWiltonVectorSpace<BasisFunctionType>::discontinuousSpace(                                                                               const shared_ptr<const Space<BasisFunctionType>> &self) const {
+ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::discontinuousSpace(                                                                               const shared_ptr<const Space<BasisFunctionType>> &self) const {
         if (!m_discontinuousSpace) {
             tbb::mutex::scoped_lock lock(m_discontinuousSpaceMutex);
             typedef PiecewiseLinearDiscontinuousScalarSpace<BasisFunctionType>
@@ -154,32 +154,32 @@ RotatedChenWiltonVectorSpace<BasisFunctionType>::discontinuousSpace(            
 }
     
 template <typename BasisFunctionType>
-bool RotatedChenWiltonVectorSpace<BasisFunctionType>::isDiscontinuous()
+bool ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::isDiscontinuous()
     const {
         return false;
     }
     
 template <typename BasisFunctionType>
-const typename RotatedChenWiltonVectorSpace<BasisFunctionType>::CollectionOfShapesetTransformations &
-    RotatedChenWiltonVectorSpace<BasisFunctionType>::basisFunctionValue()
+const typename ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::CollectionOfShapesetTransformations &
+    ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::basisFunctionValue()
     const {
         return m_impl->transformations;
     }
     
 template <typename BasisFunctionType>
-int RotatedChenWiltonVectorSpace<BasisFunctionType>::domainDimension()
+int ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::domainDimension()
     const {
         return 2;
     }
     
 template <typename BasisFunctionType>
-int RotatedChenWiltonVectorSpace<BasisFunctionType>::codomainDimension()
+int ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::codomainDimension()
     const {
         return 3;
     }
     
 template <typename BasisFunctionType>
-ElementVariant RotatedChenWiltonVectorSpace<BasisFunctionType>::elementVariant(
+ElementVariant ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::elementVariant(
    const Entity<0> &element) const {
         GeometryType type = element.type();
         if (type.isTriangle())
@@ -187,22 +187,22 @@ ElementVariant RotatedChenWiltonVectorSpace<BasisFunctionType>::elementVariant(
         else if (type.isQuadrilateral())
             return 4;
         else
-            throw std::runtime_error("RotatedChenWiltonVectorSpace::"
+            throw std::runtime_error("ModifiedRotatedChenWiltonVectorSpace::"
                                      "elementVariant(): invalid geometry type, "
                                      "this shouldn't happen!");
     }
     
 template <typename BasisFunctionType>
-void RotatedChenWiltonVectorSpace<BasisFunctionType>::setElementVariant(
+void ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::setElementVariant(
    const Entity<0> &element, ElementVariant variant) {
         if (variant != elementVariant(element))
             // for this space, the element variants are unmodifiable,
-            throw std::runtime_error("RotatedChenWiltonVectorSpace::"
+            throw std::runtime_error("ModifiedRotatedChenWiltonVectorSpace::"
                                      "setElementVariant(): invalid variant");
     }
     
 template <typename BasisFunctionType>
-void RotatedChenWiltonVectorSpace<BasisFunctionType>::assignDofsImpl() {
+void ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::assignDofsImpl() {
     // Set up useful numbers, maps, etc.
     int edgeCountCoarseGrid = m_originalGrid->leafView()->entityCount(1);
     int vertexCountCoarseGrid = m_originalGrid->leafView()->entityCount(2);
@@ -241,7 +241,7 @@ void RotatedChenWiltonVectorSpace<BasisFunctionType>::assignDofsImpl() {
             int &lowestIndex =
             lowestIndicesOfElementsAdjacentToFineEdges[bindex.subEntityIndex(entity, i, 1)];
             lowestIndex = std::min(ent0Number, lowestIndex);
-            areaT[ent0Number] = triangleAArea(corners.col(0), corners.col(1), corners.col(2));  //gives area of each small triangle
+            areaT[ent0Number] = TriangleAArea(corners.col(0), corners.col(1), corners.col(2));  //gives area of each small triangle
             verticesFineGrid.col(ent0Number * 3) = corners.col(0);
             verticesFineGrid.col(ent0Number * 3 + 1) = corners.col(1);
             verticesFineGrid.col(ent0Number * 3 + 2) = corners.col(2);
@@ -466,13 +466,13 @@ void RotatedChenWiltonVectorSpace<BasisFunctionType>::assignDofsImpl() {
             faceNum = nextFaceAnticlockwise[faceNum];
             
             if (corners.col(0) == verticesFineGrid.col(3 * faceNum) || corners.col(1) == verticesFineGrid.col(3 * faceNum)) {
-                length_top = sideLLength(verticesFineGrid.col(3 * faceNum + 1), verticesFineGrid.col(3 * faceNum + 2));
+                length_top = SideLLength(verticesFineGrid.col(3 * faceNum + 1), verticesFineGrid.col(3 * faceNum + 2));
             }
             else if (corners.col(0) == verticesFineGrid.col(3 * faceNum +1) || corners.col(1) == verticesFineGrid.col(3 * faceNum +1) ){
-                length_top = sideLLength(verticesFineGrid.col(3 * faceNum), verticesFineGrid.col(3 * faceNum + 2));
+                length_top = SideLLength(verticesFineGrid.col(3 * faceNum), verticesFineGrid.col(3 * faceNum + 2));
             }
             else if (corners.col(0) == verticesFineGrid.col(3 * faceNum +2) || corners.col(1) == verticesFineGrid.col(3 * faceNum +2) ){
-                length_top = sideLLength(verticesFineGrid.col(3 * faceNum), verticesFineGrid.col(3 * faceNum + 1));
+                length_top = SideLLength(verticesFineGrid.col(3 * faceNum), verticesFineGrid.col(3 * faceNum + 1));
             }
             else
                 std::cout << "something's wrong!";
@@ -482,13 +482,13 @@ void RotatedChenWiltonVectorSpace<BasisFunctionType>::assignDofsImpl() {
             faceNum = nextFaceAnticlockwise[faceNum];
             
             if (corners.col(0) == verticesFineGrid.col(3 * faceNum) || corners.col(1) == verticesFineGrid.col(3 * faceNum)) {
-                length_bottom = sideLLength(verticesFineGrid.col(3 * faceNum + 1), verticesFineGrid.col(3 * faceNum + 2));
+                length_bottom = SideLLength(verticesFineGrid.col(3 * faceNum + 1), verticesFineGrid.col(3 * faceNum + 2));
             }
             else if (corners.col(0) == verticesFineGrid.col(3 * faceNum +1) || corners.col(1) == verticesFineGrid.col(3 * faceNum +1) ){
-                length_bottom = sideLLength(verticesFineGrid.col(3 * faceNum), verticesFineGrid.col(3 * faceNum + 2));
+                length_bottom = SideLLength(verticesFineGrid.col(3 * faceNum), verticesFineGrid.col(3 * faceNum + 2));
             }
             else if (corners.col(0) == verticesFineGrid.col(3 * faceNum +2) || corners.col(1) == verticesFineGrid.col(3 * faceNum +2) ){
-                length_bottom = sideLLength(verticesFineGrid.col(3 * faceNum), verticesFineGrid.col(3 * faceNum + 1));
+                length_bottom = SideLLength(verticesFineGrid.col(3 * faceNum), verticesFineGrid.col(3 * faceNum + 1));
             }
             else
                 std::cout << "something's wrong!";
@@ -700,7 +700,7 @@ void RotatedChenWiltonVectorSpace<BasisFunctionType>::assignDofsImpl() {
     
 template <typename BasisFunctionType>
 const Fiber::Shapeset<BasisFunctionType> &
-RotatedChenWiltonVectorSpace<BasisFunctionType>::shapeset(                                                                     const Entity<0> &element) const {
+ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::shapeset(                                                                     const Entity<0> &element) const {
         const Mapper &elementMapper = m_view->elementMapper();
         int index = elementMapper.entityIndex(element);
         return m_elementShapesets[index];
@@ -708,19 +708,19 @@ RotatedChenWiltonVectorSpace<BasisFunctionType>::shapeset(                      
     
 template <typename BasisFunctionType>
 size_t
-RotatedChenWiltonVectorSpace<BasisFunctionType>::globalDofCount() const {
+ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::globalDofCount() const {
     return m_global2localDofs.size();
 }
     
 template <typename BasisFunctionType>
 size_t
-RotatedChenWiltonVectorSpace<BasisFunctionType>::flatLocalDofCount()
+ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::flatLocalDofCount()
     const {
         return m_flatLocal2localDofs.size();
     }
     
 template <typename BasisFunctionType>
-void RotatedChenWiltonVectorSpace<BasisFunctionType>::getGlobalDofs(
+void ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::getGlobalDofs(
        const Entity<0> &element, std::vector<GlobalDofIndex> &dofs,
        std::vector<BasisFunctionType> &dofWeights) const {
         const Mapper &mapper = m_view->elementMapper();
@@ -730,7 +730,7 @@ void RotatedChenWiltonVectorSpace<BasisFunctionType>::getGlobalDofs(
     }
     
 template <typename BasisFunctionType>
-void RotatedChenWiltonVectorSpace<BasisFunctionType>::global2localDofs(                                                                                  const std::vector<GlobalDofIndex> &globalDofs, std::vector<std::vector<LocalDof>> &localDofs,std::vector<std::vector<BasisFunctionType>> &localDofWeights)
+void ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::global2localDofs(                                                                                  const std::vector<GlobalDofIndex> &globalDofs, std::vector<std::vector<LocalDof>> &localDofs,std::vector<std::vector<BasisFunctionType>> &localDofWeights)
     const {
         localDofs.resize(globalDofs.size());
         localDofWeights.resize(globalDofs.size());
@@ -747,7 +747,7 @@ void RotatedChenWiltonVectorSpace<BasisFunctionType>::global2localDofs(         
     }
     
 template <typename BasisFunctionType>
-void RotatedChenWiltonVectorSpace<BasisFunctionType>::flatLocal2localDofs(
+void ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::flatLocal2localDofs(
      const std::vector<FlatLocalDofIndex> &flatLocalDofs, std::vector<LocalDof> &localDofs)
     const {
         localDofs.resize(flatLocalDofs.size());
@@ -756,7 +756,7 @@ void RotatedChenWiltonVectorSpace<BasisFunctionType>::flatLocal2localDofs(
     }
     
 template <typename BasisFunctionType>
-void RotatedChenWiltonVectorSpace<BasisFunctionType>:: getGlobalDofPositions(
+void ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>:: getGlobalDofPositions(
   std::vector<Point3D<CoordinateType>> &positions)
     const {
         positions.resize(m_globalDofBoundingBoxes.size());
@@ -765,7 +765,7 @@ void RotatedChenWiltonVectorSpace<BasisFunctionType>:: getGlobalDofPositions(
     }
     
 template <typename BasisFunctionType>
-void RotatedChenWiltonVectorSpace<BasisFunctionType>::getFlatLocalDofPositions(
+void ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::getFlatLocalDofPositions(
      std::vector<Point3D<CoordinateType>> &positions)
     const {
         std::vector<BoundingBox<CoordinateType>> bboxes;
@@ -776,14 +776,14 @@ void RotatedChenWiltonVectorSpace<BasisFunctionType>::getFlatLocalDofPositions(
     }
     
 template <typename BasisFunctionType>
-void RotatedChenWiltonVectorSpace<BasisFunctionType>::
+void ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::
     getGlobalDofBoundingBoxes(std::vector<BoundingBox<CoordinateType>> &bboxes)
     const {
         bboxes = m_globalDofBoundingBoxes;
     }
     
 template <typename BasisFunctionType>
-void RotatedChenWiltonVectorSpace<BasisFunctionType>::
+void ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::
     getFlatLocalDofBoundingBoxes(std::vector<BoundingBox<CoordinateType>> &bboxes)
     const {
         BoundingBox<CoordinateType> model;
@@ -807,7 +807,7 @@ void RotatedChenWiltonVectorSpace<BasisFunctionType>::
             e.geometry().getCorners(acc(elementCorners, index));
             if (acc(elementCorners, index).cols() != 3)
                 throw std::runtime_error(
-                                         "RotatedChenWiltonVectorSpace::getFlatLocalDofBoundingBoxes():"
+                                         "ModifiedRotatedChenWiltonVectorSpace::getFlatLocalDofBoundingBoxes():"
                                          " "
                                          "only triangular elements are supported at present");
             it->next();
@@ -836,7 +836,7 @@ void RotatedChenWiltonVectorSpace<BasisFunctionType>::
     }
     
 template <typename BasisFunctionType>
-void RotatedChenWiltonVectorSpace<BasisFunctionType>::
+void ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::
     getGlobalDofNormals(std::vector<Point3D<CoordinateType>> &normals)
     const {
         const int gridDim = 2;
@@ -878,7 +878,7 @@ void RotatedChenWiltonVectorSpace<BasisFunctionType>::
     }
     
 template <typename BasisFunctionType>
-void RotatedChenWiltonVectorSpace<BasisFunctionType>::
+void ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::
     getFlatLocalDofNormals(std::vector<Point3D<CoordinateType>> &normals)
     const {
         const int gridDim = 2;
@@ -917,107 +917,107 @@ void RotatedChenWiltonVectorSpace<BasisFunctionType>::
     }
     
 template <typename BasisFunctionType>
-void RotatedChenWiltonVectorSpace<BasisFunctionType>::dumpClusterIds(const char *fileName,
+void ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::dumpClusterIds(const char *fileName,
     const std::vector<unsigned int> &clusterIdsOfDofs)
     const {
         dumpClusterIdsEx(fileName, clusterIdsOfDofs, GLOBAL_DOFS);
     }
     
 template <typename BasisFunctionType>
-void RotatedChenWiltonVectorSpace<BasisFunctionType>::dumpClusterIdsEx(const char *fileName, const std::vector<unsigned int> &clusterIdsOfDofs,DofType dofType)
+void ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::dumpClusterIdsEx(const char *fileName, const std::vector<unsigned int> &clusterIdsOfDofs,DofType dofType)
     const {
-        throw std::runtime_error("RotatedChenWiltonVectorSpace::"
+        throw std::runtime_error("ModifiedRotatedChenWiltonVectorSpace::"
                                  "dumpClusterIdsEx(): Not implemented yet");
     }
     
 template <typename BasisFunctionType>
 shared_ptr<Space<BasisFunctionType>>
-adaptiveRotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid) {
-    shared_ptr<SpaceFactory<BasisFunctionType>> factory(new RotatedChenWiltonSpaceFactory<BasisFunctionType>());
+adaptiveModifiedRotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid) {
+    shared_ptr<SpaceFactory<BasisFunctionType>> factory(new ModifiedRotatedChenWiltonSpaceFactory<BasisFunctionType>());
         return shared_ptr<Space<BasisFunctionType>>(new AdaptiveSpace<BasisFunctionType>(factory, grid));
 }
     
 template <typename BasisFunctionType>
 shared_ptr<Space<BasisFunctionType>>
-adaptiveRotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid,const std::vector<int> &domains,
+adaptiveModifiedRotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid,const std::vector<int> &domains,
                                                 bool open) {
-    shared_ptr<SpaceFactory<BasisFunctionType>> factory(new RotatedChenWiltonSpaceFactory<BasisFunctionType>());
+    shared_ptr<SpaceFactory<BasisFunctionType>> factory(new ModifiedRotatedChenWiltonSpaceFactory<BasisFunctionType>());
         return shared_ptr<Space<BasisFunctionType>>(new AdaptiveSpace<BasisFunctionType>(factory, grid, domains, open));
     }
     
 template <typename BasisFunctionType>
 shared_ptr<Space<BasisFunctionType>>
-adaptiveRotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid,int domain, bool open) {
-    shared_ptr<SpaceFactory<BasisFunctionType>> factory(new RotatedChenWiltonSpaceFactory<BasisFunctionType>());
+adaptiveModifiedRotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid,int domain, bool open) {
+    shared_ptr<SpaceFactory<BasisFunctionType>> factory(new ModifiedRotatedChenWiltonSpaceFactory<BasisFunctionType>());
     return shared_ptr<Space<BasisFunctionType>>(new AdaptiveSpace<BasisFunctionType>(factory, grid,std::vector<int>({domain}), open));
     }
     
 #define INSTANTIATE_FREE_FUNCTIONS(BASIS)                                      \
 template shared_ptr<Space<BASIS>>                                            \
-adaptiveRotatedChenWiltonVectorSpace<BASIS>(                          \
+adaptiveModifiedRotatedChenWiltonVectorSpace<BASIS>(                          \
 const shared_ptr<const Grid> &);                                         \
 template shared_ptr<Space<BASIS>>                                            \
-adaptiveRotatedChenWiltonVectorSpace<BASIS>(                          \
+adaptiveModifiedRotatedChenWiltonVectorSpace<BASIS>(                          \
 const shared_ptr<const Grid> &, const std::vector<int> &, bool);         \
 template shared_ptr<Space<BASIS>>                                            \
-adaptiveRotatedChenWiltonVectorSpace<BASIS>(                          \
+adaptiveModifiedRotatedChenWiltonVectorSpace<BASIS>(                          \
 const shared_ptr<const Grid> &, int, bool)
     
     FIBER_ITERATE_OVER_BASIS_TYPES(INSTANTIATE_FREE_FUNCTIONS);
     
-    FIBER_INSTANTIATE_CLASS_TEMPLATED_ON_BASIS(RotatedChenWiltonVectorSpace);
+    FIBER_INSTANTIATE_CLASS_TEMPLATED_ON_BASIS(ModifiedRotatedChenWiltonVectorSpace);
     
 } // namespace Bempp
 
 /*template <typename BasisFunctionType>
  shared_ptr<Space<BasisFunctionType>>
- adaptiveRotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid)
+ adaptiveModifiedRotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid)
  {
  
  return shared_ptr<Space<BasisFunctionType>>(
  new AdaptiveSpace<BasisFunctionType,
- RotatedChenWiltonVectorSpace<BasisFunctionType>>(grid));
+ ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>>(grid));
  }
  
  template <typename BasisFunctionType>
  shared_ptr<Space<BasisFunctionType>>
- adaptiveRotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid,
+ adaptiveModifiedRotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid,
  const std::vector<int> &domains,
  bool open) {
  
  return shared_ptr<Space<BasisFunctionType>>(
  new AdaptiveSpace<BasisFunctionType,
- RotatedChenWiltonVectorSpace<BasisFunctionType>>(
+ ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>>(
  grid, domains, open));
  }
  
  template <typename BasisFunctionType>
  shared_ptr<Space<BasisFunctionType>>
- adaptiveRotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid,
+ adaptiveModifiedRotatedChenWiltonVectorSpace(const shared_ptr<const Grid> &grid,
  int domain, bool open) {
  
  return shared_ptr<Space<BasisFunctionType>>(
  new AdaptiveSpace<BasisFunctionType,
- RotatedChenWiltonVectorSpace<BasisFunctionType>>(
+ ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>>(
  grid, std::vector<int>({domain}), open));
  }
  
  #define INSTANTIATE_FREE_FUNCTIONS(BASIS)                                      \
  template shared_ptr<Space<BASIS>>                                            \
- adaptiveRotatedChenWiltonVectorSpace<BASIS>(const shared_ptr<const
+ adaptiveModifiedRotatedChenWiltonVectorSpace<BASIS>(const shared_ptr<const
  Grid> &); \
  template shared_ptr<Space<BASIS>>                                            \
- adaptiveRotatedChenWiltonVectorSpace<BASIS>(const shared_ptr<const
+ adaptiveModifiedRotatedChenWiltonVectorSpace<BASIS>(const shared_ptr<const
  Grid> &,  \
  const std::vector<int> &, bool); \
  template shared_ptr<Space<BASIS>>                                            \
- adaptiveRotatedChenWiltonVectorSpace<BASIS>(const shared_ptr<const
+ adaptiveModifiedRotatedChenWiltonVectorSpace<BASIS>(const shared_ptr<const
  Grid> &,  \
  int, bool)
  
  FIBER_ITERATE_OVER_BASIS_TYPES(INSTANTIATE_FREE_FUNCTIONS);
  
- FIBER_INSTANTIATE_CLASS_TEMPLATED_ON_BASIS(RotatedChenWiltonVectorSpace);
+ FIBER_INSTANTIATE_CLASS_TEMPLATED_ON_BASIS(ModifiedRotatedChenWiltonVectorSpace);
  
  } // namespace Bempp
  

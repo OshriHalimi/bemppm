@@ -117,6 +117,12 @@ cdef extern from "bempp/space/chen_wilton_vector_space.hpp" namespace "Bempp":
 cdef extern from "bempp/space/rotated_chen_wilton_vector_space.hpp" namespace "Bempp":
     cdef shared_ptr[c_Space[T]] adaptiveRotatedChenWiltonVectorSpace[T](const shared_ptr[c_Grid]& grid)
 
+cdef extern from "bempp/space/modified_chen_wilton_vector_space.hpp" namespace "Bempp":
+    cdef shared_ptr[c_Space[T]] adaptiveModifiedChenWiltonVectorSpace[T](const shared_ptr[c_Grid]& grid)
+
+cdef extern from "bempp/space/modified_rotated_chen_wilton_vector_space.hpp" namespace "Bempp":
+    cdef shared_ptr[c_Space[T]] adaptiveModifiedRotatedChenWiltonVectorSpace[T](const shared_ptr[c_Grid]& grid)
+
 cdef extern from "bempp/space/rwg_vector_space.hpp" namespace "Bempp":
     cdef shared_ptr[c_Space[T]] adaptiveRWGVectorSpace[T](const shared_ptr[c_Grid]& grid)
     cdef shared_ptr[c_Space[T]] adaptiveRWGVectorSpace[T](const shared_ptr[c_Grid]& grid, vector[int] domains, cbool closed)

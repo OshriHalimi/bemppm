@@ -478,6 +478,22 @@ def function_space(Grid grid, kind, order, domains=None, cbool closed=True, cboo
         else:
             s.impl_.assign(reverse_const_pointer_cast(
                     shared_ptr[c_Space[double]](adaptiveRotatedChenWiltonVectorSpace[double](grid.impl_))))
+    elif kind=="MCW":
+        if order!=0:
+            raise ValueError("Only order 0 Modified Chen-Wilton spaces are implemented.")
+        if domains is not None:
+            raise ValueError("Spaces on subdomains are not supported for Modified Chen-Wilton spaces.")
+        else:
+            s.impl_.assign(reverse_const_pointer_cast(
+                shared_ptr[c_Space[double]](adaptiveModifiedChenWiltonVectorSpace[double](grid.impl_))))
+    elif kind=="MRCW":
+        if order!=0:
+            raise ValueError("Only order 0 Modified Chen-Wilton spaces are implemented.")
+        if domains is not None:
+            raise ValueError("Spaces on subdomains are not supported for Modified Chen-Wilton spaces.")
+        else:
+            s.impl_.assign(reverse_const_pointer_cast(
+                    shared_ptr[c_Space[double]](adaptiveModifiedRotatedChenWiltonVectorSpace[double](grid.impl_))))
     else:
         raise ValueError("Unknown kind")
 
