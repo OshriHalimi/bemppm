@@ -524,20 +524,19 @@ void ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::assignDofsImpl() {
                 
                 { // Before
                     Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[faceNum];
+		    auxCoeff = auxCoeff + qLeft * areaT[faceNum];
                     if (vertexOnBoundary[coarseVerticesonEdge(ent1Number, 0)]){
                         if (pastBoundary){
                             std::cout << "past boundary \n";
                             throw std::runtime_error("Currently not implemented for open structures");
                         }
                         else {
-                            auxCoeff = auxCoeff + qLeft * areaT[faceNum] ;
                             ffCoeff(1, ffCoeff.cols() - 1) = auxCoeff;
                             if (anticlockwiseEdgesToFaces[anticlockwiseFacesToEdges[faceNum]] == -1)
                                 pastBoundary = true;
                         }
                     }
                     else{
-                        auxCoeff = auxCoeff + qLeft * areaT[faceNum] ;
                         ffCoeff(1, ffCoeff.cols() - 1) = auxCoeff;
                     }
                     
@@ -559,13 +558,11 @@ void ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::assignDofsImpl() {
                             throw std::runtime_error("Currently not implemented for open structures");
                         }
                         else{
-                            auxCoeff = -1 * auxCoeff;
-                            ffCoeff(0, ffCoeff.cols() - 1) = auxCoeff;
+                            ffCoeff(0, ffCoeff.cols() - 1) = -1 * auxCoeff;
                         }
                     }
                     else{
-                        auxCoeff = -1 * auxCoeff;
-                        ffCoeff(0, ffCoeff.cols() - 1) = auxCoeff;
+                        ffCoeff(0, ffCoeff.cols() - 1) = -1 * auxCoeff;
                     }
                     ffCoeff(1, ffCoeff.cols() - 1) = 0;
                     ffCoeff(2, ffCoeff.cols() - 1) = 0;
@@ -574,8 +571,7 @@ void ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::assignDofsImpl() {
             
             { // First edge top
                 Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[faceNum];
-                ffCoeff(1, ffCoeff.cols() - 1) = 0.;
-                ffCoeff(2, ffCoeff.cols() - 1) = length_bottom; //change to length
+                ffCoeff(2, ffCoeff.cols() - 1) = length_bottom; 
                 m_local2globalDofs[faceNum].push_back(glDof);
                 m_local2globalDofWeights[faceNum].push_back(1.);
                 m_global2localDofs[glDof].push_back(LocalDof(faceNum, ffCoeff.cols() - 1));
@@ -590,9 +586,9 @@ void ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::assignDofsImpl() {
             { // Second edge bottom
                 Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[faceNum];
                 ffCoeff.conservativeResize(3, ffCoeff.cols() + 1);
-                ffCoeff(0, ffCoeff.cols() - 1) = 0; //check
+                ffCoeff(0, ffCoeff.cols() - 1) = 0; 
                 ffCoeff(1, ffCoeff.cols() - 1) = 0;
-                auxCoeff = length_bottom; //change to length
+                auxCoeff = length_bottom; 
                 ffCoeff(2, ffCoeff.cols() - 1) = auxCoeff;
             }
             
@@ -606,19 +602,18 @@ void ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::assignDofsImpl() {
                 
                 { // Before
                     Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[faceNum];
+		    auxCoeff = auxCoeff + qRight * areaT[faceNum];
                     if (vertexOnBoundary[coarseVerticesonEdge(ent1Number, 1)]){
                         if (pastBoundary){
                             throw std::runtime_error("Currently not implemented for open structures");
                         }
                         else {
-                            auxCoeff = auxCoeff + qRight * areaT[faceNum];
                             ffCoeff(1, ffCoeff.cols() - 1) = auxCoeff;
                             if (anticlockwiseEdgesToFaces[anticlockwiseFacesToEdges[faceNum]] == -1)
                                 pastBoundary = true;
                         }
                     }
                     else{
-                        auxCoeff = auxCoeff + qRight * areaT[faceNum];
                         ffCoeff(1, ffCoeff.cols() - 1) = auxCoeff;
                     }
                     
@@ -638,13 +633,11 @@ void ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::assignDofsImpl() {
                             throw std::runtime_error("Currently not implemented for open structures");
                         }
                         else{
-                            auxCoeff = -1 * auxCoeff;
-                            ffCoeff(0, ffCoeff.cols() - 1) = auxCoeff;
+                            ffCoeff(0, ffCoeff.cols() - 1) = -1 * auxCoeff;
                         }
                     }
                     else{
-                        auxCoeff = -1 * auxCoeff;
-                        ffCoeff(0, ffCoeff.cols() - 1) = auxCoeff;
+                        ffCoeff(0, ffCoeff.cols() - 1) = -1 * auxCoeff;
                     }
                     ffCoeff(1, ffCoeff.cols() - 1) = 0;
                     ffCoeff(2, ffCoeff.cols() - 1) = 0;
@@ -653,10 +646,7 @@ void ModifiedRotatedChenWiltonVectorSpace<BasisFunctionType>::assignDofsImpl() {
             }
             { // Second edge top
                 Matrix<BasisFunctionType> &ffCoeff = m_fineFaceCoeffs[faceNum];
-                //                if (vertexOnBoundary[coarseVerticesonEdge(ent1Number, 1)])
-                //                    ffCoeff(1, ffCoeff.cols() - 1) = (N - 2.) / (N * 2); //needs to change
-                ffCoeff(1, ffCoeff.cols() - 1) = 0.;
-                ffCoeff(2, ffCoeff.cols() - 1) = length_top; //change to length
+                ffCoeff(2, ffCoeff.cols() - 1) = length_top; 
                 m_local2globalDofs[faceNum].push_back(glDof);
                 m_local2globalDofWeights[faceNum].push_back(-1.);
                 m_global2localDofs[glDof].push_back(LocalDof(faceNum, ffCoeff.cols() - 1));
