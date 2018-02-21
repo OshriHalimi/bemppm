@@ -70,9 +70,12 @@ public:
       distanceSq += diff * diff;
       numeratorSum += diff * trialGeomData.normal(coordIndex);
     }
+    CoordinateType epsilon = 1e-6;
     CoordinateType distance = sqrt(distanceSq);
     result[0](0, 0) = -numeratorSum / (static_cast<CoordinateType>(4. * M_PI) *
-                                       distance * distanceSq);
+                                       (distance+epsilon) * (distanceSq+2*distance*epsilon));
+    // result[0](0, 0) = -numeratorSum / (static_cast<CoordinateType>(4. * M_PI) *
+    //                                   distance * distanceSq);
   }
 };
 
