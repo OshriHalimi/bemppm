@@ -12,3 +12,7 @@ cmake -DCMAKE_INSTALL_PREFIX=/media/wangyu/sdb1/WorkSpace/Python/Steklov/libs/li
 make -j4
 
 make install
+
+
+To edit the default bempp to use:
+gedit ~/anaconda/lib/python2.7/site-packages/bempp.pth
