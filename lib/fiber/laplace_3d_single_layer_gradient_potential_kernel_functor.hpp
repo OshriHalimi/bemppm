@@ -71,6 +71,7 @@ public:
           testGeomData.global(coordIndex) - trialGeomData.global(coordIndex);
       sum += diff[coordIndex] * diff[coordIndex];
     }
+    CoordinateType epsilon = 1e-2;
     CoordinateType sqrt_sum = sqrt(sum);
     CoordinateType factor = -static_cast<CoordinateType>(1. / (4. * M_PI)) /
                             (sqrt_sum * sqrt_sum * sqrt_sum);
