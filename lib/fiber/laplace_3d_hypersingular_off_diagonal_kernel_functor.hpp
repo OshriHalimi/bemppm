@@ -78,10 +78,14 @@ public:
       nTest_nTrial +=
           testGeomData.normal(coordIndex) * trialGeomData.normal(coordIndex);
     }
+    CoordinateType epsilon = 1e-6;
     CoordinateType distance = sqrt(distanceSq);
     CoordinateType commonFactor =
         static_cast<CoordinateType>(-1. / (4. * M_PI)) /
-        (distance * distanceSq * distanceSq);
+        ( (distance+epsilon) * (distanceSq+2*distance*epsilon) * (distanceSq+2*distance*epsilon) );
+    //CoordinateType commonFactor =
+    //    static_cast<CoordinateType>(-1. / (4. * M_PI)) /
+    //    (distance * distanceSq * distanceSq);
     result[0](0, 0) = commonFactor * (nTest_nTrial * distanceSq -
                                       static_cast<CoordinateType>(3.) *
                                           nTest_diff * nTrial_diff);
