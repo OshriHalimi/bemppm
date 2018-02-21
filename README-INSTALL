@@ -2,3 +2,13 @@ See here: http://www.bempp.org/installation.html
 
 
 `git clone https://github.com/wangyu9/bemppm.git`
+
+cd bemppm
+mkdir build
+cd build
+
+cmake -DCMAKE_INSTALL_PREFIX=/media/wangyu/sdb1/WorkSpace/Python/Steklov/libs/libbemppm-1e-2/ ..
+
+make -j4
+
+make install
