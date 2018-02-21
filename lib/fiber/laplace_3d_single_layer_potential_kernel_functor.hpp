@@ -63,13 +63,18 @@ public:
     assert(testGeomData.dimWorld() == coordCount);
     assert(result.size() == 1);
 
+    CoordinateType epsilon = 1e-6;
+    
     ValueType sum = 0;
     for (int coordIndex = 0; coordIndex < coordCount; ++coordIndex) {
       ValueType diff =
           testGeomData.global(coordIndex) - trialGeomData.global(coordIndex);
       sum += diff * diff;
     }
-    result[0](0, 0) = static_cast<CoordinateType>(1. / (4. * M_PI)) / sqrt(sum);
+    CoordinateType sqrt_sum = sqrt(sum);
+    CoordinateType sum_eff = (sum+2*sqrt_sum*epsilon);
+    result[0](0, 0) = static_cast<CoordinateType>(1. / (4. * M_PI)) / sqrt(sum_eff);
+    //result[0](0, 0) = static_cast<CoordinateType>(1. / (4. * M_PI)) / sqrt(sum);
   }
 };
 
