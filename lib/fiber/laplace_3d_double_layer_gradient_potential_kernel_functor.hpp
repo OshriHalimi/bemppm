@@ -82,20 +82,35 @@ public:
     CoordinateType term2[coordCount];
     CoordinateType factor = 0;
 
+    CoordinateType epsilon = 1e-6;
+
+    CoordinateType sum_eff = (sum+2*sqrt_sum*epsilon);
+    CoordinateType sqrt_sum_eff = sqrt(sum)+epsilon;
+
     for (int coordIndex = 0; coordIndex < coordCount; ++coordIndex)
-      factor += normal[coordIndex] * diff[coordIndex] * 3. / sum;
+      factor += normal[coordIndex] * diff[coordIndex] * 3. / sum_eff;
+    //for (int coordIndex = 0; coordIndex < coordCount; ++coordIndex)
+    //  factor += normal[coordIndex] * diff[coordIndex] * 3. / sum;
 
     for (int coordIndex = 0; coordIndex < coordCount; ++coordIndex) {
       term1[coordIndex] = normal[coordIndex];
       term2[coordIndex] = factor * diff[coordIndex];
     }
-
+    result[0](0, 0) = static_cast<CoordinateType>(1. / (4. * M_PI)) *
+                      (term1[0] - term2[0]) / (sum_eff * sqrt_sum_eff);
+    result[0](1, 0) = static_cast<CoordinateType>(1. / (4. * M_PI)) *
+                      (term1[1] - term2[1]) / (sum_eff * sqrt_sum_eff);
+    result[0](2, 0) = static_cast<CoordinateType>(1. / (4. * M_PI)) *
+                      (term1[2] - term2[2]) / (sum_eff * sqrt_sum_eff);
+    /*               
     result[0](0, 0) = static_cast<CoordinateType>(1. / (4. * M_PI)) *
                       (term1[0] - term2[0]) / (sum * sqrt_sum);
     result[0](1, 0) = static_cast<CoordinateType>(1. / (4. * M_PI)) *
                       (term1[1] - term2[1]) / (sum * sqrt_sum);
     result[0](2, 0) = static_cast<CoordinateType>(1. / (4. * M_PI)) *
                       (term1[2] - term2[2]) / (sum * sqrt_sum);
+       */                  
+                      
   }
 };
 
