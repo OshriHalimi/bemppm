@@ -75,7 +75,7 @@ public:
     CoordinateType epsilon = 1e-2;
     CoordinateType distance = sqrt(distanceSq);
     result[0](0, 0) = -numeratorSum / (static_cast<CoordinateType>(4. * M_PI) *
-                                       (distanceSq+2*distance*epsilon) * (distance+epsilon) );
+                                       (distanceSq+2*distance*epsilon+epsilon*epsilon) * (distance+epsilon) );
   }
 };
 
