@@ -82,7 +82,7 @@ public:
     CoordinateType term2[coordCount];
     CoordinateType factor = 0;
 
-    CoordinateType epsilon = 1e-2;
+    CoordinateType epsilon = KERNEL_EPSILON;
 
     CoordinateType sum_eff = (sum+2*sqrt_sum*epsilon+epsilon*epsilon);
     CoordinateType sqrt_sum_eff = sqrt(sum)+epsilon;
