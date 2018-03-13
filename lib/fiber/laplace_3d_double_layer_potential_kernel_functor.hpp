@@ -70,7 +70,7 @@ public:
       distanceSq += diff * diff;
       numeratorSum += diff * trialGeomData.normal(coordIndex);
     }
-    CoordinateType epsilon = 1e-2;
+    CoordinateType epsilon = KERNEL_EPSILON;
     CoordinateType distance = sqrt(distanceSq);
     result[0](0, 0) = -numeratorSum / (static_cast<CoordinateType>(4. * M_PI) *
                                        (distance+epsilon) * (distanceSq+2*distance*epsilon+epsilon*epsilon));
