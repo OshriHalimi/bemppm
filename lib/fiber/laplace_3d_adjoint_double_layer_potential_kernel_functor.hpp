@@ -72,7 +72,7 @@ public:
       numeratorSum += diff * testGeomData.normal(coordIndex);
     }
     // wangyu
-    CoordinateType epsilon = 1e-2;
+    CoordinateType epsilon = KERNEL_EPSILON;
     CoordinateType distance = sqrt(distanceSq);
     result[0](0, 0) = -numeratorSum / (static_cast<CoordinateType>(4. * M_PI) *
                                        (distanceSq+2*distance*epsilon+epsilon*epsilon) * (distance+epsilon) );
