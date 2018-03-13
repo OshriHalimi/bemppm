@@ -73,10 +73,17 @@ public:
     }
     CoordinateType epsilon = 1e-2;
     CoordinateType sqrt_sum = sqrt(sum);
+    CoordinateType sqrt_sum_eff = sqrt(sum)+epsilon;
     CoordinateType factor = -static_cast<CoordinateType>(1. / (4. * M_PI)) /
-                            (sqrt_sum * sqrt_sum * sqrt_sum);
+                            (sqrt_sum_eff * sqrt_sum_eff * sqrt_sum_eff);
     for (int coordIndex = 0; coordIndex < coordCount; ++coordIndex)
       result[0](coordIndex, 0) = diff[coordIndex] * factor;
+      
+    //CoordinateType sqrt_sum = sqrt(sum);
+    //CoordinateType factor = -static_cast<CoordinateType>(1. / (4. * M_PI)) /
+    //                        (sqrt_sum * sqrt_sum * sqrt_sum);
+    //for (int coordIndex = 0; coordIndex < coordCount; ++coordIndex)
+    //  result[0](coordIndex, 0) = diff[coordIndex] * factor;
   }
 };
 
