@@ -84,7 +84,7 @@ public:
 
     CoordinateType epsilon = 1e-2;
 
-    CoordinateType sum_eff = (sum+2*sqrt_sum*epsilon);
+    CoordinateType sum_eff = (sum+2*sqrt_sum*epsilon+epsilon*epsilon);
     CoordinateType sqrt_sum_eff = sqrt(sum)+epsilon;
 
     for (int coordIndex = 0; coordIndex < coordCount; ++coordIndex)
