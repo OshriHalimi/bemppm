@@ -78,7 +78,7 @@ public:
       nTest_nTrial +=
           testGeomData.normal(coordIndex) * trialGeomData.normal(coordIndex);
     }
-    CoordinateType epsilon = 1e-2;
+    CoordinateType epsilon = KERNEL_EPSILON;
     CoordinateType distance = sqrt(distanceSq);
     CoordinateType commonFactor =
         static_cast<CoordinateType>(-1. / (4. * M_PI)) /
