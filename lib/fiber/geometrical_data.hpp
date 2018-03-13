@@ -40,7 +40,7 @@ enum GeometricalDataType {
   DOMAIN_INDEX = 0x0020
 };
 
-const CoordinateType KERNEL_EPSILON = 1e-2;  
+#define KERNEL_EPSILON 1e-2
   
 /** \cond FORWARD_DECL */
 template <typename CoordinateType> class ConstGeometricalDataSlice;
