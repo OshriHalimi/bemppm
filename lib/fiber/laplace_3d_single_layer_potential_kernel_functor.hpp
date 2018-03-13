@@ -72,7 +72,7 @@ public:
       sum += diff * diff;
     }
     CoordinateType sqrt_sum = sqrt(sum);
-    CoordinateType sum_eff = (sum+2*sqrt_sum*epsilon);
+    CoordinateType sum_eff = (sum+2*sqrt_sum*epsilon+epsilon*epsilon);
     result[0](0, 0) = static_cast<CoordinateType>(1. / (4. * M_PI)) / sqrt(sum_eff);
     //result[0](0, 0) = static_cast<CoordinateType>(1. / (4. * M_PI)) / sqrt(sum);
   }
