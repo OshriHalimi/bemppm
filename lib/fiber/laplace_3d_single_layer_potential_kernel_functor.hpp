@@ -63,7 +63,7 @@ public:
     assert(testGeomData.dimWorld() == coordCount);
     assert(result.size() == 1);
 
-    CoordinateType epsilon = 1e-2;
+    CoordinateType epsilon = KERNEL_EPSILON;
     
     ValueType sum = 0;
     for (int coordIndex = 0; coordIndex < coordCount; ++coordIndex) {
